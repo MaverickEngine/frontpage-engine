@@ -5,30 +5,31 @@ class FrontPageEngineAPI {
         add_action("wp_ajax_frontpage_engine_order_posts", [ $this, 'order_posts' ]);
         add_action("wp_ajax_frontpage_engine_insert_post", [ $this, 'insert_post' ]);
         add_action("wp_ajax_frontpage_engine_fetch_posts", [ $this, 'fetch_posts' ]);
+        add_action("wp_ajax_frontpage_engine_fetch_unfeatured_posts", [ $this, 'fetch_unfeatured_posts' ]);
+        add_action("wp_ajax_frontpage_engine_fetch_unordered_posts", [ $this, 'fetch_unordered_posts' ]);
     }
 
     public function order_posts() {
-        if (empty($_POST['nonce']) || ! wp_verify_nonce( $_POST['nonce'], 'frontpageengine-admin-nonce' ) ) {
+        if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
             wp_die('You do not have sufficient permissions to access this page.');
         }
         $status = false;
         if ( ! empty( $_POST['ordering_code'] && ! empty( $_POST['order'] ) ) ) {
-            foreach ( $_POST['order'] as $key => $id ) {
-                $status = update_post_meta( $id, $_POST['ordering_code'], $key );
+            foreach ( sanitize_text_field($_POST['order']) as $key => $id ) {
+                $status = update_post_meta( $id, sanitize_text_field($_POST['ordering_code']), $key );
             }
         }
         return $status;
     }
 
     public function insert_post() {
-        if (empty($_POST['nonce']) || ! wp_verify_nonce( $_POST['nonce'], 'frontpageengine-admin-nonce' ) ) {
+        if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
             wp_die('You do not have sufficient permissions to access this page.');
         }
-        print_r($_POST);
         if ( ! empty( $_POST['ordering_code'] && ! empty( $_POST['post_id'] ) && ! empty($_POST['featured_code'] && !empty($_POST["position"])) ) ) {
-            update_post_meta( $_POST['post_id'], $_POST['ordering_code'], $_POST["position"] );
-            update_post_meta( $_POST['post_id'], $_POST['featured_code'], true );
-            wp_set_object_terms( intval( $_POST['post_id'] ), [$_POST['featured_code']], 'flag', true );
+            update_post_meta( sanitize_text_field($_POST['post_id']), sanitize_text_field($_POST['ordering_code']), sanitize_text_field($_POST["position"]) );
+            update_post_meta( sanitize_text_field($_POST['post_id']), sanitize_text_field($_POST['featured_code']), true );
+            wp_set_object_terms( intval( $_POST['post_id'] ), [sanitize_text_field($_POST['featured_code'])], 'flag', true );
             return true;
         }
         print "not done";
@@ -36,23 +37,27 @@ class FrontPageEngineAPI {
     }
 
     public function unfeature_post() {
-        if (empty($_POST['nonce']) || ! wp_verify_nonce( $_POST['nonce'], 'frontpageengine-admin-nonce' ) ) {
+        if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
             wp_die('You do not have sufficient permissions to access this page.');
         }
         $status = false;
         if ( ! empty( $_POST['ordering_code']) && ! empty( $_POST['post_id'] ) && ! empty($_POST['featured_code'])) {
-            $status = update_post_meta( $_POST['post_id'], $_POST['ordering_code'], -1 );
-            $status = update_post_meta( $_POST['post_id'], $_POST['featured_code'], 0 );
+            $status = update_post_meta( sanitize_text_field($_POST['post_id']), sanitize_text_field($_POST['ordering_code']), -1 );
+            $status = update_post_meta( sanitize_text_field($_POST['post_id']), sanitize_text_field($_POST['featured_code']), 0 );
         }
         return $status;
     }
 
     public function fetch_posts() {
-        if (empty($_POST['nonce']) || ! wp_verify_nonce( $_POST['nonce'], 'frontpageengine-admin-nonce' ) ) {
-            wp_die('You do not have sufficient permissions to access this page!');
+        if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
+            wp_die('You do not have sufficient permissions to access this page');
         }
+        if (empty($_POST["id"])) {
+            wp_die('Missing ID');
+        }
+        
         global $wpdb;
-        $id = $_POST["id"];
+        $id = sanitize_text_field($_POST["id"]);
         $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE id = %d", $id));
         $slot_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}frontpage_engine_slots WHERE frontpage_id = %d", $frontpage->id));
         $params = array(
@@ -72,7 +77,75 @@ class FrontPageEngineAPI {
             ),
         );
         $posts = get_posts( $params );
-        // print json_encode($posts);
+        print json_encode(array_map([$this, "map_post"], $posts));
+        wp_die();
+    }
+
+    public function fetch_unfeatured_posts() {
+        if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
+            wp_die('You do not have sufficient permissions to access this page!');
+        }
+        if (empty($_POST["id"])) {
+            wp_die('Missing ID');
+        }
+        global $wpdb;
+        $id = sanitize_text_field($_POST["id"]);
+        $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE id = %d", $id));
+        $params = array(
+			'post_type'   => explode(",", $frontpage->post_types),
+			'post_status' => 'publish',
+		);
+        $params['numberposts'] = 100;
+        $params['orderby'] = 'publish_date';
+        $params['order'] = 'DESC';
+        $params['tax_query'] = array(
+            'relation' => 'AND',
+            array(
+                'taxonomy' => 'flag',
+                'field'    => 'slug',
+                'terms'    => $frontpage->featured_code,
+                'operator' => 'NOT IN',
+            ),
+        );
+        $posts = get_posts( $params );
+        print json_encode(array_map([$this, "map_post"], $posts));
+        wp_die();
+    }
+
+    public function fetch_unordered_posts() {
+        if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
+            wp_die('You do not have sufficient permissions to access this page!');
+        }
+        if (empty($_POST["id"])) {
+            wp_die('Missing ID');
+        }
+        global $wpdb;
+        $id = sanitize_text_field($_POST["id"]);
+        $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE id = %d", $id));
+        $params = array(
+			'post_type'   => explode(",", $frontpage->post_types),
+			'post_status' => 'publish',
+		);
+        $params['numberposts'] = 100;
+        $params['orderby'] = 'publish_date';
+        $params['order'] = 'DESC';
+        $params['tax_query'] = array(
+            'relation' => 'AND',
+            array(
+                'taxonomy' => 'flag',
+                'field'    => 'slug',
+                'terms'    => $frontpage->featured_code,
+                'operator' => 'IN',
+            ),
+        );
+        $params['meta_query'] = array(
+            'relation' => 'AND',
+            array(
+                'key'     => $frontpage->ordering_code,
+                'compare' => 'NOT EXISTS',
+            ),
+        );
+        $posts = get_posts( $params );
         print json_encode(array_map([$this, "map_post"], $posts));
         wp_die();
     }

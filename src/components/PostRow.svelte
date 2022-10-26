@@ -2,11 +2,6 @@
     export let post;
 </script>
 
-
-<th scope="row" class="check-column">
-    <label class="screen-reader-text" for="cb-select-1">Select</label>
-    <input class="cb-select-1" type="checkbox" />
-</th>
 <td class="column-image">
     {#if post.image}
     <img class="image column-image" width="50" height="50" src={post.image} alt={post.title} />

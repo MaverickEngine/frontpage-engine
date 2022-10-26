@@ -1,14 +1,11 @@
 <script>
-    import { featuredPosts } from '../stores.js';
+    import { featuredPosts, unfeaturedPosts } from '../stores.js';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
-    import { flip } from 'svelte/animate';
     import { wp_api_post } from "../lib/wp_api.js";
+    import map_posts from "./lib/map_posts.js";
 
-    import { createEventDispatcher } from 'svelte';
-	const dispatch = createEventDispatcher();
-
-    let hovering = false;
+    export let frontpage_id;
 
     const dragStart = (e, i) => {
         console.log("dragStart", i);
@@ -18,30 +15,11 @@
         e.dataTransfer.setData('text/plain', start);
     }
 
-    const dragDrop = async (e, target) => {
-        console.log("drop", target);
-        e.dataTransfer.dropEffect = 'move'; 
-        const start = parseInt(e.dataTransfer.getData("text/plain"));
-        const posts = $featuredPosts;
-        if (start < target) {
-            posts.splice(target + 1, 0, posts[start]);
-            posts.splice(start, 1);
-        } else {
-            posts.splice(target, 0, posts[start]);
-            posts.splice(start + 1, 1);
-        }
-        featuredPosts.set(posts);
-        await wp_api_post("frontpage_engine_order_posts", {
-            id: $featuredPosts[0].id,
-            ordering_code: ajax_var.ordering_code,
-            "order[]": $featuredPosts.map(post => post.id),
+    onMount(async () => {
+        const posts = await wp_api_post("frontpage_engine_fetch_unfeatured_posts", {
+            id: frontpage_id,
         });
-        dispatch("updated");
-        hovering = null
-    }
-
-    onMount(() => {
-        console.log("onMount");
+        $unfeaturedPosts = posts.map(map_posts);
     });
 </script>
 
@@ -60,16 +38,11 @@
         </tr>
     </thead>
     <tbody>
-        {#each $featuredPosts as post, index (post.id)}
+        {#each $unfeaturedPosts as post, index (post.id)}
         <tr 
             id="post-{post.id}"
-            animate:flip={{ duration: 600 }}
-            draggable={true}
-            on:dragstart={e => dragStart(e, index)}
-            on:drop|preventDefault={e => dragDrop(e, index)}
-            on:dragenter={() => hovering = index}
-            ondragover="return false"
-            class:is-active={hovering === index}
+            draggable="true"
+
         >
             <th scope="row" class="check-column">
                 <label class="screen-reader-text" for="cb-select-1">Select</label>
