@@ -13,7 +13,7 @@
         console.log("onMount");
         socket = new FrontPageEngineSocketServer(url);
         socket.subscribe(`frontpage-${frontpage_id}`);
-        socket.on("updated", getPosts);
+        socket.on("frontpage_updated", getPosts);
         await getPosts();
     });
 
@@ -41,7 +41,7 @@
     }
 
     const updated = () => {
-        socket.sendMessage("updated");
+        socket.sendMessage({ name: "frontpage_updated", message: "Updated front page" });
     }
 </script>
 

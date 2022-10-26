@@ -38,20 +38,20 @@ var frontpage_engine = (function () {
             }
         }
 
-        on(event, callback) {
-            this.callbacks.push({ event, callback });
+        on(name, callback) {
+            this.callbacks.push({ name, callback });
         }
 
         onOpen(event) {
             console.log(event);
         }
 
-        onMessage(event) {
-            console.log({ data: event.data });
-            const data = JSON.parse(event.data);
+        onMessage(message) {
+            console.log({ data: message.data });
+            const data = JSON.parse(message.data);
             Promise.all(this.callbacks.map(callback => {
-                if (callback.event === data.message) {
-                    console.log("Calling callback", callback.event);
+                if (callback.name === data.name) {
+                    console.log("Calling callback", callback.name);
                     return callback.callback(data);
                 }
             }));
@@ -2009,7 +2009,7 @@ var frontpage_engine = (function () {
     		console.log("onMount");
     		socket = new FrontPageEngineSocketServer(url);
     		socket.subscribe(`frontpage-${frontpage_id}`);
-    		socket.on("updated", getPosts);
+    		socket.on("frontpage_updated", getPosts);
     		await getPosts();
     	});
 
@@ -2040,7 +2040,10 @@ var frontpage_engine = (function () {
     	};
 
     	const updated = () => {
-    		socket.sendMessage("updated");
+    		socket.sendMessage({
+    			name: "frontpage_updated",
+    			message: "Updated front page"
+    		});
     	};
 
     	$$self.$$set = $$props => {

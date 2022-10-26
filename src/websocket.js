@@ -35,20 +35,20 @@ export class FrontPageEngineSocketServer {
         }
     }
 
-    on(event, callback) {
-        this.callbacks.push({ event, callback });
+    on(name, callback) {
+        this.callbacks.push({ name, callback });
     }
 
     onOpen(event) {
         console.log(event);
     }
 
-    onMessage(event) {
-        console.log({ data: event.data });
-        const data = JSON.parse(event.data);
+    onMessage(message) {
+        console.log({ data: message.data });
+        const data = JSON.parse(message.data);
         Promise.all(this.callbacks.map(callback => {
-            if (callback.event === data.message) {
-                console.log("Calling callback", callback.event);
+            if (callback.name === data.name) {
+                console.log("Calling callback", callback.name);
                 return callback.callback(data);
             }
         }));
