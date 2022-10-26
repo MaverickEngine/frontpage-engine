@@ -52,8 +52,8 @@
                 <label class="screen-reader-text" for="cb-select-all-1">Select All</label>
                 <input class="cb-select-all-1" type="checkbox" />
             </td>
-            <th scope="col" class="manage-column">Image</th>
-            <th scope="col" class="manage-column">Title</th>
+            <th scope="col" class="column-header-image">Image</th>
+            <th scope="col" class="column-header-title">Title</th>
             <th scope="col" class="manage-column">Author</th>
             <th scope="col" class="manage-column">Tags</th>
             <th scope="col" class="manage-column">Published</th>
@@ -63,7 +63,7 @@
         {#each $featuredPosts as post, index (post.id)}
         <tr 
             id="post-{post.id}"
-            animate:flip
+            animate:flip={{ duration: 600 }}
             draggable={true}
             on:dragstart={e => dragStart(e, index)}
             on:drop|preventDefault={e => dragDrop(e, index)}
@@ -84,5 +84,13 @@
 <style>
     tr.is-active {
         background-color: rgb(128, 162, 213) !important;
+    }
+
+    .column-header-image {
+        width: 50px;
+    }
+
+    .column-header-title {
+        width: 500px;
     }
 </style>

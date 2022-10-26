@@ -20,3 +20,13 @@
 <td class="column-author">{post.author}</td>
 <td class="column-tags">{post.tags}</td>
 <td class="column-published">{post.date_published}</td>
+
+<style>
+    .column-image {
+        width: 50px;
+    }
+    .column-image img {
+        width: 50px;
+        height: 50px;
+    }
+</style>
