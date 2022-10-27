@@ -8,6 +8,8 @@
     import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
 
+    export let frontpage_id;
+
     let hovering = false;
 
     const dragStart = (e, i) => {
@@ -31,11 +33,6 @@
             posts.splice(start + 1, 1);
         }
         featuredPosts.set(posts);
-        await wp_api_post("frontpage_engine_order_posts", {
-            id: $featuredPosts[0].id,
-            ordering_code: ajax_var.ordering_code,
-            "order[]": $featuredPosts.map(post => post.id),
-        });
         dispatch("updated");
         hovering = null
     }

@@ -5,6 +5,7 @@
 	const close = () => dispatch('close');
 
 	let modal;
+	let modal_background;
 
 	const handle_keydown = e => {
 		if (e.key === 'Escape') {
@@ -39,16 +40,16 @@
 
 <svelte:window on:keydown={handle_keydown}/>
 
-<div class="modal-background" on:click={close} on:keypress={handle_keydown}></div>
+<div class="modal-background" on:click={close} on:keypress={handle_keydown} bind:this={modal_background}></div>
 
 <div class="modal" role="dialog" aria-modal="true" bind:this={modal}>
 	<slot name="header"></slot>
-	<hr>
 	<slot></slot>
-	<hr>
-    <slot name="buttons"></slot>
-    <!-- svelte-ignore a11y-autofocus -->
-	<button autofocus on:click={close}>Close</button>
+	<div class="modal-footer">
+		<slot name="buttons"></slot>
+		<!-- svelte-ignore a11y-autofocus -->
+		<button autofocus on:click={close}>Close</button>
+	</div>
 </div>
 
 <style>
@@ -68,7 +69,7 @@
 		top: 50%;
 		width: calc(100vw - 4em);
 		max-width: 90%;
-		max-height: calc(100vh - 4em);
+		max-height: calc(100vh - 6em);
 		overflow: auto;
 		transform: translate(-50%,-50%);
 		padding: 1em;
@@ -79,5 +80,9 @@
 
 	button {
 		display: block;
+	}
+
+	.modal-footer {
+		margin-top: 1em;		
 	}
 </style>
