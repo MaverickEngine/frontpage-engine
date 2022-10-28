@@ -34,11 +34,13 @@ class FrontPageEngineDB {
             post_types varchar(255) NOT NULL DEFAULT '',
             display_order tinyint(3) NOT NULL,
             post_id mediumint(9) NOT NULL,
+            lock_until datetime,
             PRIMARY KEY  (id),
             INDEX frontpage_id (frontpage_id),
             INDEX automate (automate),
             INDEX display_order (display_order),
-            INDEX post_id (post_id)
+            INDEX post_id (post_id),
+            INDEX lock_until (lock_until)
         ) $charset_collate;";
         dbDelta( $sql );
         update_option( "frontpage_engine_db_version", FRONTPAGEENGINE_VERSION );

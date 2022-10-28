@@ -4,20 +4,28 @@
     import AddPostTable from "./components/AddPostTable.svelte";
     import Modal from "./components/Modal.svelte";
     import { FrontPageEngineSocketServer } from './websocket.js';
-    import { featuredPosts, unfeaturedPosts, unorderedPosts } from './stores.js';
+    import { featuredPosts, unfeaturedPosts, unorderedPosts, slots } from './stores.js';
     import { wp_api_post } from "./lib/wp_api.js";
     import map_posts from "./lib/map_posts.js";
-    
+    import { v4 as uuidv4 } from 'uuid';
+
     export let frontpage_id;
     export let url;
     let show_modal = false;
     let show_unordered_modal = false;
+    let updating = false;
+    const uuid = uuidv4();
+    
 
     let socket = null;
     onMount(async () => {
         socket = new FrontPageEngineSocketServer(url);
         socket.subscribe(`frontpage-${frontpage_id}`);
-        socket.on("frontpage_updated", getPosts);
+        socket.on("frontpage_updated", message => {
+            if (uuid === message.uuid) return;
+            getPosts();
+        });
+        await getSlots();
         await getPosts();
         await getUnorderedPosts();
         setInterval(getUnorderedPosts, 60000);
@@ -27,11 +35,28 @@
         socket.close();
     });
 
+    const getSlots = async () => {
+        const result = await wp_api_post("frontpage_engine_fetch_slots", {
+            id: frontpage_id,
+        });
+        $slots = result;
+    };
+
     const getPosts = async () => {
         const wp_posts = await wp_api_post("frontpage_engine_fetch_posts", {
             id: frontpage_id,
+        },
+        "getPosts");
+        $featuredPosts = wp_posts.map(map_posts)
+        .map((post, i) => {
+            post.slot = $slots[i];
+            post.locked = false;
+            if (post.slot.lock_until) {
+                post.locked = true;
+            }
+            return post;
         });
-        $featuredPosts = wp_posts.map(map_posts);
+        console.log("featuredPosts", $featuredPosts);
     }
 
     const getUnorderedPosts = async () => {
@@ -42,17 +67,18 @@
     }
 
     const updatePosts = async () => {
+        updating = true;
         await wp_api_post("frontpage_engine_order_posts", {
             id: frontpage_id,
             "order[]": $featuredPosts.map(post => post.id),
-        });
+        }, "updatePosts");
+        updating = false;
     };
 
-
     const updated = async () => {
-        console.log("updated");
+        // console.log("updated");
         await updatePosts();
-        socket.sendMessage({ name: "frontpage_updated", message: "Updated front page" });
+        socket.sendMessage({ name: "frontpage_updated", message: "Updated front page", uuid });
     }
 </script>
 
@@ -77,7 +103,7 @@
         <AddPostTable frontpage_id={frontpage_id} on:updated={updated} />
     </Modal>
     {/if}
-    <FrontpageTable frontpage_id={frontpage_id} on:updated={updated} />
+    <FrontpageTable frontpage_id={frontpage_id} on:updated={updated} updating={updating} />
 </main>
 
 <style>

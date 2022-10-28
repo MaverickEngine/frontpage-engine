@@ -17,12 +17,13 @@ class FrontPageEngineSlotsTable extends WP_List_Table {
                 return sprintf('<input type="checkbox" name="slot_id[]" value="%s" />', $item['id']);
             case 'display_order':
                 return $item['display_order'] + 1;
-            case 'types':
-                return ucwords(join(", ", explode(",", $item['types'])));
+            case 'post_types':
+                return ucwords(join(", ", explode(",", $item['post_types'])));
             case 'automate':
                 return $item['automate'] ? "Yes" : "No";
             case 'id':
             case 'name':
+                (empty($item["name"]) ? "Slot " . $item['id'] : $item['name']);
             case 'code':
             case 'content':
             default:
@@ -46,8 +47,9 @@ class FrontPageEngineSlotsTable extends WP_List_Table {
             'display_order' => 'Position',
             'name' => 'Name',
             'automate' => 'Automated?',
-            'types' => 'Type',
-            'content' => 'Content'
+            'post_types' => 'Post Types',
+            'content' => 'Content',
+            'locked_until' => 'Locked Until',
         );
         return $columns;
     }

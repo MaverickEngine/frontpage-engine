@@ -1,5 +1,5 @@
 <script>
-    import { featuredPosts } from '../stores.js';
+    import { featuredPosts, slots } from '../stores.js';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import { flip } from 'svelte/animate';
@@ -7,10 +7,11 @@
 
     import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
-
-    export let frontpage_id;
+    
+    // export let frontpage_id;
 
     let hovering = false;
+    export let updating = false;
 
     const dragStart = (e, i) => {
         console.log("dragStart", i);
@@ -21,20 +22,66 @@
     }
 
     const dragDrop = async (e, target) => {
-        console.log("drop", target);
+        // console.log("drop", target);
         e.dataTransfer.dropEffect = 'move'; 
         const start = parseInt(e.dataTransfer.getData("text/plain"));
+        if (start === target) return; // No change
         const posts = $featuredPosts;
         if (start < target) {
             posts.splice(target + 1, 0, posts[start]);
             posts.splice(start, 1);
-        } else {
+        } else { // Placing post above
             posts.splice(target, 0, posts[start]);
             posts.splice(start + 1, 1);
+        }
+        // Put all locked posts back in original position
+        for (let x = 0; x < posts.length; x++) {
+            if (posts[x].locked) {
+                const post = posts[x];
+                posts.splice(x, 1);
+                posts.splice(Number(post.slot.display_order), 0, post);
+            }
+        }
+        // Fix up slots again
+        for (let i = 0; i < posts.length; i++) {
+            posts[i].slot = $slots[i]
         }
         featuredPosts.set(posts);
         dispatch("updated");
         hovering = null
+    }
+
+    const doLock = async (post) => {
+        const day = new Date().getTime() + 1000 * 60 * 60 * 24;
+        post.slot.lock_until = new Date(day);
+        post.locked = true;
+        $featuredPosts = $featuredPosts.map(p => p.id === post.id ? post : p);
+        console.log("doLock", post);
+        await wp_api_post("frontpage_engine_update_slot", {
+            id: post.slot.id,
+            lock_until: formatTimeSql(post.slot.lock_until),
+        });
+    }
+
+    const doUnlock = async (post) => {
+        post.slot.lock_until = null;
+        post.locked = false;
+        $featuredPosts = $featuredPosts.map(p => p.id === post.id ? post : p);
+        console.log("doUnlock", post);
+        await wp_api_post("frontpage_engine_update_slot", {
+            id: post.slot.id,
+            lock_until: null,
+        });
+    }
+
+    const formatTime = (time) => {
+        const date = new Date(time);
+        return date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
+    }
+
+    const formatTimeSql = (time) => {
+        const date = new Date(time);
+        return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     }
 
     onMount(() => {
@@ -42,18 +89,20 @@
     });
 </script>
 
-<table class="wp-list-table widefat fixed striped table-view-list featuredposts">
+<table class="wp-list-table widefat fixed striped table-view-list featuredposts {updating  ? "is-updating" : ""}">
     <thead>
         <tr>
             <td class="manage-column check-column">
                 <label class="screen-reader-text" for="cb-select-all-1">Select All</label>
                 <input class="cb-select-all-1" type="checkbox" />
             </td>
+            <th></th>
             <th scope="col" class="column-header-image">Image</th>
             <th scope="col" class="column-header-title">Title</th>
             <th scope="col" class="manage-column">Author</th>
             <th scope="col" class="manage-column">Tags</th>
             <th scope="col" class="manage-column">Published</th>
+            <th scope="col" class="manage-column"></th>
         </tr>
     </thead>
     <tbody>
@@ -61,7 +110,7 @@
         <tr 
             id="post-{post.id}"
             animate:flip={{ duration: 600 }}
-            draggable={true}
+            draggable={!(post.locked)}
             on:dragstart={e => dragStart(e, index)}
             on:drop|preventDefault={e => dragDrop(e, index)}
             on:dragenter={() => hovering = index}
@@ -72,10 +121,21 @@
                 <label class="screen-reader-text" for="cb-select-1">Select</label>
                 <input class="cb-select-1" type="checkbox" />
             </th>
+            <td>{index}</td>
             <PostRow 
                 post={post} 
                 index={index}
             />
+            <th scope="row" class="lock-column">
+                {#if (post.locked)}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <span class="dashicons dashicons-lock" on:click={doUnlock(post)}></span>
+                    {formatTime(post.slot.lock_until)}
+                {:else}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <span class="dashicons dashicons-unlock" on:click={doLock(post)}></span>
+                {/if}
+            </th>
         </tr>
         {/each}
         
@@ -83,6 +143,11 @@
 </table>
 
 <style>
+    table.is-updating {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
     tr.is-active {
         background-color: rgb(128, 162, 213) !important;
     }

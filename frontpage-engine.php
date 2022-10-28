@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const FRONTPAGEENGINE_VERSION = '0.0.7';
+const FRONTPAGEENGINE_VERSION = '0.0.8';
 
 require_once(plugin_dir_path( __FILE__ ).'includes/admin/tables/frontpage_engine-frontpages_table.php');
 require_once(plugin_dir_path( __FILE__ ).'includes/admin/tables/frontpage_engine-slots_table.php');

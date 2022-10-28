@@ -4,6 +4,7 @@ export class FrontPageEngineSocketServer {
         this.channel = channel;
         this.connect();
         this.callbacks = [];
+        this.me = null;
     }
 
     connect() {
@@ -44,11 +45,11 @@ export class FrontPageEngineSocketServer {
     }
 
     onMessage(message) {
-        console.log({ data: message.data });
+        // console.log({ data: message.data });
         const data = JSON.parse(message.data);
         Promise.all(this.callbacks.map(callback => {
             if (callback.name === data.name) {
-                console.log("Calling callback", callback.name);
+                // console.log("Calling callback", callback.name);
                 return callback.callback(data);
             }
         }));
@@ -62,7 +63,7 @@ export class FrontPageEngineSocketServer {
     }
 
     sendMessage(message) {
-        console.log("Sending message", message);
+        // console.log("Sending message", message);
         if (typeof message !== 'object' || Array.isArray(message) || message === null) {
             message = { message };
         }
@@ -74,7 +75,7 @@ export class FrontPageEngineSocketServer {
         }
         message.channel = this.channel;
         message.domain = this.domain;
-        console.log(message);
+        // console.log(message);
         // Wait for the connection to be established before sending a message.
         if (this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify(message));
