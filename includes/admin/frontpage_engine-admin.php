@@ -35,6 +35,7 @@ class FrontpageEngineAdmin {
             'featured_code' => $frontpage->featured_code,
             'action' => 'frontpage_engine_order_posts',
             'frontpage_id' => $frontpage->id,
+            'revengine_content_promoter_api_url' => get_option("revengine_content_promoter_api_url")
         ));
         require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/order_frontpage.php';
     }

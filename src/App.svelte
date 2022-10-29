@@ -4,9 +4,9 @@
     import AddPostTable from "./components/AddPostTable.svelte";
     import Modal from "./components/Modal.svelte";
     import { FrontPageEngineSocketServer } from './websocket.js';
-    import { featuredPosts, unfeaturedPosts, unorderedPosts, slots } from './stores.js';
+    import { featuredPosts, unfeaturedPosts, unorderedPosts, slots, analytics } from './stores.js';
     import { wp_api_post } from "./lib/wp_api.js";
-    import map_posts from "./lib/map_posts.js";
+    import { map_posts, applyLockedSlots, applySlots, applyAnalytics } from "./lib/posts.js";
     import { v4 as uuidv4 } from 'uuid';
 
     export let frontpage_id;
@@ -28,7 +28,9 @@
         await getSlots();
         await getPosts();
         await getUnorderedPosts();
+        await getAnalytics();
         setInterval(getUnorderedPosts, 60000);
+        setInterval(getAnalytics, 60000);
     });
 
     onDestroy(() => {
@@ -42,20 +44,16 @@
         $slots = result;
     };
 
+    const getAnalytics = async() => {
+        // Todo: Implement
+    }
+
     const getPosts = async () => {
         const wp_posts = await wp_api_post("frontpage_engine_fetch_posts", {
             id: frontpage_id,
         },
         "getPosts");
-        $featuredPosts = wp_posts.map(map_posts)
-        .map((post, i) => {
-            post.slot = $slots[i];
-            post.locked = false;
-            if (post.slot.lock_until) {
-                post.locked = true;
-            }
-            return post;
-        });
+        $featuredPosts = wp_posts.map(map_posts);
         console.log("featuredPosts", $featuredPosts);
     }
 
@@ -80,6 +78,26 @@
         await updatePosts();
         socket.sendMessage({ name: "frontpage_updated", message: "Updated front page", uuid });
     }
+
+    const autoSort = async () => {
+        const posts = $featuredPosts;
+        posts.sort((a, b) => {
+            if (a.analytics && b.analytics) {
+                return b.analytics.hits - a.analytics.hits;
+            }
+            return 0;
+        });
+        // Put all locked posts back in original position
+        $featuredPosts = applyLockedSlots(posts);
+        await updated();
+    }
+
+    
+
+    $: if ($featuredPosts.length > 0) {
+        $featuredPosts = applySlots($featuredPosts, $slots);
+        $featuredPosts = applyAnalytics($featuredPosts, $analytics);
+    }
 </script>
 
 <main>
@@ -89,6 +107,7 @@
             <div class="unordered-posts-alert" alt="Posts awaiting placement" on:click={() => show_unordered_modal = true }>{$unorderedPosts.length}</div>
         {/if}
         <a href="#show-modal" class="button button-primary" on:click={() => show_modal = true}>Add posts</a>
+        <a href="#auto-sort" class="button" on:click={() => autoSort()}>Auto sort</a>
     </div>
     <hr>
     {#if show_unordered_modal}
@@ -126,5 +145,9 @@
        display: flex;
        justify-content: left;
        flex-direction: row;
+   }
+
+   .button {
+    margin-right: 10px;
    }
 </style>

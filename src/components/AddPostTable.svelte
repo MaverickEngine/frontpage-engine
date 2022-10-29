@@ -4,7 +4,7 @@
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import { wp_api_post } from "../lib/wp_api.js";
-    import map_posts from "../lib/map_posts.js";
+    import { map_posts, applyLockedSlots } from "../lib/posts.js";
 
     import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
@@ -22,18 +22,24 @@
         dispatch("dragstart");
     }
 
-    const featurePost = async (post) => {
-        console.log("featurePost", post);
-        $featuredPosts.push(post);
+    const featurePost = async (post, position) => {
+        let posts = $featuredPosts;
+        if (position === "top") {
+            posts.unshift(post);
+            posts = applyLockedSlots(posts);
+        } else if (position === "bottom") {
+            posts.push(post);
+        } else {
+            alert("Not implemented");
+            return;
+        }
         if (type==="unfeatured") {
             $unfeaturedPosts = $unfeaturedPosts.filter(p => p.id !== post.id);
-            posts = $unfeaturedPosts;
         } else if (type==="unordered") {
             $unorderedPosts = $unorderedPosts.filter(p => p.id !== post.id);
-            posts = $unorderedPosts;
             console.log("unorderdPosts", $unorderedPosts);
         }
-        console.log("Calling updated");
+        featuredPosts.set(posts);
         dispatch("updated");
     }
 
@@ -66,7 +72,6 @@
             <th scope="col" class="column-header-image">Image</th>
             <th scope="col" class="column-header-title">Title</th>
             <th scope="col" class="manage-column">Author</th>
-            <th scope="col" class="manage-column">Tags</th>
             <th scope="col" class="manage-column">Published</th>
             <th></th>
         </tr>
@@ -90,9 +95,21 @@
             <th>
                 <button 
                     class="button button-primary"
-                    on:click="{featurePost(post)}"
+                    on:click="{featurePost(post, "top")}"
                 >
-                    Add
+                    Top
+                </button>
+                <button 
+                    class="button button-primary"
+                    on:click="{featurePost(post, "bottom")}"
+                >
+                    Bottom
+                </button>
+                <button 
+                    class="button button-primary"
+                    on:click="{featurePost(post, "auto")}"
+                >
+                    Auto
                 </button>
             </th>
         </tr>

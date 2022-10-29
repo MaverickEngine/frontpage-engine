@@ -13,7 +13,6 @@
     </strong>
 </td>
 <td class="column-author">{post.author}</td>
-<td class="column-tags">{post.id}</td>
 <td class="column-published">{post.date_published}</td>
 
 <style>

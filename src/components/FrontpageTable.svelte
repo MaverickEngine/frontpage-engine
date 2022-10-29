@@ -1,5 +1,5 @@
 <script>
-    import { featuredPosts, slots } from '../stores.js';
+    import { analytics, featuredPosts, slots } from '../stores.js';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import { flip } from 'svelte/animate';
@@ -42,10 +42,10 @@
                 posts.splice(Number(post.slot.display_order), 0, post);
             }
         }
-        // Fix up slots again
-        for (let i = 0; i < posts.length; i++) {
-            posts[i].slot = $slots[i]
-        }
+        // // Fix up slots again
+        // for (let i = 0; i < posts.length; i++) {
+        //     posts[i].slot = $slots[i]
+        // }
         featuredPosts.set(posts);
         dispatch("updated");
         hovering = null
@@ -96,12 +96,11 @@
                 <label class="screen-reader-text" for="cb-select-all-1">Select All</label>
                 <input class="cb-select-all-1" type="checkbox" />
             </td>
-            <th></th>
             <th scope="col" class="column-header-image">Image</th>
             <th scope="col" class="column-header-title">Title</th>
             <th scope="col" class="manage-column">Author</th>
-            <th scope="col" class="manage-column">Tags</th>
             <th scope="col" class="manage-column">Published</th>
+            <th scope="col" class="manage-column"></th>
             <th scope="col" class="manage-column"></th>
         </tr>
     </thead>
@@ -116,12 +115,15 @@
             on:dragenter={() => hovering = index}
             ondragover="return false"
             class:is-active={hovering === index}
+            class:is-locked={post.locked}
         >
             <th scope="row" class="check-column">
                 <label class="screen-reader-text" for="cb-select-1">Select</label>
                 <input class="cb-select-1" type="checkbox" />
+                {index}
+                {post.id}
+                {post.slot.display_order}
             </th>
-            <td>{index}</td>
             <PostRow 
                 post={post} 
                 index={index}
@@ -136,6 +138,22 @@
                     <span class="dashicons dashicons-unlock" on:click={doLock(post)}></span>
                 {/if}
             </th>
+            <th scope="row" class="analytics-column">
+                {#if post.analytics}
+                    <div class="analytics-hits">
+                        {post.analytics.hits}
+                    </div>
+                    <div class="analytics-depth">
+                        {post.analytics.page_depth}
+                    </div>
+                    <div class="analytics-time_on_page">
+                        {post.analytics.time_on_page}
+                    </div>
+                    <div class="analytics-attention">
+                        {post.analytics.hits * post.analytics.time_on_page}
+                    </div>
+                {/if}
+            </th>
         </tr>
         {/each}
         
@@ -143,13 +161,21 @@
 </table>
 
 <style>
+    table {
+        border-collapse: collapse; 
+    }
+
     table.is-updating {
         opacity: 0.5;
         pointer-events: none;
     }
 
     tr.is-active {
-        background-color: rgb(128, 162, 213) !important;
+        background-color: rgb(204, 204, 204) !important;
+    }
+
+    tr.is-locked {
+        background-color: rgb(250, 232, 238) !important;
     }
 
     .column-header-image {
