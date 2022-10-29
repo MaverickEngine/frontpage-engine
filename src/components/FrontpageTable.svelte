@@ -4,6 +4,7 @@
     import PostRow from "./PostRow.svelte";
     import { flip } from 'svelte/animate';
     import { wp_api_post } from "../lib/wp_api.js";
+    import { applyLockedSlots } from '../lib/posts.js';
 
     import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
@@ -74,6 +75,11 @@
         });
     }
 
+    const doRemove = async (post) => {
+        $featuredPosts = applyLockedSlots($featuredPosts.filter(p => p.id !== post.id));
+        dispatch("updated");
+    }
+
     const formatTime = (time) => {
         const date = new Date(time);
         return date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
@@ -136,6 +142,8 @@
                 {:else}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <span class="dashicons dashicons-unlock" on:click={doLock(post)}></span>
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <span class="dashicons dashicons-trash" on:click={doRemove(post)}></span>
                 {/if}
             </th>
             <th scope="row" class="analytics-column">
