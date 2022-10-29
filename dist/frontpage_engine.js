@@ -2567,7 +2567,7 @@ var frontpage_engine = (function () {
     	return child_ctx;
     }
 
-    // (80:8) {#each posts as post, index (post.id)}
+    // (84:8) {#each posts as post, index (post.id)}
     function create_each_block(key_1, ctx) {
     	let tr;
     	let th0;
@@ -2805,26 +2805,29 @@ var frontpage_engine = (function () {
     	};
 
     	const featurePost = async (post, position) => {
-    		let posts = $featuredPosts;
+    		let featured_posts = $featuredPosts;
 
     		if (position === "top") {
-    			posts.unshift(post);
-    			posts = applyLockedSlots(posts);
+    			featured_posts.unshift(post);
+    			featured_posts = applyLockedSlots(featured_posts);
     		} else if (position === "bottom") {
-    			posts.push(post);
+    			featured_posts.push(post);
     		} else {
     			alert("Not implemented");
     			return;
     		}
 
+    		console.log(type);
+
     		if (type === "unfeatured") {
     			set_store_value(unfeaturedPosts, $unfeaturedPosts = $unfeaturedPosts.filter(p => p.id !== post.id), $unfeaturedPosts);
+    			$$invalidate(0, posts = $unfeaturedPosts);
     		} else if (type === "unordered") {
-    			set_store_value(unorderedPosts, $unorderedPosts = $unorderedPosts.filter(p => p.id !== post.id), $unorderedPosts);
-    			console.log("unorderdPosts", $unorderedPosts);
-    		}
+    			set_store_value(unorderedPosts, $unorderedPosts = $unorderedPosts.filter(p => p.id !== post.id), $unorderedPosts); // console.log("unfeaturedPosts", $unfeaturedPosts);
+    			$$invalidate(0, posts = $unorderedPosts);
+    		} // console.log("unorderdPosts", $unorderedPosts);
 
-    		featuredPosts.set(posts);
+    		featuredPosts.set(featured_posts);
     		dispatch("updated");
     	};
 
@@ -3583,7 +3586,7 @@ var frontpage_engine = (function () {
     	append_styles(target, "svelte-4dra5q", ".unordered-posts-alert.svelte-4dra5q{background-color:rgb(213, 57, 57);color:white;border-radius:50%;width:30px;height:30px;text-align:center;top:0;right:0;margin:0px 10px;font-size:15px;line-height:30px;cursor:pointer}.action-bar.svelte-4dra5q{display:flex;justify-content:left;flex-direction:row}.button.svelte-4dra5q{margin-right:10px}");
     }
 
-    // (105:8) {#if $unorderedPosts.length > 0}
+    // (103:8) {#if $unorderedPosts.length > 0}
     function create_if_block_2(ctx) {
     	let div;
     	let t_value = /*$unorderedPosts*/ ctx[4].length + "";
@@ -3618,7 +3621,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (113:4) {#if show_unordered_modal}
+    // (111:4) {#if show_unordered_modal}
     function create_if_block_1(ctx) {
     	let modal;
     	let current;
@@ -3664,7 +3667,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (114:4) <Modal on:close="{() => show_unordered_modal = false}">
+    // (112:4) <Modal on:close="{() => show_unordered_modal = false}">
     function create_default_slot_1(ctx) {
     	let h2;
     	let t1;
@@ -3715,7 +3718,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (119:4) {#if show_modal}
+    // (117:4) {#if show_modal}
     function create_if_block(ctx) {
     	let modal;
     	let current;
@@ -3764,7 +3767,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (120:4) <Modal on:close="{() => show_modal = false}">
+    // (118:4) <Modal on:close="{() => show_modal = false}">
     function create_default_slot(ctx) {
     	let addposttable;
     	let current;
@@ -3803,7 +3806,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (121:8) 
+    // (119:8) 
     function create_header_slot(ctx) {
     	let h2;
 

@@ -92,8 +92,6 @@
         await updated();
     }
 
-    
-
     $: if ($featuredPosts.length > 0) {
         $featuredPosts = applySlots($featuredPosts, $slots);
         $featuredPosts = applyAnalytics($featuredPosts, $analytics);

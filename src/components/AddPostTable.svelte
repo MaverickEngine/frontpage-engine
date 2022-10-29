@@ -23,23 +23,27 @@
     }
 
     const featurePost = async (post, position) => {
-        let posts = $featuredPosts;
+        let featured_posts = $featuredPosts;
         if (position === "top") {
-            posts.unshift(post);
-            posts = applyLockedSlots(posts);
+            featured_posts.unshift(post);
+            featured_posts = applyLockedSlots(featured_posts);
         } else if (position === "bottom") {
-            posts.push(post);
+            featured_posts.push(post);
         } else {
             alert("Not implemented");
             return;
         }
+        console.log(type);
         if (type==="unfeatured") {
             $unfeaturedPosts = $unfeaturedPosts.filter(p => p.id !== post.id);
+            posts = $unfeaturedPosts;
+            // console.log("unfeaturedPosts", $unfeaturedPosts);
         } else if (type==="unordered") {
             $unorderedPosts = $unorderedPosts.filter(p => p.id !== post.id);
-            console.log("unorderdPosts", $unorderedPosts);
+            posts = $unorderedPosts;
+            // console.log("unorderdPosts", $unorderedPosts);
         }
-        featuredPosts.set(posts);
+        featuredPosts.set(featured_posts);
         dispatch("updated");
     }
 
