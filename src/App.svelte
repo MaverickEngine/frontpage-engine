@@ -4,7 +4,7 @@
     import AddPostTable from "./components/AddPostTable.svelte";
     import Modal from "./components/Modal.svelte";
     import { FrontPageEngineSocketServer } from './websocket.js';
-    import { featuredPosts, unfeaturedPosts, unorderedPosts, slots, analytics } from './stores.js';
+    import { featuredPosts, featuredPostsDynamic, unorderedPosts, slots, analytics } from './stores.js';
     import { wp_api_post } from "./lib/wp_api.js";
     import { map_posts, applyLockedSlots, applySlots, applyAnalytics } from "./lib/posts.js";
     import { v4 as uuidv4 } from 'uuid';
@@ -14,6 +14,7 @@
     let show_modal = false;
     let show_unordered_modal = false;
     let updating = false;
+    let show_group_actions = false;
     const uuid = uuidv4();
     
 
@@ -80,21 +81,46 @@
     }
 
     const autoSort = async () => {
-        const posts = $featuredPosts;
-        posts.sort((a, b) => {
-            if (a.analytics && b.analytics) {
-                return b.analytics.hits - a.analytics.hits;
-            }
-            return 0;
+        console.log("autoSort");
+        const posts = $featuredPosts.filter(post => post.locked === false);
+        const lockedPosts = $featuredPosts.filter(post => post.locked === true);
+        const no_analytics = posts.filter(post => !(post.analytics));
+        const with_analytics = posts.filter(post => (post.analytics));
+        with_analytics.sort((a, b) => {
+            return b.analytics.hits - a.analytics.hits;
         });
+        const combined_posts = [...with_analytics, ...no_analytics];
+        
         // Put all locked posts back in original position
-        $featuredPosts = applyLockedSlots(posts);
-        await updated();
+        for(let i = 0; i < lockedPosts.length; i++) {
+            combined_posts.splice(Number(lockedPosts[i].slot.display_order), 0, lockedPosts[i]);
+        }
+        $featuredPosts = combined_posts;
+        await updatePosts();
+    }
+
+    let group_action;
+    const onGroupAction = async () => {
+        console.log(group_action);
+        if (group_action === "remove") {
+            const posts = $featuredPosts.filter(post => post.locked === false)
+            .filter(post => !post.checked || post.locked);
+            const lockedPosts = $featuredPosts.filter(post => post.locked === true);
+            for(let i = 0; i < lockedPosts.length; i++) {
+                posts.splice(Number(lockedPosts[i].slot.display_order), 0, lockedPosts[i]);
+            }
+            $featuredPosts = posts;
+            // console.log(posts);
+            await updatePosts();
+        }
+        // await updatePosts();
+        group_action = "0";
     }
 
     $: if ($featuredPosts.length > 0) {
         $featuredPosts = applySlots($featuredPosts, $slots);
         $featuredPosts = applyAnalytics($featuredPosts, $analytics);
+        show_group_actions = $featuredPosts.filter(post => post.checked).length > 0;
     }
 </script>
 
@@ -106,6 +132,12 @@
         {/if}
         <a href="#show-modal" class="button button-primary" on:click={() => show_modal = true}>Add posts</a>
         <a href="#auto-sort" class="button" on:click={() => autoSort()}>Auto sort</a>
+        {#if show_group_actions}
+            <select class="group-action" bind:value={group_action} on:change={onGroupAction}>
+                <option value="0">Group action</option>
+                <option value="remove">Remove</option>
+            </select>
+        {/if}
     </div>
     <hr>
     {#if show_unordered_modal}

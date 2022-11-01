@@ -287,6 +287,20 @@ var frontpage_engine = (function () {
         if (text.wholeText !== data)
             text.data = data;
     }
+    function select_option(select, value) {
+        for (let i = 0; i < select.options.length; i += 1) {
+            const option = select.options[i];
+            if (option.__value === value) {
+                option.selected = true;
+                return;
+            }
+        }
+        select.selectedIndex = -1; // no option should be selected
+    }
+    function select_value(select) {
+        const selected_option = select.querySelector(':checked') || select.options[0];
+        return selected_option && selected_option.__value;
+    }
     function toggle_class(element, name, toggle) {
         element.classList[toggle ? 'add' : 'remove'](name);
     }
@@ -1961,12 +1975,72 @@ var frontpage_engine = (function () {
 
     function get_each_context$1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[14] = list[i];
-    	child_ctx[16] = i;
+    	child_ctx[18] = list[i];
+    	child_ctx[19] = list;
+    	child_ctx[20] = i;
     	return child_ctx;
     }
 
-    // (142:16) {:else}
+    // (150:16) {#if (!post.locked)}
+    function create_if_block_2$1(ctx) {
+    	let label;
+    	let t1;
+    	let input;
+    	let mounted;
+    	let dispose;
+
+    	function input_change_handler() {
+    		/*input_change_handler*/ ctx[11].call(input, /*each_value*/ ctx[19], /*index*/ ctx[20]);
+    	}
+
+    	function change_handler(...args) {
+    		return /*change_handler*/ ctx[12](/*post*/ ctx[18], ...args);
+    	}
+
+    	return {
+    		c() {
+    			label = element("label");
+    			label.textContent = "Select";
+    			t1 = space();
+    			input = element("input");
+    			attr(label, "class", "screen-reader-text");
+    			attr(label, "for", "cb-select-1");
+    			attr(input, "class", "cb-select-1");
+    			attr(input, "type", "checkbox");
+    		},
+    		m(target, anchor) {
+    			insert(target, label, anchor);
+    			insert(target, t1, anchor);
+    			insert(target, input, anchor);
+    			input.checked = /*post*/ ctx[18].checked;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen(input, "change", input_change_handler),
+    					listen(input, "change", change_handler)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty & /*$featuredPosts*/ 4) {
+    				input.checked = /*post*/ ctx[18].checked;
+    			}
+    		},
+    		d(detaching) {
+    			if (detaching) detach(label);
+    			if (detaching) detach(t1);
+    			if (detaching) detach(input);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+    }
+
+    // (167:16) {:else}
     function create_else_block(ctx) {
     	let span0;
     	let t;
@@ -1990,10 +2064,10 @@ var frontpage_engine = (function () {
     			if (!mounted) {
     				dispose = [
     					listen(span0, "click", function () {
-    						if (is_function(/*doLock*/ ctx[5](/*post*/ ctx[14]))) /*doLock*/ ctx[5](/*post*/ ctx[14]).apply(this, arguments);
+    						if (is_function(/*doLock*/ ctx[5](/*post*/ ctx[18]))) /*doLock*/ ctx[5](/*post*/ ctx[18]).apply(this, arguments);
     					}),
     					listen(span1, "click", function () {
-    						if (is_function(/*doRemove*/ ctx[7](/*post*/ ctx[14]))) /*doRemove*/ ctx[7](/*post*/ ctx[14]).apply(this, arguments);
+    						if (is_function(/*doRemove*/ ctx[7](/*post*/ ctx[18]))) /*doRemove*/ ctx[7](/*post*/ ctx[18]).apply(this, arguments);
     					})
     				];
 
@@ -2013,11 +2087,11 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (138:16) {#if (post.locked)}
+    // (163:16) {#if (post.locked)}
     function create_if_block_1$1(ctx) {
     	let span;
     	let t0;
-    	let t1_value = /*formatTime*/ ctx[8](/*post*/ ctx[14].slot.lock_until) + "";
+    	let t1_value = /*formatTime*/ ctx[10](/*post*/ ctx[18].slot.lock_until) + "";
     	let t1;
     	let mounted;
     	let dispose;
@@ -2036,7 +2110,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doUnlock*/ ctx[6](/*post*/ ctx[14]))) /*doUnlock*/ ctx[6](/*post*/ ctx[14]).apply(this, arguments);
+    					if (is_function(/*doUnlock*/ ctx[6](/*post*/ ctx[18]))) /*doUnlock*/ ctx[6](/*post*/ ctx[18]).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -2044,7 +2118,7 @@ var frontpage_engine = (function () {
     		},
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
-    			if (dirty & /*$featuredPosts*/ 4 && t1_value !== (t1_value = /*formatTime*/ ctx[8](/*post*/ ctx[14].slot.lock_until) + "")) set_data(t1, t1_value);
+    			if (dirty & /*$featuredPosts*/ 4 && t1_value !== (t1_value = /*formatTime*/ ctx[10](/*post*/ ctx[18].slot.lock_until) + "")) set_data(t1, t1_value);
     		},
     		d(detaching) {
     			if (detaching) detach(span);
@@ -2056,22 +2130,22 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (150:16) {#if post.analytics}
+    // (175:16) {#if post.analytics}
     function create_if_block$1(ctx) {
     	let div0;
-    	let t0_value = /*post*/ ctx[14].analytics.hits + "";
+    	let t0_value = /*post*/ ctx[18].analytics.hits + "";
     	let t0;
     	let t1;
     	let div1;
-    	let t2_value = /*post*/ ctx[14].analytics.page_depth + "";
+    	let t2_value = /*post*/ ctx[18].analytics.page_depth + "";
     	let t2;
     	let t3;
     	let div2;
-    	let t4_value = /*post*/ ctx[14].analytics.time_on_page + "";
+    	let t4_value = /*post*/ ctx[18].analytics.time_on_page + "";
     	let t4;
     	let t5;
     	let div3;
-    	let t6_value = /*post*/ ctx[14].analytics.hits * /*post*/ ctx[14].analytics.time_on_page + "";
+    	let t6_value = /*post*/ ctx[18].analytics.hits * /*post*/ ctx[18].analytics.time_on_page + "";
     	let t6;
 
     	return {
@@ -2106,10 +2180,10 @@ var frontpage_engine = (function () {
     			append(div3, t6);
     		},
     		p(ctx, dirty) {
-    			if (dirty & /*$featuredPosts*/ 4 && t0_value !== (t0_value = /*post*/ ctx[14].analytics.hits + "")) set_data(t0, t0_value);
-    			if (dirty & /*$featuredPosts*/ 4 && t2_value !== (t2_value = /*post*/ ctx[14].analytics.page_depth + "")) set_data(t2, t2_value);
-    			if (dirty & /*$featuredPosts*/ 4 && t4_value !== (t4_value = /*post*/ ctx[14].analytics.time_on_page + "")) set_data(t4, t4_value);
-    			if (dirty & /*$featuredPosts*/ 4 && t6_value !== (t6_value = /*post*/ ctx[14].analytics.hits * /*post*/ ctx[14].analytics.time_on_page + "")) set_data(t6, t6_value);
+    			if (dirty & /*$featuredPosts*/ 4 && t0_value !== (t0_value = /*post*/ ctx[18].analytics.hits + "")) set_data(t0, t0_value);
+    			if (dirty & /*$featuredPosts*/ 4 && t2_value !== (t2_value = /*post*/ ctx[18].analytics.page_depth + "")) set_data(t2, t2_value);
+    			if (dirty & /*$featuredPosts*/ 4 && t4_value !== (t4_value = /*post*/ ctx[18].analytics.time_on_page + "")) set_data(t4, t4_value);
+    			if (dirty & /*$featuredPosts*/ 4 && t6_value !== (t6_value = /*post*/ ctx[18].analytics.hits * /*post*/ ctx[18].analytics.time_on_page + "")) set_data(t6, t6_value);
     		},
     		d(detaching) {
     			if (detaching) detach(div0);
@@ -2123,29 +2197,26 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (114:8) {#each $featuredPosts as post, index (post.id)}
+    // (137:8) {#each $featuredPosts as post, index (post.id)}
     function create_each_block$1(key_1, ctx) {
     	let tr;
     	let th0;
-    	let label;
+    	let t0;
+    	let t1_value = /*index*/ ctx[20] + "";
     	let t1;
-    	let input;
     	let t2;
-    	let t3_value = /*index*/ ctx[16] + "";
+    	let t3_value = /*post*/ ctx[18].id + "";
     	let t3;
     	let t4;
-    	let t5_value = /*post*/ ctx[14].id + "";
+    	let t5_value = /*post*/ ctx[18].slot.display_order + "";
     	let t5;
     	let t6;
-    	let t7_value = /*post*/ ctx[14].slot.display_order + "";
-    	let t7;
-    	let t8;
     	let postrow;
-    	let t9;
+    	let t7;
     	let th1;
-    	let t10;
+    	let t8;
     	let th2;
-    	let t11;
+    	let t9;
     	let tr_id_value;
     	let tr_draggable_value;
     	let rect;
@@ -2153,33 +2224,34 @@ var frontpage_engine = (function () {
     	let current;
     	let mounted;
     	let dispose;
+    	let if_block0 = !/*post*/ ctx[18].locked && create_if_block_2$1(ctx);
 
     	postrow = new PostRow({
     			props: {
-    				post: /*post*/ ctx[14],
-    				index: /*index*/ ctx[16]
+    				post: /*post*/ ctx[18],
+    				index: /*index*/ ctx[20]
     			}
     		});
 
     	function select_block_type(ctx, dirty) {
-    		if (/*post*/ ctx[14].locked) return create_if_block_1$1;
+    		if (/*post*/ ctx[18].locked) return create_if_block_1$1;
     		return create_else_block;
     	}
 
     	let current_block_type = select_block_type(ctx);
-    	let if_block0 = current_block_type(ctx);
-    	let if_block1 = /*post*/ ctx[14].analytics && create_if_block$1(ctx);
+    	let if_block1 = current_block_type(ctx);
+    	let if_block2 = /*post*/ ctx[18].analytics && create_if_block$1(ctx);
 
     	function dragstart_handler(...args) {
-    		return /*dragstart_handler*/ ctx[9](/*index*/ ctx[16], ...args);
+    		return /*dragstart_handler*/ ctx[13](/*index*/ ctx[20], ...args);
     	}
 
     	function drop_handler(...args) {
-    		return /*drop_handler*/ ctx[10](/*index*/ ctx[16], ...args);
+    		return /*drop_handler*/ ctx[14](/*index*/ ctx[20], ...args);
     	}
 
     	function dragenter_handler() {
-    		return /*dragenter_handler*/ ctx[11](/*index*/ ctx[16]);
+    		return /*dragenter_handler*/ ctx[15](/*index*/ ctx[20]);
     	}
 
     	return {
@@ -2188,64 +2260,55 @@ var frontpage_engine = (function () {
     		c() {
     			tr = element("tr");
     			th0 = element("th");
-    			label = element("label");
-    			label.textContent = "Select";
-    			t1 = space();
-    			input = element("input");
+    			if (if_block0) if_block0.c();
+    			t0 = space();
+    			t1 = text(t1_value);
     			t2 = space();
     			t3 = text(t3_value);
     			t4 = space();
     			t5 = text(t5_value);
     			t6 = space();
-    			t7 = text(t7_value);
-    			t8 = space();
     			create_component(postrow.$$.fragment);
-    			t9 = space();
+    			t7 = space();
     			th1 = element("th");
-    			if_block0.c();
-    			t10 = space();
+    			if_block1.c();
+    			t8 = space();
     			th2 = element("th");
-    			if (if_block1) if_block1.c();
-    			t11 = space();
-    			attr(label, "class", "screen-reader-text");
-    			attr(label, "for", "cb-select-1");
-    			attr(input, "class", "cb-select-1");
-    			attr(input, "type", "checkbox");
+    			if (if_block2) if_block2.c();
+    			t9 = space();
     			attr(th0, "scope", "row");
     			attr(th0, "class", "check-column");
     			attr(th1, "scope", "row");
     			attr(th1, "class", "lock-column");
     			attr(th2, "scope", "row");
     			attr(th2, "class", "analytics-column");
-    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[14].id);
-    			attr(tr, "draggable", tr_draggable_value = !/*post*/ ctx[14].locked);
+    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[18].id);
+    			attr(tr, "draggable", tr_draggable_value = !/*post*/ ctx[18].locked);
     			attr(tr, "ondragover", "return false");
     			attr(tr, "class", "svelte-1y2qr2p");
-    			toggle_class(tr, "is-active", /*hovering*/ ctx[1] === /*index*/ ctx[16]);
-    			toggle_class(tr, "is-locked", /*post*/ ctx[14].locked);
+    			toggle_class(tr, "is-active", /*hovering*/ ctx[1] === /*index*/ ctx[20]);
+    			toggle_class(tr, "is-locked", /*post*/ ctx[18].locked);
     			this.first = tr;
     		},
     		m(target, anchor) {
     			insert(target, tr, anchor);
     			append(tr, th0);
-    			append(th0, label);
+    			if (if_block0) if_block0.m(th0, null);
+    			append(th0, t0);
     			append(th0, t1);
-    			append(th0, input);
     			append(th0, t2);
     			append(th0, t3);
     			append(th0, t4);
     			append(th0, t5);
-    			append(th0, t6);
-    			append(th0, t7);
-    			append(tr, t8);
+    			append(tr, t6);
     			mount_component(postrow, tr, null);
-    			append(tr, t9);
+    			append(tr, t7);
     			append(tr, th1);
-    			if_block0.m(th1, null);
-    			append(tr, t10);
+    			if_block1.m(th1, null);
+    			append(tr, t8);
     			append(tr, th2);
-    			if (if_block1) if_block1.m(th2, null);
-    			append(tr, t11);
+    			if (if_block2) if_block2.m(th2, null);
+    			append(tr, t9);
     			current = true;
 
     			if (!mounted) {
@@ -2260,53 +2323,67 @@ var frontpage_engine = (function () {
     		},
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
-    			if ((!current || dirty & /*$featuredPosts*/ 4) && t3_value !== (t3_value = /*index*/ ctx[16] + "")) set_data(t3, t3_value);
-    			if ((!current || dirty & /*$featuredPosts*/ 4) && t5_value !== (t5_value = /*post*/ ctx[14].id + "")) set_data(t5, t5_value);
-    			if ((!current || dirty & /*$featuredPosts*/ 4) && t7_value !== (t7_value = /*post*/ ctx[14].slot.display_order + "")) set_data(t7, t7_value);
+
+    			if (!/*post*/ ctx[18].locked) {
+    				if (if_block0) {
+    					if_block0.p(ctx, dirty);
+    				} else {
+    					if_block0 = create_if_block_2$1(ctx);
+    					if_block0.c();
+    					if_block0.m(th0, t0);
+    				}
+    			} else if (if_block0) {
+    				if_block0.d(1);
+    				if_block0 = null;
+    			}
+
+    			if ((!current || dirty & /*$featuredPosts*/ 4) && t1_value !== (t1_value = /*index*/ ctx[20] + "")) set_data(t1, t1_value);
+    			if ((!current || dirty & /*$featuredPosts*/ 4) && t3_value !== (t3_value = /*post*/ ctx[18].id + "")) set_data(t3, t3_value);
+    			if ((!current || dirty & /*$featuredPosts*/ 4) && t5_value !== (t5_value = /*post*/ ctx[18].slot.display_order + "")) set_data(t5, t5_value);
     			const postrow_changes = {};
-    			if (dirty & /*$featuredPosts*/ 4) postrow_changes.post = /*post*/ ctx[14];
-    			if (dirty & /*$featuredPosts*/ 4) postrow_changes.index = /*index*/ ctx[16];
+    			if (dirty & /*$featuredPosts*/ 4) postrow_changes.post = /*post*/ ctx[18];
+    			if (dirty & /*$featuredPosts*/ 4) postrow_changes.index = /*index*/ ctx[20];
     			postrow.$set(postrow_changes);
 
-    			if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block0) {
-    				if_block0.p(ctx, dirty);
+    			if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block1) {
+    				if_block1.p(ctx, dirty);
     			} else {
-    				if_block0.d(1);
-    				if_block0 = current_block_type(ctx);
-
-    				if (if_block0) {
-    					if_block0.c();
-    					if_block0.m(th1, null);
-    				}
-    			}
-
-    			if (/*post*/ ctx[14].analytics) {
-    				if (if_block1) {
-    					if_block1.p(ctx, dirty);
-    				} else {
-    					if_block1 = create_if_block$1(ctx);
-    					if_block1.c();
-    					if_block1.m(th2, null);
-    				}
-    			} else if (if_block1) {
     				if_block1.d(1);
-    				if_block1 = null;
+    				if_block1 = current_block_type(ctx);
+
+    				if (if_block1) {
+    					if_block1.c();
+    					if_block1.m(th1, null);
+    				}
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 4 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[14].id)) {
+    			if (/*post*/ ctx[18].analytics) {
+    				if (if_block2) {
+    					if_block2.p(ctx, dirty);
+    				} else {
+    					if_block2 = create_if_block$1(ctx);
+    					if_block2.c();
+    					if_block2.m(th2, null);
+    				}
+    			} else if (if_block2) {
+    				if_block2.d(1);
+    				if_block2 = null;
+    			}
+
+    			if (!current || dirty & /*$featuredPosts*/ 4 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[18].id)) {
     				attr(tr, "id", tr_id_value);
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 4 && tr_draggable_value !== (tr_draggable_value = !/*post*/ ctx[14].locked)) {
+    			if (!current || dirty & /*$featuredPosts*/ 4 && tr_draggable_value !== (tr_draggable_value = !/*post*/ ctx[18].locked)) {
     				attr(tr, "draggable", tr_draggable_value);
     			}
 
     			if (!current || dirty & /*hovering, $featuredPosts*/ 6) {
-    				toggle_class(tr, "is-active", /*hovering*/ ctx[1] === /*index*/ ctx[16]);
+    				toggle_class(tr, "is-active", /*hovering*/ ctx[1] === /*index*/ ctx[20]);
     			}
 
     			if (!current || dirty & /*$featuredPosts*/ 4) {
-    				toggle_class(tr, "is-locked", /*post*/ ctx[14].locked);
+    				toggle_class(tr, "is-locked", /*post*/ ctx[18].locked);
     			}
     		},
     		r() {
@@ -2331,9 +2408,10 @@ var frontpage_engine = (function () {
     		},
     		d(detaching) {
     			if (detaching) detach(tr);
+    			if (if_block0) if_block0.d();
     			destroy_component(postrow);
-    			if_block0.d();
-    			if (if_block1) if_block1.d();
+    			if_block1.d();
+    			if (if_block2) if_block2.d();
     			mounted = false;
     			run_all(dispose);
     		}
@@ -2343,14 +2421,33 @@ var frontpage_engine = (function () {
     function create_fragment$3(ctx) {
     	let table;
     	let thead;
+    	let tr;
+    	let td;
+    	let label;
+    	let t1;
+    	let input;
+    	let t2;
+    	let th0;
+    	let t4;
+    	let th1;
+    	let t6;
+    	let th2;
+    	let t8;
+    	let th3;
+    	let t10;
+    	let th4;
+    	let t11;
+    	let th5;
     	let t12;
     	let tbody;
     	let each_blocks = [];
     	let each_1_lookup = new Map();
     	let table_class_value;
     	let current;
+    	let mounted;
+    	let dispose;
     	let each_value = /*$featuredPosts*/ ctx[2];
-    	const get_key = ctx => /*post*/ ctx[14].id;
+    	const get_key = ctx => /*post*/ ctx[18].id;
 
     	for (let i = 0; i < each_value.length; i += 1) {
     		let child_ctx = get_each_context$1(ctx, each_value, i);
@@ -2362,16 +2459,28 @@ var frontpage_engine = (function () {
     		c() {
     			table = element("table");
     			thead = element("thead");
-
-    			thead.innerHTML = `<tr><td class="manage-column check-column"><label class="screen-reader-text" for="cb-select-all-1">Select All</label> 
-                <input class="cb-select-all-1" type="checkbox"/></td> 
-            <th scope="col" class="column-header-image svelte-1y2qr2p">Image</th> 
-            <th scope="col" class="column-header-title svelte-1y2qr2p">Title</th> 
-            <th scope="col" class="manage-column">Author</th> 
-            <th scope="col" class="manage-column">Published</th> 
-            <th scope="col" class="manage-column"></th> 
-            <th scope="col" class="manage-column"></th></tr>`;
-
+    			tr = element("tr");
+    			td = element("td");
+    			label = element("label");
+    			label.textContent = "Select All";
+    			t1 = space();
+    			input = element("input");
+    			t2 = space();
+    			th0 = element("th");
+    			th0.textContent = "Image";
+    			t4 = space();
+    			th1 = element("th");
+    			th1.textContent = "Title";
+    			t6 = space();
+    			th2 = element("th");
+    			th2.textContent = "Author";
+    			t8 = space();
+    			th3 = element("th");
+    			th3.textContent = "Published";
+    			t10 = space();
+    			th4 = element("th");
+    			t11 = space();
+    			th5 = element("th");
     			t12 = space();
     			tbody = element("tbody");
 
@@ -2379,11 +2488,45 @@ var frontpage_engine = (function () {
     				each_blocks[i].c();
     			}
 
+    			attr(label, "class", "screen-reader-text");
+    			attr(label, "for", "");
+    			attr(input, "class", "");
+    			attr(input, "type", "checkbox");
+    			attr(td, "class", "manage-column check-column");
+    			attr(th0, "scope", "col");
+    			attr(th0, "class", "column-header-image svelte-1y2qr2p");
+    			attr(th1, "scope", "col");
+    			attr(th1, "class", "column-header-title svelte-1y2qr2p");
+    			attr(th2, "scope", "col");
+    			attr(th2, "class", "manage-column");
+    			attr(th3, "scope", "col");
+    			attr(th3, "class", "manage-column");
+    			attr(th4, "scope", "col");
+    			attr(th4, "class", "manage-column");
+    			attr(th5, "scope", "col");
+    			attr(th5, "class", "manage-column");
     			attr(table, "class", table_class_value = "wp-list-table widefat fixed striped table-view-list featuredposts " + (/*updating*/ ctx[0] ? "is-updating" : "") + " svelte-1y2qr2p");
     		},
     		m(target, anchor) {
     			insert(target, table, anchor);
     			append(table, thead);
+    			append(thead, tr);
+    			append(tr, td);
+    			append(td, label);
+    			append(td, t1);
+    			append(td, input);
+    			append(tr, t2);
+    			append(tr, th0);
+    			append(tr, t4);
+    			append(tr, th1);
+    			append(tr, t6);
+    			append(tr, th2);
+    			append(tr, t8);
+    			append(tr, th3);
+    			append(tr, t10);
+    			append(tr, th4);
+    			append(tr, t11);
+    			append(tr, th5);
     			append(table, t12);
     			append(table, tbody);
 
@@ -2392,9 +2535,14 @@ var frontpage_engine = (function () {
     			}
 
     			current = true;
+
+    			if (!mounted) {
+    				dispose = listen(input, "change", /*checkAll*/ ctx[9]);
+    				mounted = true;
+    			}
     		},
     		p(ctx, [dirty]) {
-    			if (dirty & /*$featuredPosts, hovering, dragStart, dragDrop, formatTime, doUnlock, doRemove, doLock*/ 510) {
+    			if (dirty & /*$featuredPosts, hovering, dragStart, dragDrop, formatTime, doUnlock, doRemove, doLock, onCheckboxChange*/ 1534) {
     				each_value = /*$featuredPosts*/ ctx[2];
     				group_outros();
     				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
@@ -2429,6 +2577,9 @@ var frontpage_engine = (function () {
     			for (let i = 0; i < each_blocks.length; i += 1) {
     				each_blocks[i].d();
     			}
+
+    			mounted = false;
+    			dispose();
     		}
     	};
     }
@@ -2514,6 +2665,37 @@ var frontpage_engine = (function () {
     		dispatch("updated");
     	};
 
+    	const onCheckboxChange = (e, post) => {
+    		
+    	}; // if (e.target.checked) {
+    	//     checked_posts.push(post);
+    	// } else {
+    	//     checked_posts = checked_posts.filter(p => p.id !== post.id);
+
+    	// }
+    	// console.log("checked_posts", checked_posts);
+    	const checkAll = e => {
+    		if (e.target.checked) {
+    			set_store_value(
+    				featuredPosts,
+    				$featuredPosts = $featuredPosts.map(p => {
+    					p.checked = true;
+    					return p;
+    				}),
+    				$featuredPosts
+    			);
+    		} else {
+    			set_store_value(
+    				featuredPosts,
+    				$featuredPosts = $featuredPosts.map(p => {
+    					p.checked = false;
+    					return p;
+    				}),
+    				$featuredPosts
+    			);
+    		}
+    	};
+
     	const formatTime = time => {
     		const date = new Date(time);
     		return date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
@@ -2528,6 +2710,12 @@ var frontpage_engine = (function () {
     		console.log("onMount");
     	});
 
+    	function input_change_handler(each_value, index) {
+    		each_value[index].checked = this.checked;
+    		featuredPosts.set($featuredPosts);
+    	}
+
+    	const change_handler = (post, e) => onCheckboxChange();
     	const dragstart_handler = (index, e) => dragStart(e, index);
     	const drop_handler = (index, e) => dragDrop(e, index);
     	const dragenter_handler = index => $$invalidate(1, hovering = index);
@@ -2545,7 +2733,11 @@ var frontpage_engine = (function () {
     		doLock,
     		doUnlock,
     		doRemove,
+    		onCheckboxChange,
+    		checkAll,
     		formatTime,
+    		input_change_handler,
+    		change_handler,
     		dragstart_handler,
     		drop_handler,
     		dragenter_handler
@@ -3606,10 +3798,10 @@ var frontpage_engine = (function () {
     	append_styles(target, "svelte-4dra5q", ".unordered-posts-alert.svelte-4dra5q{background-color:rgb(213, 57, 57);color:white;border-radius:50%;width:30px;height:30px;text-align:center;top:0;right:0;margin:0px 10px;font-size:15px;line-height:30px;cursor:pointer}.action-bar.svelte-4dra5q{display:flex;justify-content:left;flex-direction:row}.button.svelte-4dra5q{margin-right:10px}");
     }
 
-    // (103:8) {#if $unorderedPosts.length > 0}
-    function create_if_block_2(ctx) {
+    // (129:8) {#if $unorderedPosts.length > 0}
+    function create_if_block_3(ctx) {
     	let div;
-    	let t_value = /*$unorderedPosts*/ ctx[4].length + "";
+    	let t_value = /*$unorderedPosts*/ ctx[6].length + "";
     	let t;
     	let mounted;
     	let dispose;
@@ -3626,12 +3818,12 @@ var frontpage_engine = (function () {
     			append(div, t);
 
     			if (!mounted) {
-    				dispose = listen(div, "click", /*click_handler*/ ctx[11]);
+    				dispose = listen(div, "click", /*click_handler*/ ctx[14]);
     				mounted = true;
     			}
     		},
     		p(ctx, dirty) {
-    			if (dirty & /*$unorderedPosts*/ 16 && t_value !== (t_value = /*$unorderedPosts*/ ctx[4].length + "")) set_data(t, t_value);
+    			if (dirty & /*$unorderedPosts*/ 64 && t_value !== (t_value = /*$unorderedPosts*/ ctx[6].length + "")) set_data(t, t_value);
     		},
     		d(detaching) {
     			if (detaching) detach(div);
@@ -3641,7 +3833,57 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (111:4) {#if show_unordered_modal}
+    // (135:8) {#if show_group_actions}
+    function create_if_block_2(ctx) {
+    	let select;
+    	let option0;
+    	let option1;
+    	let mounted;
+    	let dispose;
+
+    	return {
+    		c() {
+    			select = element("select");
+    			option0 = element("option");
+    			option0.textContent = "Group action";
+    			option1 = element("option");
+    			option1.textContent = "Remove";
+    			option0.__value = "0";
+    			option0.value = option0.__value;
+    			option1.__value = "remove";
+    			option1.value = option1.__value;
+    			attr(select, "class", "group-action");
+    			if (/*group_action*/ ctx[5] === void 0) add_render_callback(() => /*select_change_handler*/ ctx[17].call(select));
+    		},
+    		m(target, anchor) {
+    			insert(target, select, anchor);
+    			append(select, option0);
+    			append(select, option1);
+    			select_option(select, /*group_action*/ ctx[5]);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen(select, "change", /*select_change_handler*/ ctx[17]),
+    					listen(select, "change", /*onGroupAction*/ ctx[9])
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p(ctx, dirty) {
+    			if (dirty & /*group_action*/ 32) {
+    				select_option(select, /*group_action*/ ctx[5]);
+    			}
+    		},
+    		d(detaching) {
+    			if (detaching) detach(select);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+    }
+
+    // (143:4) {#if show_unordered_modal}
     function create_if_block_1(ctx) {
     	let modal;
     	let current;
@@ -3653,7 +3895,7 @@ var frontpage_engine = (function () {
     			}
     		});
 
-    	modal.$on("close", /*close_handler*/ ctx[14]);
+    	modal.$on("close", /*close_handler*/ ctx[18]);
 
     	return {
     		c() {
@@ -3666,7 +3908,7 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const modal_changes = {};
 
-    			if (dirty & /*$$scope, frontpage_id*/ 8388609) {
+    			if (dirty & /*$$scope, frontpage_id*/ 134217729) {
     				modal_changes.$$scope = { dirty, ctx };
     			}
 
@@ -3687,7 +3929,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (112:4) <Modal on:close="{() => show_unordered_modal = false}">
+    // (144:4) <Modal on:close="{() => show_unordered_modal = false}">
     function create_default_slot_1(ctx) {
     	let h2;
     	let t1;
@@ -3701,7 +3943,7 @@ var frontpage_engine = (function () {
     			}
     		});
 
-    	addposttable.$on("updated", /*updated*/ ctx[5]);
+    	addposttable.$on("updated", /*updated*/ ctx[7]);
 
     	return {
     		c() {
@@ -3738,7 +3980,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (117:4) {#if show_modal}
+    // (149:4) {#if show_modal}
     function create_if_block(ctx) {
     	let modal;
     	let current;
@@ -3753,7 +3995,7 @@ var frontpage_engine = (function () {
     			}
     		});
 
-    	modal.$on("close", /*close_handler_1*/ ctx[15]);
+    	modal.$on("close", /*close_handler_1*/ ctx[19]);
 
     	return {
     		c() {
@@ -3766,7 +4008,7 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const modal_changes = {};
 
-    			if (dirty & /*$$scope, frontpage_id*/ 8388609) {
+    			if (dirty & /*$$scope, frontpage_id*/ 134217729) {
     				modal_changes.$$scope = { dirty, ctx };
     			}
 
@@ -3787,7 +4029,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (118:4) <Modal on:close="{() => show_modal = false}">
+    // (150:4) <Modal on:close="{() => show_modal = false}">
     function create_default_slot(ctx) {
     	let addposttable;
     	let current;
@@ -3796,7 +4038,7 @@ var frontpage_engine = (function () {
     			props: { frontpage_id: /*frontpage_id*/ ctx[0] }
     		});
 
-    	addposttable.$on("updated", /*updated*/ ctx[5]);
+    	addposttable.$on("updated", /*updated*/ ctx[7]);
 
     	return {
     		c() {
@@ -3826,7 +4068,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (119:8) 
+    // (151:8) 
     function create_header_slot(ctx) {
     	let h2;
 
@@ -3854,17 +4096,19 @@ var frontpage_engine = (function () {
     	let t2;
     	let a1;
     	let t4;
-    	let hr;
     	let t5;
+    	let hr;
     	let t6;
     	let t7;
+    	let t8;
     	let frontpagetable;
     	let current;
     	let mounted;
     	let dispose;
-    	let if_block0 = /*$unorderedPosts*/ ctx[4].length > 0 && create_if_block_2(ctx);
-    	let if_block1 = /*show_unordered_modal*/ ctx[2] && create_if_block_1(ctx);
-    	let if_block2 = /*show_modal*/ ctx[1] && create_if_block(ctx);
+    	let if_block0 = /*$unorderedPosts*/ ctx[6].length > 0 && create_if_block_3(ctx);
+    	let if_block1 = /*show_group_actions*/ ctx[4] && create_if_block_2(ctx);
+    	let if_block2 = /*show_unordered_modal*/ ctx[2] && create_if_block_1(ctx);
+    	let if_block3 = /*show_modal*/ ctx[1] && create_if_block(ctx);
 
     	frontpagetable = new FrontpageTable({
     			props: {
@@ -3873,7 +4117,7 @@ var frontpage_engine = (function () {
     			}
     		});
 
-    	frontpagetable.$on("updated", /*updated*/ ctx[5]);
+    	frontpagetable.$on("updated", /*updated*/ ctx[7]);
 
     	return {
     		c() {
@@ -3887,12 +4131,14 @@ var frontpage_engine = (function () {
     			a1 = element("a");
     			a1.textContent = "Auto sort";
     			t4 = space();
-    			hr = element("hr");
-    			t5 = space();
     			if (if_block1) if_block1.c();
+    			t5 = space();
+    			hr = element("hr");
     			t6 = space();
     			if (if_block2) if_block2.c();
     			t7 = space();
+    			if (if_block3) if_block3.c();
+    			t8 = space();
     			create_component(frontpagetable.$$.fragment);
     			attr(a0, "href", "#show-modal");
     			attr(a0, "class", "button button-primary svelte-4dra5q");
@@ -3908,31 +4154,33 @@ var frontpage_engine = (function () {
     			append(div, a0);
     			append(div, t2);
     			append(div, a1);
-    			append(main, t4);
-    			append(main, hr);
+    			append(div, t4);
+    			if (if_block1) if_block1.m(div, null);
     			append(main, t5);
-    			if (if_block1) if_block1.m(main, null);
+    			append(main, hr);
     			append(main, t6);
     			if (if_block2) if_block2.m(main, null);
     			append(main, t7);
+    			if (if_block3) if_block3.m(main, null);
+    			append(main, t8);
     			mount_component(frontpagetable, main, null);
     			current = true;
 
     			if (!mounted) {
     				dispose = [
-    					listen(a0, "click", /*click_handler_1*/ ctx[12]),
-    					listen(a1, "click", /*click_handler_2*/ ctx[13])
+    					listen(a0, "click", /*click_handler_1*/ ctx[15]),
+    					listen(a1, "click", /*click_handler_2*/ ctx[16])
     				];
 
     				mounted = true;
     			}
     		},
     		p(ctx, [dirty]) {
-    			if (/*$unorderedPosts*/ ctx[4].length > 0) {
+    			if (/*$unorderedPosts*/ ctx[6].length > 0) {
     				if (if_block0) {
     					if_block0.p(ctx, dirty);
     				} else {
-    					if_block0 = create_if_block_2(ctx);
+    					if_block0 = create_if_block_3(ctx);
     					if_block0.c();
     					if_block0.m(div, t0);
     				}
@@ -3941,38 +4189,28 @@ var frontpage_engine = (function () {
     				if_block0 = null;
     			}
 
-    			if (/*show_unordered_modal*/ ctx[2]) {
+    			if (/*show_group_actions*/ ctx[4]) {
     				if (if_block1) {
     					if_block1.p(ctx, dirty);
-
-    					if (dirty & /*show_unordered_modal*/ 4) {
-    						transition_in(if_block1, 1);
-    					}
     				} else {
-    					if_block1 = create_if_block_1(ctx);
+    					if_block1 = create_if_block_2(ctx);
     					if_block1.c();
-    					transition_in(if_block1, 1);
-    					if_block1.m(main, t6);
+    					if_block1.m(div, null);
     				}
     			} else if (if_block1) {
-    				group_outros();
-
-    				transition_out(if_block1, 1, 1, () => {
-    					if_block1 = null;
-    				});
-
-    				check_outros();
+    				if_block1.d(1);
+    				if_block1 = null;
     			}
 
-    			if (/*show_modal*/ ctx[1]) {
+    			if (/*show_unordered_modal*/ ctx[2]) {
     				if (if_block2) {
     					if_block2.p(ctx, dirty);
 
-    					if (dirty & /*show_modal*/ 2) {
+    					if (dirty & /*show_unordered_modal*/ 4) {
     						transition_in(if_block2, 1);
     					}
     				} else {
-    					if_block2 = create_if_block(ctx);
+    					if_block2 = create_if_block_1(ctx);
     					if_block2.c();
     					transition_in(if_block2, 1);
     					if_block2.m(main, t7);
@@ -3987,6 +4225,29 @@ var frontpage_engine = (function () {
     				check_outros();
     			}
 
+    			if (/*show_modal*/ ctx[1]) {
+    				if (if_block3) {
+    					if_block3.p(ctx, dirty);
+
+    					if (dirty & /*show_modal*/ 2) {
+    						transition_in(if_block3, 1);
+    					}
+    				} else {
+    					if_block3 = create_if_block(ctx);
+    					if_block3.c();
+    					transition_in(if_block3, 1);
+    					if_block3.m(main, t8);
+    				}
+    			} else if (if_block3) {
+    				group_outros();
+
+    				transition_out(if_block3, 1, 1, () => {
+    					if_block3 = null;
+    				});
+
+    				check_outros();
+    			}
+
     			const frontpagetable_changes = {};
     			if (dirty & /*frontpage_id*/ 1) frontpagetable_changes.frontpage_id = /*frontpage_id*/ ctx[0];
     			if (dirty & /*updating*/ 8) frontpagetable_changes.updating = /*updating*/ ctx[3];
@@ -3994,14 +4255,14 @@ var frontpage_engine = (function () {
     		},
     		i(local) {
     			if (current) return;
-    			transition_in(if_block1);
     			transition_in(if_block2);
+    			transition_in(if_block3);
     			transition_in(frontpagetable.$$.fragment, local);
     			current = true;
     		},
     		o(local) {
-    			transition_out(if_block1);
     			transition_out(if_block2);
+    			transition_out(if_block3);
     			transition_out(frontpagetable.$$.fragment, local);
     			current = false;
     		},
@@ -4010,6 +4271,7 @@ var frontpage_engine = (function () {
     			if (if_block0) if_block0.d();
     			if (if_block1) if_block1.d();
     			if (if_block2) if_block2.d();
+    			if (if_block3) if_block3.d();
     			destroy_component(frontpagetable);
     			mounted = false;
     			run_all(dispose);
@@ -4018,19 +4280,20 @@ var frontpage_engine = (function () {
     }
 
     function instance($$self, $$props, $$invalidate) {
-    	let $analytics;
     	let $featuredPosts;
+    	let $analytics;
     	let $slots;
     	let $unorderedPosts;
-    	component_subscribe($$self, analytics, $$value => $$invalidate(8, $analytics = $$value));
-    	component_subscribe($$self, featuredPosts, $$value => $$invalidate(9, $featuredPosts = $$value));
-    	component_subscribe($$self, slots, $$value => $$invalidate(10, $slots = $$value));
-    	component_subscribe($$self, unorderedPosts, $$value => $$invalidate(4, $unorderedPosts = $$value));
+    	component_subscribe($$self, featuredPosts, $$value => $$invalidate(11, $featuredPosts = $$value));
+    	component_subscribe($$self, analytics, $$value => $$invalidate(12, $analytics = $$value));
+    	component_subscribe($$self, slots, $$value => $$invalidate(13, $slots = $$value));
+    	component_subscribe($$self, unorderedPosts, $$value => $$invalidate(6, $unorderedPosts = $$value));
     	let { frontpage_id } = $$props;
     	let { url } = $$props;
     	let show_modal = false;
     	let show_unordered_modal = false;
     	let updating = false;
+    	let show_group_actions = false;
     	const uuid = v4();
     	let socket = null;
 
@@ -4102,38 +4365,73 @@ var frontpage_engine = (function () {
     	};
 
     	const autoSort = async () => {
-    		const posts = $featuredPosts;
+    		console.log("autoSort");
+    		const posts = $featuredPosts.filter(post => post.locked === false);
+    		const lockedPosts = $featuredPosts.filter(post => post.locked === true);
+    		const no_analytics = posts.filter(post => !post.analytics);
+    		const with_analytics = posts.filter(post => post.analytics);
 
-    		posts.sort((a, b) => {
-    			if (a.analytics && b.analytics) {
-    				return b.analytics.hits - a.analytics.hits;
-    			}
-
-    			return 0;
+    		with_analytics.sort((a, b) => {
+    			return b.analytics.hits - a.analytics.hits;
     		});
 
-    		// Put all locked posts back in original position
-    		set_store_value(featuredPosts, $featuredPosts = applyLockedSlots(posts), $featuredPosts);
+    		const combined_posts = [...with_analytics, ...no_analytics];
 
-    		await updated();
+    		// Put all locked posts back in original position
+    		for (let i = 0; i < lockedPosts.length; i++) {
+    			combined_posts.splice(Number(lockedPosts[i].slot.display_order), 0, lockedPosts[i]);
+    		}
+
+    		set_store_value(featuredPosts, $featuredPosts = combined_posts, $featuredPosts);
+    		await updatePosts();
+    	};
+
+    	let group_action;
+
+    	const onGroupAction = async () => {
+    		console.log(group_action);
+
+    		if (group_action === "remove") {
+    			const posts = $featuredPosts.filter(post => post.locked === false).filter(post => !post.checked || post.locked);
+    			const lockedPosts = $featuredPosts.filter(post => post.locked === true);
+
+    			for (let i = 0; i < lockedPosts.length; i++) {
+    				posts.splice(Number(lockedPosts[i].slot.display_order), 0, lockedPosts[i]);
+    			}
+
+    			set_store_value(featuredPosts, $featuredPosts = posts, $featuredPosts);
+
+    			// console.log(posts);
+    			await updatePosts();
+    		}
+
+    		// await updatePosts();
+    		$$invalidate(5, group_action = "0");
     	};
 
     	const click_handler = () => $$invalidate(2, show_unordered_modal = true);
     	const click_handler_1 = () => $$invalidate(1, show_modal = true);
     	const click_handler_2 = () => autoSort();
+
+    	function select_change_handler() {
+    		group_action = select_value(this);
+    		$$invalidate(5, group_action);
+    	}
+
     	const close_handler = () => $$invalidate(2, show_unordered_modal = false);
     	const close_handler_1 = () => $$invalidate(1, show_modal = false);
 
     	$$self.$$set = $$props => {
     		if ('frontpage_id' in $$props) $$invalidate(0, frontpage_id = $$props.frontpage_id);
-    		if ('url' in $$props) $$invalidate(7, url = $$props.url);
+    		if ('url' in $$props) $$invalidate(10, url = $$props.url);
     	};
 
     	$$self.$$.update = () => {
-    		if ($$self.$$.dirty & /*$featuredPosts, $slots, $analytics*/ 1792) {
+    		if ($$self.$$.dirty & /*$featuredPosts, $slots, $analytics*/ 14336) {
     			if ($featuredPosts.length > 0) {
     				set_store_value(featuredPosts, $featuredPosts = applySlots($featuredPosts, $slots), $featuredPosts);
     				set_store_value(featuredPosts, $featuredPosts = applyAnalytics($featuredPosts, $analytics), $featuredPosts);
+    				$$invalidate(4, show_group_actions = $featuredPosts.filter(post => post.checked).length > 0);
     			}
     		}
     	};
@@ -4143,16 +4441,20 @@ var frontpage_engine = (function () {
     		show_modal,
     		show_unordered_modal,
     		updating,
+    		show_group_actions,
+    		group_action,
     		$unorderedPosts,
     		updated,
     		autoSort,
+    		onGroupAction,
     		url,
-    		$analytics,
     		$featuredPosts,
+    		$analytics,
     		$slots,
     		click_handler,
     		click_handler_1,
     		click_handler_2,
+    		select_change_handler,
     		close_handler,
     		close_handler_1
     	];
@@ -4161,7 +4463,7 @@ var frontpage_engine = (function () {
     class App extends SvelteComponent {
     	constructor(options) {
     		super();
-    		init(this, options, instance, create_fragment, safe_not_equal, { frontpage_id: 0, url: 7 }, add_css);
+    		init(this, options, instance, create_fragment, safe_not_equal, { frontpage_id: 0, url: 10 }, add_css);
     	}
     }
 

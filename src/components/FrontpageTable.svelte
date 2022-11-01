@@ -80,6 +80,29 @@
         dispatch("updated");
     }
 
+    const onCheckboxChange = (e, post) => {
+        // if (e.target.checked) {
+        //     checked_posts.push(post);
+        // } else {
+        //     checked_posts = checked_posts.filter(p => p.id !== post.id);
+        // }
+        // console.log("checked_posts", checked_posts);
+    }
+
+    const checkAll = (e) => {
+        if (e.target.checked) {
+            $featuredPosts = $featuredPosts.map(p => {
+                p.checked = true;
+                return p;
+            });
+        } else {
+            $featuredPosts = $featuredPosts.map(p => {
+                p.checked = false;
+                return p;
+            });
+        }
+    }
+
     const formatTime = (time) => {
         const date = new Date(time);
         return date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
@@ -99,8 +122,8 @@
     <thead>
         <tr>
             <td class="manage-column check-column">
-                <label class="screen-reader-text" for="cb-select-all-1">Select All</label>
-                <input class="cb-select-all-1" type="checkbox" />
+                <label class="screen-reader-text" for="">Select All</label>
+                <input class="" type="checkbox" on:change={checkAll} />
             </td>
             <th scope="col" class="column-header-image">Image</th>
             <th scope="col" class="column-header-title">Title</th>
@@ -124,8 +147,10 @@
             class:is-locked={post.locked}
         >
             <th scope="row" class="check-column">
+                {#if (!post.locked)}
                 <label class="screen-reader-text" for="cb-select-1">Select</label>
-                <input class="cb-select-1" type="checkbox" />
+                <input class="cb-select-1" type="checkbox" bind:checked={post.checked} on:change={e => onCheckboxChange(e, post)} />
+                {/if}
                 {index}
                 {post.id}
                 {post.slot.display_order}
