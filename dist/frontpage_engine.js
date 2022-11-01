@@ -1975,13 +1975,13 @@ var frontpage_engine = (function () {
 
     function get_each_context$1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[18] = list[i];
-    	child_ctx[19] = list;
-    	child_ctx[20] = i;
+    	child_ctx[16] = list[i];
+    	child_ctx[17] = list;
+    	child_ctx[18] = i;
     	return child_ctx;
     }
 
-    // (150:16) {#if (!post.locked)}
+    // (141:16) {#if (!post.locked)}
     function create_if_block_2$1(ctx) {
     	let label;
     	let t1;
@@ -1990,11 +1990,7 @@ var frontpage_engine = (function () {
     	let dispose;
 
     	function input_change_handler() {
-    		/*input_change_handler*/ ctx[11].call(input, /*each_value*/ ctx[19], /*index*/ ctx[20]);
-    	}
-
-    	function change_handler(...args) {
-    		return /*change_handler*/ ctx[12](/*post*/ ctx[18], ...args);
+    		/*input_change_handler*/ ctx[10].call(input, /*each_value*/ ctx[17], /*index*/ ctx[18]);
     	}
 
     	return {
@@ -2012,14 +2008,10 @@ var frontpage_engine = (function () {
     			insert(target, label, anchor);
     			insert(target, t1, anchor);
     			insert(target, input, anchor);
-    			input.checked = /*post*/ ctx[18].checked;
+    			input.checked = /*post*/ ctx[16].checked;
 
     			if (!mounted) {
-    				dispose = [
-    					listen(input, "change", input_change_handler),
-    					listen(input, "change", change_handler)
-    				];
-
+    				dispose = listen(input, "change", input_change_handler);
     				mounted = true;
     			}
     		},
@@ -2027,7 +2019,7 @@ var frontpage_engine = (function () {
     			ctx = new_ctx;
 
     			if (dirty & /*$featuredPosts*/ 4) {
-    				input.checked = /*post*/ ctx[18].checked;
+    				input.checked = /*post*/ ctx[16].checked;
     			}
     		},
     		d(detaching) {
@@ -2035,12 +2027,12 @@ var frontpage_engine = (function () {
     			if (detaching) detach(t1);
     			if (detaching) detach(input);
     			mounted = false;
-    			run_all(dispose);
+    			dispose();
     		}
     	};
     }
 
-    // (167:16) {:else}
+    // (155:16) {:else}
     function create_else_block(ctx) {
     	let span0;
     	let t;
@@ -2064,10 +2056,10 @@ var frontpage_engine = (function () {
     			if (!mounted) {
     				dispose = [
     					listen(span0, "click", function () {
-    						if (is_function(/*doLock*/ ctx[5](/*post*/ ctx[18]))) /*doLock*/ ctx[5](/*post*/ ctx[18]).apply(this, arguments);
+    						if (is_function(/*doLock*/ ctx[5](/*post*/ ctx[16]))) /*doLock*/ ctx[5](/*post*/ ctx[16]).apply(this, arguments);
     					}),
     					listen(span1, "click", function () {
-    						if (is_function(/*doRemove*/ ctx[7](/*post*/ ctx[18]))) /*doRemove*/ ctx[7](/*post*/ ctx[18]).apply(this, arguments);
+    						if (is_function(/*doRemove*/ ctx[7](/*post*/ ctx[16]))) /*doRemove*/ ctx[7](/*post*/ ctx[16]).apply(this, arguments);
     					})
     				];
 
@@ -2087,11 +2079,11 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (163:16) {#if (post.locked)}
+    // (151:16) {#if (post.locked)}
     function create_if_block_1$1(ctx) {
     	let span;
     	let t0;
-    	let t1_value = /*formatTime*/ ctx[10](/*post*/ ctx[18].slot.lock_until) + "";
+    	let t1_value = /*formatTime*/ ctx[9](/*post*/ ctx[16].slot.lock_until) + "";
     	let t1;
     	let mounted;
     	let dispose;
@@ -2110,7 +2102,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doUnlock*/ ctx[6](/*post*/ ctx[18]))) /*doUnlock*/ ctx[6](/*post*/ ctx[18]).apply(this, arguments);
+    					if (is_function(/*doUnlock*/ ctx[6](/*post*/ ctx[16]))) /*doUnlock*/ ctx[6](/*post*/ ctx[16]).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -2118,7 +2110,7 @@ var frontpage_engine = (function () {
     		},
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
-    			if (dirty & /*$featuredPosts*/ 4 && t1_value !== (t1_value = /*formatTime*/ ctx[10](/*post*/ ctx[18].slot.lock_until) + "")) set_data(t1, t1_value);
+    			if (dirty & /*$featuredPosts*/ 4 && t1_value !== (t1_value = /*formatTime*/ ctx[9](/*post*/ ctx[16].slot.lock_until) + "")) set_data(t1, t1_value);
     		},
     		d(detaching) {
     			if (detaching) detach(span);
@@ -2130,93 +2122,42 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (175:16) {#if post.analytics}
+    // (163:16) {#if post.analytics}
     function create_if_block$1(ctx) {
-    	let div0;
-    	let t0_value = /*post*/ ctx[18].analytics.hits + "";
-    	let t0;
-    	let t1;
-    	let div1;
-    	let t2_value = /*post*/ ctx[18].analytics.page_depth + "";
-    	let t2;
-    	let t3;
-    	let div2;
-    	let t4_value = /*post*/ ctx[18].analytics.time_on_page + "";
-    	let t4;
-    	let t5;
-    	let div3;
-    	let t6_value = /*post*/ ctx[18].analytics.hits * /*post*/ ctx[18].analytics.time_on_page + "";
-    	let t6;
+    	let div;
+    	let t_value = /*post*/ ctx[16].analytics.hits + "";
+    	let t;
 
     	return {
     		c() {
-    			div0 = element("div");
-    			t0 = text(t0_value);
-    			t1 = space();
-    			div1 = element("div");
-    			t2 = text(t2_value);
-    			t3 = space();
-    			div2 = element("div");
-    			t4 = text(t4_value);
-    			t5 = space();
-    			div3 = element("div");
-    			t6 = text(t6_value);
-    			attr(div0, "class", "analytics-hits");
-    			attr(div1, "class", "analytics-depth");
-    			attr(div2, "class", "analytics-time_on_page");
-    			attr(div3, "class", "analytics-attention");
+    			div = element("div");
+    			t = text(t_value);
+    			attr(div, "class", "analytics-hits");
     		},
     		m(target, anchor) {
-    			insert(target, div0, anchor);
-    			append(div0, t0);
-    			insert(target, t1, anchor);
-    			insert(target, div1, anchor);
-    			append(div1, t2);
-    			insert(target, t3, anchor);
-    			insert(target, div2, anchor);
-    			append(div2, t4);
-    			insert(target, t5, anchor);
-    			insert(target, div3, anchor);
-    			append(div3, t6);
+    			insert(target, div, anchor);
+    			append(div, t);
     		},
     		p(ctx, dirty) {
-    			if (dirty & /*$featuredPosts*/ 4 && t0_value !== (t0_value = /*post*/ ctx[18].analytics.hits + "")) set_data(t0, t0_value);
-    			if (dirty & /*$featuredPosts*/ 4 && t2_value !== (t2_value = /*post*/ ctx[18].analytics.page_depth + "")) set_data(t2, t2_value);
-    			if (dirty & /*$featuredPosts*/ 4 && t4_value !== (t4_value = /*post*/ ctx[18].analytics.time_on_page + "")) set_data(t4, t4_value);
-    			if (dirty & /*$featuredPosts*/ 4 && t6_value !== (t6_value = /*post*/ ctx[18].analytics.hits * /*post*/ ctx[18].analytics.time_on_page + "")) set_data(t6, t6_value);
+    			if (dirty & /*$featuredPosts*/ 4 && t_value !== (t_value = /*post*/ ctx[16].analytics.hits + "")) set_data(t, t_value);
     		},
     		d(detaching) {
-    			if (detaching) detach(div0);
-    			if (detaching) detach(t1);
-    			if (detaching) detach(div1);
-    			if (detaching) detach(t3);
-    			if (detaching) detach(div2);
-    			if (detaching) detach(t5);
-    			if (detaching) detach(div3);
+    			if (detaching) detach(div);
     		}
     	};
     }
 
-    // (137:8) {#each $featuredPosts as post, index (post.id)}
+    // (128:8) {#each $featuredPosts as post, index (post.id)}
     function create_each_block$1(key_1, ctx) {
     	let tr;
     	let th0;
     	let t0;
-    	let t1_value = /*index*/ ctx[20] + "";
-    	let t1;
-    	let t2;
-    	let t3_value = /*post*/ ctx[18].id + "";
-    	let t3;
-    	let t4;
-    	let t5_value = /*post*/ ctx[18].slot.display_order + "";
-    	let t5;
-    	let t6;
     	let postrow;
-    	let t7;
+    	let t1;
     	let th1;
-    	let t8;
+    	let t2;
     	let th2;
-    	let t9;
+    	let t3;
     	let tr_id_value;
     	let tr_draggable_value;
     	let rect;
@@ -2224,34 +2165,34 @@ var frontpage_engine = (function () {
     	let current;
     	let mounted;
     	let dispose;
-    	let if_block0 = !/*post*/ ctx[18].locked && create_if_block_2$1(ctx);
+    	let if_block0 = !/*post*/ ctx[16].locked && create_if_block_2$1(ctx);
 
     	postrow = new PostRow({
     			props: {
-    				post: /*post*/ ctx[18],
-    				index: /*index*/ ctx[20]
+    				post: /*post*/ ctx[16],
+    				index: /*index*/ ctx[18]
     			}
     		});
 
     	function select_block_type(ctx, dirty) {
-    		if (/*post*/ ctx[18].locked) return create_if_block_1$1;
+    		if (/*post*/ ctx[16].locked) return create_if_block_1$1;
     		return create_else_block;
     	}
 
     	let current_block_type = select_block_type(ctx);
     	let if_block1 = current_block_type(ctx);
-    	let if_block2 = /*post*/ ctx[18].analytics && create_if_block$1(ctx);
+    	let if_block2 = /*post*/ ctx[16].analytics && create_if_block$1(ctx);
 
     	function dragstart_handler(...args) {
-    		return /*dragstart_handler*/ ctx[13](/*index*/ ctx[20], ...args);
+    		return /*dragstart_handler*/ ctx[11](/*index*/ ctx[18], ...args);
     	}
 
     	function drop_handler(...args) {
-    		return /*drop_handler*/ ctx[14](/*index*/ ctx[20], ...args);
+    		return /*drop_handler*/ ctx[12](/*index*/ ctx[18], ...args);
     	}
 
     	function dragenter_handler() {
-    		return /*dragenter_handler*/ ctx[15](/*index*/ ctx[20]);
+    		return /*dragenter_handler*/ ctx[13](/*index*/ ctx[18]);
     	}
 
     	return {
@@ -2262,53 +2203,41 @@ var frontpage_engine = (function () {
     			th0 = element("th");
     			if (if_block0) if_block0.c();
     			t0 = space();
-    			t1 = text(t1_value);
-    			t2 = space();
-    			t3 = text(t3_value);
-    			t4 = space();
-    			t5 = text(t5_value);
-    			t6 = space();
     			create_component(postrow.$$.fragment);
-    			t7 = space();
+    			t1 = space();
     			th1 = element("th");
     			if_block1.c();
-    			t8 = space();
+    			t2 = space();
     			th2 = element("th");
     			if (if_block2) if_block2.c();
-    			t9 = space();
+    			t3 = space();
     			attr(th0, "scope", "row");
     			attr(th0, "class", "check-column");
     			attr(th1, "scope", "row");
     			attr(th1, "class", "lock-column");
     			attr(th2, "scope", "row");
     			attr(th2, "class", "analytics-column");
-    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[18].id);
-    			attr(tr, "draggable", tr_draggable_value = !/*post*/ ctx[18].locked);
+    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[16].id);
+    			attr(tr, "draggable", tr_draggable_value = !/*post*/ ctx[16].locked);
     			attr(tr, "ondragover", "return false");
     			attr(tr, "class", "svelte-1y2qr2p");
-    			toggle_class(tr, "is-active", /*hovering*/ ctx[1] === /*index*/ ctx[20]);
-    			toggle_class(tr, "is-locked", /*post*/ ctx[18].locked);
+    			toggle_class(tr, "is-active", /*hovering*/ ctx[1] === /*index*/ ctx[18]);
+    			toggle_class(tr, "is-locked", /*post*/ ctx[16].locked);
     			this.first = tr;
     		},
     		m(target, anchor) {
     			insert(target, tr, anchor);
     			append(tr, th0);
     			if (if_block0) if_block0.m(th0, null);
-    			append(th0, t0);
-    			append(th0, t1);
-    			append(th0, t2);
-    			append(th0, t3);
-    			append(th0, t4);
-    			append(th0, t5);
-    			append(tr, t6);
+    			append(tr, t0);
     			mount_component(postrow, tr, null);
-    			append(tr, t7);
+    			append(tr, t1);
     			append(tr, th1);
     			if_block1.m(th1, null);
-    			append(tr, t8);
+    			append(tr, t2);
     			append(tr, th2);
     			if (if_block2) if_block2.m(th2, null);
-    			append(tr, t9);
+    			append(tr, t3);
     			current = true;
 
     			if (!mounted) {
@@ -2324,25 +2253,22 @@ var frontpage_engine = (function () {
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
 
-    			if (!/*post*/ ctx[18].locked) {
+    			if (!/*post*/ ctx[16].locked) {
     				if (if_block0) {
     					if_block0.p(ctx, dirty);
     				} else {
     					if_block0 = create_if_block_2$1(ctx);
     					if_block0.c();
-    					if_block0.m(th0, t0);
+    					if_block0.m(th0, null);
     				}
     			} else if (if_block0) {
     				if_block0.d(1);
     				if_block0 = null;
     			}
 
-    			if ((!current || dirty & /*$featuredPosts*/ 4) && t1_value !== (t1_value = /*index*/ ctx[20] + "")) set_data(t1, t1_value);
-    			if ((!current || dirty & /*$featuredPosts*/ 4) && t3_value !== (t3_value = /*post*/ ctx[18].id + "")) set_data(t3, t3_value);
-    			if ((!current || dirty & /*$featuredPosts*/ 4) && t5_value !== (t5_value = /*post*/ ctx[18].slot.display_order + "")) set_data(t5, t5_value);
     			const postrow_changes = {};
-    			if (dirty & /*$featuredPosts*/ 4) postrow_changes.post = /*post*/ ctx[18];
-    			if (dirty & /*$featuredPosts*/ 4) postrow_changes.index = /*index*/ ctx[20];
+    			if (dirty & /*$featuredPosts*/ 4) postrow_changes.post = /*post*/ ctx[16];
+    			if (dirty & /*$featuredPosts*/ 4) postrow_changes.index = /*index*/ ctx[18];
     			postrow.$set(postrow_changes);
 
     			if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block1) {
@@ -2357,7 +2283,7 @@ var frontpage_engine = (function () {
     				}
     			}
 
-    			if (/*post*/ ctx[18].analytics) {
+    			if (/*post*/ ctx[16].analytics) {
     				if (if_block2) {
     					if_block2.p(ctx, dirty);
     				} else {
@@ -2370,20 +2296,20 @@ var frontpage_engine = (function () {
     				if_block2 = null;
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 4 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[18].id)) {
+    			if (!current || dirty & /*$featuredPosts*/ 4 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[16].id)) {
     				attr(tr, "id", tr_id_value);
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 4 && tr_draggable_value !== (tr_draggable_value = !/*post*/ ctx[18].locked)) {
+    			if (!current || dirty & /*$featuredPosts*/ 4 && tr_draggable_value !== (tr_draggable_value = !/*post*/ ctx[16].locked)) {
     				attr(tr, "draggable", tr_draggable_value);
     			}
 
     			if (!current || dirty & /*hovering, $featuredPosts*/ 6) {
-    				toggle_class(tr, "is-active", /*hovering*/ ctx[1] === /*index*/ ctx[20]);
+    				toggle_class(tr, "is-active", /*hovering*/ ctx[1] === /*index*/ ctx[18]);
     			}
 
     			if (!current || dirty & /*$featuredPosts*/ 4) {
-    				toggle_class(tr, "is-locked", /*post*/ ctx[18].locked);
+    				toggle_class(tr, "is-locked", /*post*/ ctx[16].locked);
     			}
     		},
     		r() {
@@ -2438,7 +2364,7 @@ var frontpage_engine = (function () {
     	let th4;
     	let t11;
     	let th5;
-    	let t12;
+    	let t13;
     	let tbody;
     	let each_blocks = [];
     	let each_1_lookup = new Map();
@@ -2447,7 +2373,7 @@ var frontpage_engine = (function () {
     	let mounted;
     	let dispose;
     	let each_value = /*$featuredPosts*/ ctx[2];
-    	const get_key = ctx => /*post*/ ctx[18].id;
+    	const get_key = ctx => /*post*/ ctx[16].id;
 
     	for (let i = 0; i < each_value.length; i += 1) {
     		let child_ctx = get_each_context$1(ctx, each_value, i);
@@ -2481,7 +2407,8 @@ var frontpage_engine = (function () {
     			th4 = element("th");
     			t11 = space();
     			th5 = element("th");
-    			t12 = space();
+    			th5.textContent = "Hits";
+    			t13 = space();
     			tbody = element("tbody");
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -2527,7 +2454,7 @@ var frontpage_engine = (function () {
     			append(tr, th4);
     			append(tr, t11);
     			append(tr, th5);
-    			append(table, t12);
+    			append(table, t13);
     			append(table, tbody);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -2537,12 +2464,12 @@ var frontpage_engine = (function () {
     			current = true;
 
     			if (!mounted) {
-    				dispose = listen(input, "change", /*checkAll*/ ctx[9]);
+    				dispose = listen(input, "change", /*checkAll*/ ctx[8]);
     				mounted = true;
     			}
     		},
     		p(ctx, [dirty]) {
-    			if (dirty & /*$featuredPosts, hovering, dragStart, dragDrop, formatTime, doUnlock, doRemove, doLock, onCheckboxChange*/ 1534) {
+    			if (dirty & /*$featuredPosts, hovering, dragStart, dragDrop, formatTime, doUnlock, doRemove, doLock*/ 766) {
     				each_value = /*$featuredPosts*/ ctx[2];
     				group_outros();
     				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
@@ -2665,15 +2592,6 @@ var frontpage_engine = (function () {
     		dispatch("updated");
     	};
 
-    	const onCheckboxChange = (e, post) => {
-    		
-    	}; // if (e.target.checked) {
-    	//     checked_posts.push(post);
-    	// } else {
-    	//     checked_posts = checked_posts.filter(p => p.id !== post.id);
-
-    	// }
-    	// console.log("checked_posts", checked_posts);
     	const checkAll = e => {
     		if (e.target.checked) {
     			set_store_value(
@@ -2715,7 +2633,6 @@ var frontpage_engine = (function () {
     		featuredPosts.set($featuredPosts);
     	}
 
-    	const change_handler = (post, e) => onCheckboxChange();
     	const dragstart_handler = (index, e) => dragStart(e, index);
     	const drop_handler = (index, e) => dragDrop(e, index);
     	const dragenter_handler = index => $$invalidate(1, hovering = index);
@@ -2733,11 +2650,9 @@ var frontpage_engine = (function () {
     		doLock,
     		doUnlock,
     		doRemove,
-    		onCheckboxChange,
     		checkAll,
     		formatTime,
     		input_change_handler,
-    		change_handler,
     		dragstart_handler,
     		drop_handler,
     		dragenter_handler
@@ -3798,7 +3713,7 @@ var frontpage_engine = (function () {
     	append_styles(target, "svelte-4dra5q", ".unordered-posts-alert.svelte-4dra5q{background-color:rgb(213, 57, 57);color:white;border-radius:50%;width:30px;height:30px;text-align:center;top:0;right:0;margin:0px 10px;font-size:15px;line-height:30px;cursor:pointer}.action-bar.svelte-4dra5q{display:flex;justify-content:left;flex-direction:row}.button.svelte-4dra5q{margin-right:10px}");
     }
 
-    // (129:8) {#if $unorderedPosts.length > 0}
+    // (130:8) {#if $unorderedPosts.length > 0}
     function create_if_block_3(ctx) {
     	let div;
     	let t_value = /*$unorderedPosts*/ ctx[6].length + "";
@@ -3833,7 +3748,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (135:8) {#if show_group_actions}
+    // (136:8) {#if show_group_actions}
     function create_if_block_2(ctx) {
     	let select;
     	let option0;
@@ -3883,7 +3798,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (143:4) {#if show_unordered_modal}
+    // (144:4) {#if show_unordered_modal}
     function create_if_block_1(ctx) {
     	let modal;
     	let current;
@@ -3929,7 +3844,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (144:4) <Modal on:close="{() => show_unordered_modal = false}">
+    // (145:4) <Modal on:close="{() => show_unordered_modal = false}">
     function create_default_slot_1(ctx) {
     	let h2;
     	let t1;
@@ -3980,7 +3895,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (149:4) {#if show_modal}
+    // (150:4) {#if show_modal}
     function create_if_block(ctx) {
     	let modal;
     	let current;
@@ -4029,7 +3944,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (150:4) <Modal on:close="{() => show_modal = false}">
+    // (151:4) <Modal on:close="{() => show_modal = false}">
     function create_default_slot(ctx) {
     	let addposttable;
     	let current;
@@ -4068,7 +3983,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (151:8) 
+    // (152:8) 
     function create_header_slot(ctx) {
     	let h2;
 
@@ -4324,8 +4239,8 @@ var frontpage_engine = (function () {
     	};
 
     	const getAnalytics = async () => {
-    		
-    	}; // Todo: Implement
+    		set_store_value(analytics, $analytics = await wp_api_post("frontpage_engine_fetch_analytics", { id: frontpage_id }), $analytics);
+    	};
 
     	const getPosts = async () => {
     		const wp_posts = await wp_api_post("frontpage_engine_fetch_posts", { id: frontpage_id }, "getPosts");
@@ -4405,7 +4320,6 @@ var frontpage_engine = (function () {
     			await updatePosts();
     		}
 
-    		// await updatePosts();
     		$$invalidate(5, group_action = "0");
     	};
 

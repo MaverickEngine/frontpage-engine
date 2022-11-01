@@ -9,6 +9,7 @@ class FrontPageEngineAPI {
         add_action("wp_ajax_frontpage_engine_fetch_unordered_posts", [ $this, 'fetch_unordered_posts' ]);
         add_action("wp_ajax_frontpage_engine_fetch_slots", [ $this, 'fetch_slots' ]);
         add_action("wp_ajax_frontpage_engine_update_slot", [ $this, 'update_slot' ]);
+        add_action("wp_ajax_frontpage_engine_fetch_analytics", [ $this, 'fetch_analytics' ]);
     }
 
     private function get_frontpage($frontpage_id) {
@@ -69,16 +70,8 @@ class FrontPageEngineAPI {
         return $status;
     }
 
-    public function fetch_posts() {
-        if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
-            wp_die('You do not have sufficient permissions to access this page');
-        }
-        if (empty($_POST["id"])) {
-            wp_die('Missing ID');
-        }
-        
+    protected function _get_posts($frontpage_id) {
         global $wpdb;
-        $frontpage_id = sanitize_text_field($_POST["id"]);
         $frontpage = $this->get_frontpage($frontpage_id);
         $slot_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE frontpage_id = %d", $frontpage->id));
         $params = array(
@@ -97,7 +90,20 @@ class FrontPageEngineAPI {
                 'terms'    => $frontpage->featured_code,
             ),
         );
-        $posts = get_posts( $params );
+        return get_posts( $params );
+    }
+
+    public function fetch_posts() {
+        if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
+            wp_die('You do not have sufficient permissions to access this page');
+        }
+        if (empty($_POST["id"])) {
+            wp_die('Missing ID');
+        }
+        $frontpage_id = sanitize_text_field($_POST["id"]);
+        $posts = $this->_get_posts($frontpage_id);
+        // Get analytics
+        // $analytics = $this->fetch_analytics($frontpage_id);
         print json_encode(array_map([$this, "map_post"], $posts));
         wp_die();
     }
@@ -233,6 +239,58 @@ class FrontPageEngineAPI {
             array('id' => $slot_id)
         );
         print json_encode(array("success" => true));
+        wp_die();
+    }
+
+    private function get_revengine_content_promoter($endpoint) {
+        try {
+            $url = get_option("revengine_content_promoter_api_url") . $endpoint;
+            // print_r($url);
+            $response = file_get_contents($url);
+            return json_decode($response);
+        } catch(Exception $e) {
+            trigger_error("Unable to access RevEngine Content API", E_WARNING);
+            return [];
+        }
+    }
+
+    protected function _fetch_analytics($frontpage_id) {
+        // $frontpage = $this->get_frontpage($frontpage_id);
+        $posts = $this->_get_posts($frontpage_id);
+        // print_r($posts);
+        // die();
+        $ids = array_map(function($post) {
+            return "post_ids[]=" . $post->ID;
+        }, $posts);
+        // print_r($ids);
+        $qs_ids = implode("&", $ids);
+        // print_r($qs_ids);
+        $content = $this->get_revengine_content_promoter("/analytics/posts?" . $qs_ids);
+        $result = [];
+        foreach($posts as $post) {
+            $post_id = $post->ID;
+            $hits = 0;
+            foreach($content as $item) {
+                if ($item->post_id == $post_id) {
+                    $hits = $item->hits;
+                    break;
+                }
+            }
+            $result[] = array(
+                "post_id" => $post_id,
+                "hits" => $hits,
+            );
+        }
+        return $result;
+    }
+
+    public function fetch_analytics() {
+        if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
+            wp_die('You do not have sufficient permissions to access this page!');
+        }
+        $frontpage_id = sanitize_text_field( $_POST["id"] );
+        $content = $this->_fetch_analytics($frontpage_id);
+        print json_encode($content);
         wp_die();
     }
 }

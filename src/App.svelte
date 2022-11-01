@@ -46,8 +46,10 @@
     };
 
     const getAnalytics = async() => {
-        // Todo: Implement
-    }
+        $analytics = await wp_api_post("frontpage_engine_fetch_analytics", {
+            id: frontpage_id,
+        });
+    };
 
     const getPosts = async () => {
         const wp_posts = await wp_api_post("frontpage_engine_fetch_posts", {
@@ -113,7 +115,6 @@
             // console.log(posts);
             await updatePosts();
         }
-        // await updatePosts();
         group_action = "0";
     }
 

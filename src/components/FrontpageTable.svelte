@@ -80,15 +80,6 @@
         dispatch("updated");
     }
 
-    const onCheckboxChange = (e, post) => {
-        // if (e.target.checked) {
-        //     checked_posts.push(post);
-        // } else {
-        //     checked_posts = checked_posts.filter(p => p.id !== post.id);
-        // }
-        // console.log("checked_posts", checked_posts);
-    }
-
     const checkAll = (e) => {
         if (e.target.checked) {
             $featuredPosts = $featuredPosts.map(p => {
@@ -130,7 +121,7 @@
             <th scope="col" class="manage-column">Author</th>
             <th scope="col" class="manage-column">Published</th>
             <th scope="col" class="manage-column"></th>
-            <th scope="col" class="manage-column"></th>
+            <th scope="col" class="manage-column">Hits</th>
         </tr>
     </thead>
     <tbody>
@@ -149,11 +140,8 @@
             <th scope="row" class="check-column">
                 {#if (!post.locked)}
                 <label class="screen-reader-text" for="cb-select-1">Select</label>
-                <input class="cb-select-1" type="checkbox" bind:checked={post.checked} on:change={e => onCheckboxChange(e, post)} />
+                <input class="cb-select-1" type="checkbox" bind:checked={post.checked} />
                 {/if}
-                {index}
-                {post.id}
-                {post.slot.display_order}
             </th>
             <PostRow 
                 post={post} 
@@ -175,15 +163,6 @@
                 {#if post.analytics}
                     <div class="analytics-hits">
                         {post.analytics.hits}
-                    </div>
-                    <div class="analytics-depth">
-                        {post.analytics.page_depth}
-                    </div>
-                    <div class="analytics-time_on_page">
-                        {post.analytics.time_on_page}
-                    </div>
-                    <div class="analytics-attention">
-                        {post.analytics.hits * post.analytics.time_on_page}
                     </div>
                 {/if}
             </th>
