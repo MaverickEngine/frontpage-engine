@@ -48,7 +48,7 @@
                     <td>
                         <?php
                             $post_types = get_post_types(['public' => true], 'objects');
-                            $selected_post_types = get_option('frontpageengine_frontpage_post_types');
+                            $selected_post_types = get_option('frontpageengine_frontpage_post_types', []);
                             foreach($post_types as $pt) {
                                 $selected = in_array($pt->name, $selected_post_types) ? 'checked' : '';
                                 echo '<input type="checkbox" name="frontpageengine_frontpage_post_types[]" value="' . esc_attr($pt->name) . '" ' . esc_attr($selected) . ' /> ' . esc_html($pt->label) . '<br />';
@@ -58,7 +58,7 @@
                 </tr>
                 <tr>
                     <th scope="row">
-                        <label for="frontpageengine_frontpage_post_types"><?php _e( 'Automate slots?', 'frontpageengine' ); ?></label>
+                        <label for="frontpageengine_frontpage_automate"><?php _e( 'Automate slots?', 'frontpageengine' ); ?></label>
                     </th>
                     <td>
                         <input type="checkbox" name="frontpageengine_frontpage_automate" id="frontpageengine_frontpage_automate" value="1" />
