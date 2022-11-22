@@ -18,13 +18,12 @@ class FrontPageEngineDB {
             post_types varchar(255) NOT NULL,
             display_order tinyint(3) NOT NULL,
             PRIMARY KEY  (id),
-            UNIQUE KEY ordering_code (code),
-            UNIQUE KEY featured_code (code),
+            UNIQUE KEY ordering_code (ordering_code),
+            UNIQUE KEY featured_code (featured_code),
             UNIQUE KEY name (name),
             INDEX display_order (display_order)
         ) $charset_collate;";
         dbDelta( $sql );
-
         $table_name = $wpdb->prefix . 'frontpage_engine_frontpage_slots';
         $sql = "CREATE TABLE $table_name (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
