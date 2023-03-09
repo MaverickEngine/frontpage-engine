@@ -3713,7 +3713,7 @@ var frontpage_engine = (function () {
     	append_styles(target, "svelte-4dra5q", ".unordered-posts-alert.svelte-4dra5q{background-color:rgb(213, 57, 57);color:white;border-radius:50%;width:30px;height:30px;text-align:center;top:0;right:0;margin:0px 10px;font-size:15px;line-height:30px;cursor:pointer}.action-bar.svelte-4dra5q{display:flex;justify-content:left;flex-direction:row}.button.svelte-4dra5q{margin-right:10px}");
     }
 
-    // (130:8) {#if $unorderedPosts.length > 0}
+    // (131:8) {#if $unorderedPosts.length > 0}
     function create_if_block_3(ctx) {
     	let div;
     	let t_value = /*$unorderedPosts*/ ctx[6].length + "";
@@ -3748,7 +3748,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (136:8) {#if show_group_actions}
+    // (137:8) {#if show_group_actions}
     function create_if_block_2(ctx) {
     	let select;
     	let option0;
@@ -3798,7 +3798,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (144:4) {#if show_unordered_modal}
+    // (145:4) {#if show_unordered_modal}
     function create_if_block_1(ctx) {
     	let modal;
     	let current;
@@ -3844,7 +3844,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (145:4) <Modal on:close="{() => show_unordered_modal = false}">
+    // (146:4) <Modal on:close="{() => show_unordered_modal = false}">
     function create_default_slot_1(ctx) {
     	let h2;
     	let t1;
@@ -3895,7 +3895,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (150:4) {#if show_modal}
+    // (151:4) {#if show_modal}
     function create_if_block(ctx) {
     	let modal;
     	let current;
@@ -3944,7 +3944,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (151:4) <Modal on:close="{() => show_modal = false}">
+    // (152:4) <Modal on:close="{() => show_modal = false}">
     function create_default_slot(ctx) {
     	let addposttable;
     	let current;
@@ -3983,7 +3983,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (152:8) 
+    // (153:8) 
     function create_header_slot(ctx) {
     	let h2;
 
@@ -4239,7 +4239,7 @@ var frontpage_engine = (function () {
     	};
 
     	const getAnalytics = async () => {
-    		set_store_value(analytics, $analytics = await wp_api_post("frontpage_engine_fetch_analytics", { id: frontpage_id }), $analytics);
+    		return true; // Dev
     	};
 
     	const getPosts = async () => {

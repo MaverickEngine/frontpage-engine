@@ -46,6 +46,7 @@
     };
 
     const getAnalytics = async() => {
+        return true; // Dev
         $analytics = await wp_api_post("frontpage_engine_fetch_analytics", {
             id: frontpage_id,
         });

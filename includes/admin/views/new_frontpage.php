@@ -48,6 +48,10 @@
                     <td>
                         <?php
                             $post_types = get_post_types(['public' => true], 'objects');
+                            // Sort by name
+                            usort($post_types, function($a, $b) {
+                                return strcmp($a->labels->name, $b->labels->name);
+                            });
                             $selected_post_types = get_option('frontpageengine_frontpage_post_types', []);
                             foreach($post_types as $pt) {
                                 $selected = in_array($pt->name, $selected_post_types) ? 'checked' : '';

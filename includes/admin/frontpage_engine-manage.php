@@ -79,7 +79,10 @@ class FrontpageEngineAdminSettings {
             'post_types' => sanitize_text_field(join(",", $_POST['frontpageengine_frontpage_post_types'])),
         ];
         if ($new) {
-            $wpdb->insert($table_name, $data);
+            $wpdb->insert($table_name, $data, ['%s', '%s', '%s', '%s']);
+            if ($wpdb->last_error) {
+                wp_die(esc_attr($wpdb->last_error));
+            }
             $id = $wpdb->insert_id;
         } else {
             if (!isset($_GET['frontpage_id'])) {
@@ -87,6 +90,9 @@ class FrontpageEngineAdminSettings {
             }
             $id = intval($_GET['frontpage_id']);
             $wpdb->update($table_name, $data, ['id' => $id]);
+            if ($wpdb->last_error) {
+                wp_die(esc_attr($wpdb->last_error));
+            }
         }
         if (isset($_POST['frontpageengine_frontpage_slots'])) {
             $table_name = $wpdb->prefix . 'frontpage_engine_frontpage_slots';
@@ -94,16 +100,23 @@ class FrontpageEngineAdminSettings {
             $slots = intval($_POST['frontpageengine_frontpage_slots']);
             if (isset($_POST['id'])) {
                 $wpdb->delete($table_name, ['frontpage_id' => intval($_POST['id'])]);
+                if ($wpdb->last_error) {
+                    wp_die(esc_attr($wpdb->last_error));
+                }
             }
             $nf = new NumberFormatter("EN_US", NumberFormatter::ORDINAL);
             for ($i = 0; $i < $slots; $i++) {
                 $wpdb->insert($table_name, [
                     'frontpage_id' => $id,
                     'automate' => isset($_POST['frontpageengine_frontpage_automate']) ? 1 : 0,
-                    'types' => implode(',', $post_types),
+                    'post_types' => implode(',', $post_types),
                     'display_order' => $i,
                     'name' => "{$nf->format($i + 1)} Position",
                 ]);
+                // Check for errors
+                if ($wpdb->last_error) {
+                    wp_die(esc_attr($wpdb->last_error));
+                }
             }
         }
         wp_redirect(admin_url( 'admin.php?page=frontpageengine_manage' ));
