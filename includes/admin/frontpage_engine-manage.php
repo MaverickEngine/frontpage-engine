@@ -45,7 +45,8 @@ class FrontpageEngineAdminSettings {
     public function new_frontpage() {
         if (isset($_POST['frontpageengine_frontpage'])) {
             if (wp_verify_nonce( $_POST['frontpageengine_frontpage'], 'new' )) {
-                $this->save_frontpage(true);
+                $id = $this->save_frontpage(true);
+                $this->display_edit($id, 'Front Page Created');
             } else {
                 wp_die('You do not have sufficient permissions to access this page.');
             }
@@ -119,8 +120,7 @@ class FrontpageEngineAdminSettings {
                 }
             }
         }
-        wp_redirect(admin_url( 'admin.php?page=frontpageengine_manage' ));
-        exit;
+        return $id;
     }
 
     // TODO: A confirmation page
@@ -164,6 +164,16 @@ class FrontpageEngineAdminSettings {
         require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/manage_slots.php';
     }
 
+    protected function display_edit($id, $message = null) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'frontpage_engine_frontpages';
+        $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE id = %d", intval($id)));
+        if (!empty($message)) {
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($message) . '</p></div>';
+        }
+        require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/edit_frontpage.php';
+    }
+
     public function edit_frontpage() {
         if (!check_admin_referer( 'edit' )) {
             wp_die('You do not have sufficient permissions to access this page man.');
@@ -173,7 +183,8 @@ class FrontpageEngineAdminSettings {
         }
         if (isset($_POST['frontpageengine_frontpage'])) {
             if (wp_verify_nonce( $_POST['frontpageengine_frontpage'], 'edit' )) {
-                $this->save_frontpage(false);
+                $id = $this->save_frontpage(false);
+                $this->display_edit($id, 'Front Page Saved');
             } else {
                 wp_die('You do not have sufficient permissions to access this page bro.');
             }
