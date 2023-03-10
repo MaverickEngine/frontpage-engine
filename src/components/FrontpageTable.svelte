@@ -52,9 +52,12 @@
         hovering = null
     }
 
-    const doLock = async (post) => {
-        const day = new Date().getTime() + 1000 * 60 * 60 * 24;
-        post.slot.lock_until = new Date(day);
+    const doLock = async (post, date) => {
+        let lock_until = new Date().getTime() + 1000 * 60 * 60 * 24;
+        if (date) {
+            lock_until = new Date(date).getTime();
+        }
+        post.slot.lock_until = new Date(lock_until);
         post.locked = true;
         $featuredPosts = $featuredPosts.map(p => p.id === post.id ? post : p);
         console.log("doLock", post);
@@ -62,6 +65,7 @@
             id: post.slot.id,
             lock_until: formatTimeSql(post.slot.lock_until),
         });
+        dispatch("updated");
     }
 
     const doUnlock = async (post) => {
@@ -73,6 +77,7 @@
             id: post.slot.id,
             lock_until: null,
         });
+        dispatch("updated");
     }
 
     const doRemove = async (post) => {

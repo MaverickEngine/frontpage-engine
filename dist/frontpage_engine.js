@@ -1981,7 +1981,7 @@ var frontpage_engine = (function () {
     	return child_ctx;
     }
 
-    // (141:16) {#if (!post.locked)}
+    // (146:16) {#if (!post.locked)}
     function create_if_block_2$1(ctx) {
     	let label;
     	let t1;
@@ -2032,7 +2032,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (155:16) {:else}
+    // (160:16) {:else}
     function create_else_block(ctx) {
     	let span0;
     	let t;
@@ -2079,7 +2079,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (151:16) {#if (post.locked)}
+    // (156:16) {#if (post.locked)}
     function create_if_block_1$1(ctx) {
     	let span;
     	let t0;
@@ -2122,7 +2122,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (163:16) {#if post.analytics}
+    // (168:16) {#if post.analytics}
     function create_if_block$1(ctx) {
     	let div;
     	let t_value = /*post*/ ctx[16].analytics.hits + "";
@@ -2147,7 +2147,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (128:8) {#each $featuredPosts as post, index (post.id)}
+    // (133:8) {#each $featuredPosts as post, index (post.id)}
     function create_each_block$1(key_1, ctx) {
     	let tr;
     	let th0;
@@ -2566,9 +2566,14 @@ var frontpage_engine = (function () {
     		$$invalidate(1, hovering = null);
     	};
 
-    	const doLock = async post => {
-    		const day = new Date().getTime() + 1000 * 60 * 60 * 24;
-    		post.slot.lock_until = new Date(day);
+    	const doLock = async (post, date) => {
+    		let lock_until = new Date().getTime() + 1000 * 60 * 60 * 24;
+
+    		if (date) {
+    			lock_until = new Date(date).getTime();
+    		}
+
+    		post.slot.lock_until = new Date(lock_until);
     		post.locked = true;
     		set_store_value(featuredPosts, $featuredPosts = $featuredPosts.map(p => p.id === post.id ? post : p), $featuredPosts);
     		console.log("doLock", post);
@@ -2577,6 +2582,8 @@ var frontpage_engine = (function () {
     			id: post.slot.id,
     			lock_until: formatTimeSql(post.slot.lock_until)
     		});
+
+    		dispatch("updated");
     	};
 
     	const doUnlock = async post => {
@@ -2585,6 +2592,7 @@ var frontpage_engine = (function () {
     		set_store_value(featuredPosts, $featuredPosts = $featuredPosts.map(p => p.id === post.id ? post : p), $featuredPosts);
     		console.log("doUnlock", post);
     		await wp_api_post("frontpage_engine_update_slot", { id: post.slot.id, lock_until: null });
+    		dispatch("updated");
     	};
 
     	const doRemove = async post => {
@@ -3713,7 +3721,7 @@ var frontpage_engine = (function () {
     	append_styles(target, "svelte-4dra5q", ".unordered-posts-alert.svelte-4dra5q{background-color:rgb(213, 57, 57);color:white;border-radius:50%;width:30px;height:30px;text-align:center;top:0;right:0;margin:0px 10px;font-size:15px;line-height:30px;cursor:pointer}.action-bar.svelte-4dra5q{display:flex;justify-content:left;flex-direction:row}.button.svelte-4dra5q{margin-right:10px}");
     }
 
-    // (131:8) {#if $unorderedPosts.length > 0}
+    // (134:8) {#if $unorderedPosts.length > 0}
     function create_if_block_3(ctx) {
     	let div;
     	let t_value = /*$unorderedPosts*/ ctx[6].length + "";
@@ -3748,7 +3756,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (137:8) {#if show_group_actions}
+    // (140:8) {#if show_group_actions}
     function create_if_block_2(ctx) {
     	let select;
     	let option0;
@@ -3798,7 +3806,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (145:4) {#if show_unordered_modal}
+    // (148:4) {#if show_unordered_modal}
     function create_if_block_1(ctx) {
     	let modal;
     	let current;
@@ -3844,7 +3852,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (146:4) <Modal on:close="{() => show_unordered_modal = false}">
+    // (149:4) <Modal on:close="{() => show_unordered_modal = false}">
     function create_default_slot_1(ctx) {
     	let h2;
     	let t1;
@@ -3895,7 +3903,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (151:4) {#if show_modal}
+    // (154:4) {#if show_modal}
     function create_if_block(ctx) {
     	let modal;
     	let current;
@@ -3944,7 +3952,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (152:4) <Modal on:close="{() => show_modal = false}">
+    // (155:4) <Modal on:close="{() => show_modal = false}">
     function create_default_slot(ctx) {
     	let addposttable;
     	let current;
@@ -3983,7 +3991,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (153:8) 
+    // (156:8) 
     function create_header_slot(ctx) {
     	let h2;
 
@@ -4219,14 +4227,17 @@ var frontpage_engine = (function () {
     		socket.on("frontpage_updated", message => {
     			if (uuid === message.uuid) return;
     			getPosts();
+    			getSlots();
     		});
 
     		await getSlots();
     		await getPosts();
     		await getUnorderedPosts();
     		await getAnalytics();
-    		setInterval(getUnorderedPosts, 60000);
-    		setInterval(getAnalytics, 60000);
+    		setInterval(getUnorderedPosts, 60000); // Check for new posts every minute
+    		setInterval(getAnalytics, 60000); // Check analystics every minute
+    		setInterval(getSlots, 600000); // Check slots every 10 minutes
+    		setInterval(getPosts, 600000); // Check posts every 10 minutes
     	});
 
     	onDestroy(() => {
@@ -4269,7 +4280,7 @@ var frontpage_engine = (function () {
     	};
 
     	const updated = async () => {
-    		// console.log("updated");
+    		console.log("updated");
     		await updatePosts();
 
     		socket.sendMessage({

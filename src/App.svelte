@@ -25,13 +25,16 @@
         socket.on("frontpage_updated", message => {
             if (uuid === message.uuid) return;
             getPosts();
+            getSlots();
         });
         await getSlots();
         await getPosts();
         await getUnorderedPosts();
         await getAnalytics();
-        setInterval(getUnorderedPosts, 60000);
-        setInterval(getAnalytics, 60000);
+        setInterval(getUnorderedPosts, 60000); // Check for new posts every minute
+        setInterval(getAnalytics, 60000); // Check analystics every minute
+        setInterval(getSlots, 600000); // Check slots every 10 minutes
+        setInterval(getPosts, 600000); // Check posts every 10 minutes
     });
 
     onDestroy(() => {
@@ -78,7 +81,7 @@
     };
 
     const updated = async () => {
-        // console.log("updated");
+        console.log("updated");
         await updatePosts();
         socket.sendMessage({ name: "frontpage_updated", message: "Updated front page", uuid });
     }

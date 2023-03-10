@@ -193,6 +193,19 @@ class FrontPageEngineAPI {
         return $data;
     }
 
+    protected function _map_slots($slots) {
+        foreach ($slots as $slot) {
+            if ($slot->lock_until) {
+                $lock_until_timestamp = strtotime($slot->lock_until);
+                $now = time();
+                if ($lock_until_timestamp < $now) {
+                    $slot->lock_until = null;
+                }
+            }
+        }
+        return $slots;
+    }
+
     public function fetch_slots() {
         if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
             wp_die('You do not have sufficient permissions to access this page!');
@@ -203,6 +216,7 @@ class FrontPageEngineAPI {
         $frontpage_id = sanitize_text_field($_POST["id"]);
         global $wpdb;
         $slots = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE frontpage_id = %d ORDER BY display_order ASC", $frontpage_id));
+        $slots = $this->_map_slots($slots);
         print json_encode($slots);
         wp_die();
     }
@@ -287,6 +301,9 @@ class FrontPageEngineAPI {
     public function fetch_analytics() {
         if (empty($_POST['nonce']) || ! wp_verify_nonce( sanitize_text_field($_POST['nonce']), 'frontpageengine-admin-nonce' ) ) {
             wp_die('You do not have sufficient permissions to access this page!');
+        }
+        if (empty($_POST["id"])) {
+            wp_die('Missing ID');
         }
         $frontpage_id = sanitize_text_field( $_POST["id"] );
         $content = $this->_fetch_analytics($frontpage_id);
