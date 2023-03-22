@@ -72,15 +72,19 @@ class FrontpageEngineAdminSettings {
         if (!isset($_POST['frontpageengine_frontpage_post_types'])) {
             wp_die('Post Types required');
         }
+        if (!isset($_POST['frontpageengine_frontpage_number_of_slots'])) {
+            wp_die('Number of slots required');
+        }
         $table_name = $wpdb->prefix . 'frontpage_engine_frontpages';
         $data = [
             'name' => sanitize_text_field($_POST['frontpageengine_frontpage_name']),
             'ordering_code' => sanitize_text_field($_POST['frontpageengine_frontpage_ordering_code']),
             'featured_code' => sanitize_text_field($_POST['frontpageengine_frontpage_featured_code']),
             'post_types' => sanitize_text_field(join(",", $_POST['frontpageengine_frontpage_post_types'])),
+            'number_of_slots' => intval($_POST['frontpageengine_frontpage_number_of_slots'])
         ];
         if ($new) {
-            $wpdb->insert($table_name, $data, ['%s', '%s', '%s', '%s']);
+            $wpdb->insert($table_name, $data, ['%s', '%s', '%s', '%s', '%d']);
             if ($wpdb->last_error) {
                 wp_die(esc_attr($wpdb->last_error));
             }
@@ -95,18 +99,23 @@ class FrontpageEngineAdminSettings {
                 wp_die(esc_attr($wpdb->last_error));
             }
         }
-        if (isset($_POST['frontpageengine_frontpage_slots'])) {
+        if (isset($_POST['frontpageengine_frontpage_number_of_slots'])) {
             $table_name = $wpdb->prefix . 'frontpage_engine_frontpage_slots';
             $post_types = isset($_POST['frontpageengine_frontpage_post_types']) ? $_POST['frontpageengine_frontpage_post_types'] : [];
-            $slots = intval($_POST['frontpageengine_frontpage_slots']);
-            if (isset($_POST['id'])) {
-                $wpdb->delete($table_name, ['frontpage_id' => intval($_POST['id'])]);
-                if ($wpdb->last_error) {
-                    wp_die(esc_attr($wpdb->last_error));
+            $number_of_slots = intval($_POST['frontpageengine_frontpage_number_of_slots']);
+            $start_count = 0;
+            if (isset($_GET['frontpage_id']) && !$new) {
+                // Ensure we don't have too many (or too few) number of slots
+                $slots = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE frontpage_id = %d ORDER BY display_order DESC", intval($_GET["frontpage_id"])));
+                if (count($slots) > $number_of_slots) {
+                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE frontpage_id = %d ORDER BY display_order DESC LIMIT %d", intval($_GET["frontpage_id"]), count($slots) - $number_of_slots));
+                    $start_count = $number_of_slots;
+                } else {
+                    $start_count = count($slots);
                 }
             }
             $nf = new NumberFormatter("EN_US", NumberFormatter::ORDINAL);
-            for ($i = 0; $i < $slots; $i++) {
+            for ($i = $start_count; $i < $number_of_slots; $i++) {
                 $wpdb->insert($table_name, [
                     'frontpage_id' => $id,
                     'automate' => isset($_POST['frontpageengine_frontpage_automate']) ? 1 : 0,

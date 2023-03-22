@@ -35,6 +35,14 @@
                 </tr>
                 <tr>
                     <th scope="row">
+                        <label for="frontpageengine_frontpage_number_of_slots"><?php _e( 'Number of slots', 'frontpageengine' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" name="frontpageengine_frontpage_number_of_slots" id="frontpageengine_frontpage_number_of_slots" value="<?php print esc_attr($frontpage->number_of_slots) ?>" min="1" step="1" />
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
                         <label for="frontpageengine_frontpage_post_types"><?php _e( 'Post types', 'frontpageengine' ); ?></label>
                     </th>
                     <td>
