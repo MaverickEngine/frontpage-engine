@@ -2,8 +2,8 @@
 
 class FrontPageEngineDB {
     public function setup() {
-        $frontpage_engine_db_version = get_option("frontpage_engine_db_version", 0 );
-        if ((string) $frontpage_engine_db_version == (string) FRONTPAGEENGINE_VERSION) {
+        $frontpage_engine_version = get_option("frontpage_engine_version", 0 );
+        if ((string) $frontpage_engine_version == (string) FRONTPAGEENGINE_VERSION) {
             return;
         }
         global $wpdb;
@@ -17,6 +17,7 @@ class FrontPageEngineDB {
             featured_code varchar(100) NOT NULL,
             post_types varchar(255) NOT NULL,
             display_order tinyint(3) NOT NULL,
+            number_of_slots smallint NOT NULL,
             PRIMARY KEY  (id),
             UNIQUE KEY ordering_code (ordering_code),
             UNIQUE KEY featured_code (featured_code),
@@ -32,16 +33,17 @@ class FrontPageEngineDB {
             automate tinyint(3) NOT NULL,
             post_types varchar(255) NOT NULL DEFAULT '',
             display_order tinyint(3) NOT NULL,
-            post_id mediumint(9) NOT NULL,
+            post_id mediumint(9) DEFAULT NULL,
             lock_until datetime,
             PRIMARY KEY  (id),
             INDEX frontpage_id (frontpage_id),
             INDEX automate (automate),
             INDEX display_order (display_order),
             INDEX post_id (post_id),
-            INDEX lock_until (lock_until)
+            INDEX lock_until (lock_until),
+            UNIQUE KEY frontpage_id_display_order (frontpage_id,display_order)
         ) $charset_collate;";
         dbDelta( $sql );
-        update_option( "frontpage_engine_db_version", FRONTPAGEENGINE_VERSION );
+        update_option( "frontpage_engine_version", FRONTPAGEENGINE_VERSION );
     }
 }
