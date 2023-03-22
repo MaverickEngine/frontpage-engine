@@ -32,7 +32,7 @@ class FrontpageEngineAdmin {
             wp_die("Front Page not found");
         }
         // Load JS
-        wp_enqueue_script( 'frontpageengine-admin', plugin_dir_url( dirname( __FILE__ ) ) . '../dist/frontpage_engine.js', array( 'jquery' ), $this->version, false );
+        wp_enqueue_script( 'frontpageengine-admin', plugin_dir_url( dirname( __FILE__ ) ) . '../dist/frontpage_engine.js', array( 'jquery', 'wp-api' ), FRONTPAGEENGINE_VERSION, false );
         wp_localize_script('frontpageengine-admin', 'ajax_var', array(
             'url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('frontpageengine-admin-nonce'),
@@ -52,7 +52,7 @@ class FrontpageEngineAdmin {
                 wp_die("Front Page not found");
             }
             // Load JS
-            wp_enqueue_script( 'frontpageengine-admin', plugin_dir_url( dirname( __FILE__ ) ) . '../dist/frontpage_engine.js', array( 'jquery' ), $this->version, false );
+            wp_enqueue_script( 'frontpageengine-admin', plugin_dir_url( dirname( __FILE__ ) ) . '../dist/frontpage_engine.js', array( 'jquery', 'wp-api' ), FRONTPAGEENGINE_VERSION, false );
             $nonce = wp_create_nonce('frontpageengine-admin-nonce');
             wp_localize_script('frontpageengine-admin', 'ajax_var', array(
                 'url' => admin_url('admin-ajax.php'),
