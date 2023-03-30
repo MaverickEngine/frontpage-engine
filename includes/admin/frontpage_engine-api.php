@@ -236,20 +236,28 @@ class FrontPageEngineAPI {
         global $wpdb;
         $post_id = intval($post_id);
         $slots = $this->_get_slots($frontpage_id);
+        $fixed_slots = array_filter($slots, function($slot) {
+            return $slot->lock_until;
+        });
         $existing_post_ids = [];
         foreach($slots as $slot) {
             if (intval($slot->post_id) !== intval($post_id)) {
                 $existing_post_ids[] = $slot->post_id;
             }
         }
-        for($i = 0; $i < count($slots); $i++) {
-            // if ($slots[$i]->lock_until) {
-            //     continue;
-            // }
-            if (isset($existing_post_ids[$i])) {
-                $slots[$i]->post_id = $existing_post_ids[$i];
+        foreach($fixed_slots as $fixed_slot) {
+            $existing_post_ids = array_filter($existing_post_ids, function($post_id) use ($fixed_slot) {
+                return $post_id !== $fixed_slot->post_id;
+            });
+        }
+        foreach($fixed_slots as $fixed_slot) {
+            array_splice($existing_post_ids, $fixed_slot->display_order, 0, $fixed_slot->post_id);
+        }
+        foreach($slots as $slot) {
+            if (count($existing_post_ids) > 0) {
+                $slot->post_id = array_shift($existing_post_ids);
             } else {
-                $slots[$i]->post_id = null;
+                $slot->post_id = null;
             }
         }
         $sql = "UPDATE {$wpdb->prefix}frontpage_engine_frontpage_slots SET post_id = CASE ";
