@@ -6,8 +6,12 @@
     import { FrontPageEngineSocketServer } from './websocket.js';
     import { featuredPosts, featuredPostsDynamic, unorderedPosts, slots, analytics } from './stores.js';
     import { wp_api_post } from "./lib/wp_api.js";
+    import { apiGet, apiPost } from "./lib/ajax.ts";
     import { map_posts, applyLockedSlots, applySlots, applyAnalytics } from "./lib/posts.js";
     import { v4 as uuidv4 } from 'uuid';
+    import Message from "./components/Message.svelte";
+    import { createEventDispatcher } from 'svelte';
+	const dispatch = createEventDispatcher();
 
     export let frontpage_id;
     export let url;
@@ -16,37 +20,28 @@
     let updating = false;
     let show_group_actions = false;
     const uuid = uuidv4();
-    
+    let messages = [];
 
     let socket = null;
     onMount(async () => {
         socket = new FrontPageEngineSocketServer(url);
         socket.subscribe(`frontpage-${frontpage_id}`);
-        socket.on("frontpage_updated", message => {
+        socket.on("frontpage_updated", async message => {
             if (uuid === message.uuid) return;
-            getPosts();
-            getSlots();
+            await getPosts();
         });
-        await getSlots();
         await getPosts();
-        await getUnorderedPosts();
-        await getAnalytics();
-        setInterval(getUnorderedPosts, 60000); // Check for new posts every minute
-        setInterval(getAnalytics, 60000); // Check analystics every minute
-        setInterval(getSlots, 600000); // Check slots every 10 minutes
+        // await getUnorderedPosts();
+        // await getAnalytics();
+        // setInterval(getUnorderedPosts, 60000); // Check for new posts every minute
+        // setInterval(getAnalytics, 60000); // Check analystics every minute
+        // setInterval(getSlots, 600000); // Check slots every 10 minutes
         setInterval(getPosts, 600000); // Check posts every 10 minutes
     });
 
     onDestroy(() => {
         socket.close();
     });
-
-    const getSlots = async () => {
-        const result = await wp_api_post("frontpage_engine_fetch_slots", {
-            id: frontpage_id,
-        });
-        $slots = result;
-    };
 
     const getAnalytics = async() => {
         return true; // Dev
@@ -56,11 +51,11 @@
     };
 
     const getPosts = async () => {
-        const wp_posts = await wp_api_post("frontpage_engine_fetch_posts", {
+        const wp_posts = await apiGet("frontpageengine/v1/get_posts/" + frontpage_id, {
             id: frontpage_id,
         },
         "getPosts");
-        $featuredPosts = wp_posts.map(map_posts);
+        $featuredPosts = wp_posts.posts.map(map_posts);
         console.log("featuredPosts", $featuredPosts);
     }
 
@@ -71,19 +66,29 @@
         $unorderedPosts = wp_posts.map(map_posts);
     }
 
-    const updatePosts = async () => {
-        updating = true;
-        await wp_api_post("frontpage_engine_order_posts", {
-            id: frontpage_id,
-            "order[]": $featuredPosts.map(post => post.id),
-        }, "updatePosts");
-        updating = false;
-    };
-
     const updated = async () => {
-        console.log("updated");
-        await updatePosts();
         socket.sendMessage({ name: "frontpage_updated", message: "Updated front page", uuid });
+    }
+
+    async function onMove(e) {
+        try {
+            const from = e.detail.from;
+            const to = e.detail.to;
+            const post_id = e.detail.post_id;
+            // console.log("moved", from, to, post_id);
+            const wp_posts = await apiPost(`frontpageengine/v1/move_post/${frontpage_id}`, {
+                post_id,
+                from,
+                to,
+            }, "onMove");
+            // console.log(wp_posts);
+            $featuredPosts = wp_posts.posts.map(map_posts);
+        } catch (error) {
+            console.error(error);
+            messages.push({ type: "error", message: error.message || error });
+            messages = messages;
+            // console.log(messages);
+        }
     }
 
     const autoSort = async () => {
@@ -109,27 +114,37 @@
     const onGroupAction = async () => {
         console.log(group_action);
         if (group_action === "remove") {
-            const posts = $featuredPosts.filter(post => post.locked === false)
-            .filter(post => !post.checked || post.locked);
-            const lockedPosts = $featuredPosts.filter(post => post.locked === true);
-            for(let i = 0; i < lockedPosts.length; i++) {
-                posts.splice(Number(lockedPosts[i].slot.display_order), 0, lockedPosts[i]);
+            if (confirm("Are you sure you want to remove these posts?")) {
+                const posts = $featuredPosts.filter(post => post.checked);
+                for(let post of posts) {
+                    try {
+                        console.log(post);
+                        $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${post.slot.frontpage_id}`, {
+                            post_id: post.id,
+                        })).posts.map(map_posts);
+                    } catch (e) {
+                        console.error(e);
+                        alert("Error removing post: " + e.message);
+                    }
+                }
+                dispatch("updated");
             }
-            $featuredPosts = posts;
-            // console.log(posts);
-            await updatePosts();
         }
         group_action = "0";
     }
 
     $: if ($featuredPosts.length > 0) {
-        $featuredPosts = applySlots($featuredPosts, $slots);
-        $featuredPosts = applyAnalytics($featuredPosts, $analytics);
+        // $featuredPosts = applySlots($featuredPosts, $slots);
+        // $featuredPosts = applyAnalytics($featuredPosts, $analytics);
         show_group_actions = $featuredPosts.filter(post => post.checked).length > 0;
+        console.log(messages);
     }
 </script>
 
 <main>
+    {#each messages as message}
+        <Message type={message.type}>{message.message}</Message>
+    {/each}
     <div class="action-bar">
         {#if $unorderedPosts.length > 0}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -157,7 +172,7 @@
         <AddPostTable frontpage_id={frontpage_id} on:updated={updated} />
     </Modal>
     {/if}
-    <FrontpageTable frontpage_id={frontpage_id} on:updated={updated} updating={updating} />
+    <FrontpageTable frontpage_id={frontpage_id} on:updated={updated} updating={updating} on:moved={onMove} />
 </main>
 
 <style>

@@ -9,10 +9,12 @@ import css from 'rollup-plugin-css-only';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import json from '@rollup/plugin-json';
 import strip from '@rollup/plugin-strip';
+import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
 
 const production = !process.env.ROLLUP_WATCH;
 const test = process.env.NODE_ENV === 'test';
+const dev = process.env.NODE_ENV === 'development';
 
 function serve() {
 	let server;
@@ -47,6 +49,38 @@ if (test) {
 			json()
 		]
 	}
+} else if (dev) {
+	config = [
+		{
+			input: "src/frontpage_engine.js",
+			output: [
+				{
+					sourcemap: true,
+					format: 'iife',
+					name: "frontpage_engine",
+					file: "dist/frontpage_engine.js"
+				},
+			],
+			plugins: [
+				svelte({
+					emitCss: false,
+				}),
+				scss(),
+				css({ output: "frontpage_engine.css" }),
+				nodeResolve({
+					browser: true,
+				}),
+				replace({
+					'process.env.NODE_ENV': JSON.stringify('development'),
+					'process.env.VERSION': JSON.stringify(pkg.version),
+				}),
+				commonjs(),
+				typescript(),
+				json(),
+				!production && serve(),
+			]
+		},
+	];
 } else {
 	config = [
 		{
@@ -68,8 +102,12 @@ if (test) {
 				nodeResolve({
 					browser: true,
 				}),
+				replace({
+					'process.env.NODE_ENV': JSON.stringify('production'),
+					'process.env.VERSION': JSON.stringify(pkg.version),
+				}),
 				commonjs(),
-				// typescript(),
+				typescript(),
 				json(),
 				!production && serve(),
 				production && terser() && strip()

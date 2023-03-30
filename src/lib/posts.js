@@ -1,12 +1,14 @@
 export const map_posts = (post) => {
     return {
-        id: post.id,
+        id: post.id || post.ID || post.slot?.post_id,
         title: post.post_title,
         author: post.post_author,
         date_published: post.post_date,
         type: post.post_type,
         image: post.image,
         order: post.menu_order,
+        slot: post.slot,
+        locked: !!(post.slot?.lock_until),
     }
 };
 

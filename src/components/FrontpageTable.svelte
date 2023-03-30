@@ -1,10 +1,12 @@
 <script>
+    const mode = process.env.NODE_ENV;
     import { analytics, featuredPosts, slots } from '../stores.js';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import { flip } from 'svelte/animate';
     import { wp_api_post } from "../lib/wp_api.js";
-    import { applyLockedSlots } from '../lib/posts.js';
+    import { apiGet, apiPost } from "../lib/ajax.ts";
+    import { applyLockedSlots, map_posts } from '../lib/posts.js';
 
     import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
@@ -15,7 +17,7 @@
     export let updating = false;
 
     const dragStart = (e, i) => {
-        console.log("dragStart", i);
+        // console.log("dragStart", i);
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.dropEffect = 'move';
         const start = i;
@@ -23,66 +25,59 @@
     }
 
     const dragDrop = async (e, target) => {
-        // console.log("drop", target);
+        updating = true;
         e.dataTransfer.dropEffect = 'move'; 
         const start = parseInt(e.dataTransfer.getData("text/plain"));
-        if (start === target) return; // No change
-        const posts = $featuredPosts;
-        if (start < target) {
-            posts.splice(target + 1, 0, posts[start]);
-            posts.splice(start, 1);
-        } else { // Placing post above
-            posts.splice(target, 0, posts[start]);
-            posts.splice(start + 1, 1);
-        }
-        // Put all locked posts back in original position
-        for (let x = 0; x < posts.length; x++) {
-            if (posts[x].locked) {
-                const post = posts[x];
-                posts.splice(x, 1);
-                posts.splice(Number(post.slot.display_order), 0, post);
-            }
-        }
-        // // Fix up slots again
-        // for (let i = 0; i < posts.length; i++) {
-        //     posts[i].slot = $slots[i]
-        // }
-        featuredPosts.set(posts);
+        const post_id = $featuredPosts[start].id;
+        const from = $featuredPosts[start].slot.id;
+        const to = $featuredPosts[target].slot.id;
+        $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}`, {
+            post_id,
+            from,
+            to,
+        })).posts.map(map_posts);
         dispatch("updated");
         hovering = null
+        updating = false;
     }
 
     const doLock = async (post, date) => {
+        updating = true;
         let lock_until = new Date().getTime() + 1000 * 60 * 60 * 24;
         if (date) {
             lock_until = new Date(date).getTime();
         }
-        post.slot.lock_until = new Date(lock_until);
-        post.locked = true;
-        $featuredPosts = $featuredPosts.map(p => p.id === post.id ? post : p);
-        console.log("doLock", post);
-        await wp_api_post("frontpage_engine_update_slot", {
-            id: post.slot.id,
-            lock_until: formatTimeSql(post.slot.lock_until),
-        });
+        $featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${post.slot.frontpage_id}`, {
+            lock_until: formatTimeSql(new Date(lock_until)),
+            post_id: post.slot.post_id,
+        })).posts.map(map_posts);
         dispatch("updated");
+        updating = false;
     }
 
     const doUnlock = async (post) => {
-        post.slot.lock_until = null;
-        post.locked = false;
-        $featuredPosts = $featuredPosts.map(p => p.id === post.id ? post : p);
-        console.log("doUnlock", post);
-        await wp_api_post("frontpage_engine_update_slot", {
-            id: post.slot.id,
-            lock_until: null,
-        });
+        updating = true;
+        $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${post.slot.frontpage_id}`, {
+            post_id: post.slot.post_id,
+        })).posts.map(map_posts);
+        updating = false;
         dispatch("updated");
     }
 
     const doRemove = async (post) => {
-        $featuredPosts = applyLockedSlots($featuredPosts.filter(p => p.id !== post.id));
-        dispatch("updated");
+        if (confirm("Are you sure you want to remove this post from the frontpage?")) {
+            updating = true;
+            try {
+                $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${post.slot.frontpage_id}`, {
+                    post_id: post.id,
+                })).posts.map(map_posts);
+                dispatch("updated");
+            } catch (e) {
+                console.error(e);
+                alert("Error removing post: " + e.message);
+            }
+            updating = false;
+        }
     }
 
     const checkAll = (e) => {
@@ -122,11 +117,16 @@
                 <input class="" type="checkbox" on:change={checkAll} />
             </td>
             <th scope="col" class="column-header-image">Image</th>
+            {#if (mode === "development")}
+            <th scope="col" class="manage-column">Slot ID</th>
+            <th scope="col" class="manage-column">Post ID</th>
+            <th scope="col" class="manage-column">Display Order</th>
+            {/if}
             <th scope="col" class="column-header-title">Title</th>
             <th scope="col" class="manage-column">Author</th>
             <th scope="col" class="manage-column">Published</th>
             <th scope="col" class="manage-column"></th>
-            <th scope="col" class="manage-column">Hits</th>
+            <th scope="col" class="manage-column"></th>
         </tr>
     </thead>
     <tbody>
@@ -134,16 +134,16 @@
         <tr 
             id="post-{post.id}"
             animate:flip={{ duration: 600 }}
-            draggable={!(post.locked)}
+            draggable={((!post.locked) && (!!post.slot.post_id))}
             on:dragstart={e => dragStart(e, index)}
             on:drop|preventDefault={e => dragDrop(e, index)}
-            on:dragenter={() => hovering = index}
+            on:dragenter={() => hovering = (!post.locked && !!post.slot.post_id) && index}
             ondragover="return false"
             class:is-active={hovering === index}
             class:is-locked={post.locked}
         >
             <th scope="row" class="check-column">
-                {#if (!post.locked)}
+                {#if (!post.locked && !!post.slot.post_id)}
                 <label class="screen-reader-text" for="cb-select-1">Select</label>
                 <input class="cb-select-1" type="checkbox" bind:checked={post.checked} />
                 {/if}
@@ -153,22 +153,17 @@
                 index={index}
             />
             <th scope="row" class="lock-column">
-                {#if (post.locked)}
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <span class="dashicons dashicons-lock" on:click={doUnlock(post)}></span>
-                    {formatTime(post.slot.lock_until)}
-                {:else}
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <span class="dashicons dashicons-unlock" on:click={doLock(post)}></span>
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <span class="dashicons dashicons-trash" on:click={doRemove(post)}></span>
-                {/if}
-            </th>
-            <th scope="row" class="analytics-column">
-                {#if post.analytics}
-                    <div class="analytics-hits">
-                        {post.analytics.hits}
-                    </div>
+                {#if (!!post.slot.post_id)}
+                    {#if (post.locked)}
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <span class="dashicons dashicons-lock" on:click={doUnlock(post)}></span>
+                        {formatTime(post.slot.lock_until)}
+                    {:else}
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <span class="dashicons dashicons-unlock" on:click={doLock(post)}></span>
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <span class="dashicons dashicons-trash" on:click={doRemove(post)}></span>
+                    {/if}
                 {/if}
             </th>
         </tr>
