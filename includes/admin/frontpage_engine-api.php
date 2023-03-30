@@ -190,6 +190,12 @@ class FrontPageEngineAPI {
         $fixed_slots = array_filter($slots, function($slot) {
             return $slot->lock_until;
         });
+        $already_exists = !empty(array_filter($fixed_slots, function($slot) use ($post_id) {
+            return $slot->post_id == $post_id;
+        }));
+        if ($already_exists) {
+            throw new Exception("Post already exists in frontpage");
+        }
         $post_id_array = [];
         $x = 0;
         foreach($slots as $slot) {

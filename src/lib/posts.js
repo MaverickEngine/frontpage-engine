@@ -1,6 +1,6 @@
 export const map_posts = (post) => {
     return {
-        id: post.id || post.ID || post.slot?.post_id,
+        id: post.id || post.ID || post.slot?.post_id || `slot-${post.slot?.id}`,
         title: post.post_title,
         author: post.post_author,
         date_published: post.post_date,
