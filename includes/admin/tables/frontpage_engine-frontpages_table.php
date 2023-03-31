@@ -26,8 +26,6 @@ class FrontPageEngineFrontpagesTable extends WP_List_Table {
         // print_r($item);
         $page = isset($_REQUEST['page']) ? esc_attr($_REQUEST['page']) : 'frontpage_engine';
         $actions = array(
-            'manage' => sprintf('<a href="?page=%s&action=%s&frontpage_id=%s&_wpnonce=%s">Manage</a>', $page, 'manage', $item['id'], wp_create_nonce('manage')),
-            'slots' => sprintf('<a href="?page=%s&action=%s&frontpage_id=%s&_wpnonce=%s">Slots</a>', $page, 'slots', $item['id'], wp_create_nonce('slots')),
             'edit' => sprintf('<a href="?page=%s&action=%s&frontpage_id=%s&_wpnonce=%s">Edit</a>', $page, 'edit', $item['id'], wp_create_nonce('edit')),
             'delete' => sprintf('<a href="?page=%s&action=%s&frontpage_id=%s&_wpnonce=%s">Delete</a>', $page, 'delete', $item['id'], wp_create_nonce('delete')),
         );
@@ -44,30 +42,30 @@ class FrontPageEngineFrontpagesTable extends WP_List_Table {
         return $columns;
     }
 
-    function get_bulk_actions() {
-        $actions = array(
-            'delete' => 'Delete'
-        );
-        return $actions;
-    }
+    // function get_bulk_actions() {
+    //     $actions = array(
+    //         'delete' => 'Delete'
+    //     );
+    //     return $actions;
+    // }
 
-    function process_bulk_action() {
-        if ('delete' === $this->current_action()) {
-            $frontpages_json = get_option("frontpageengine_frontpages", '[{"name":"Main","code":"main","slots":10}]' );
-            $frontpages = json_decode($frontpages_json);
-            $new_frontpages = array();
-            foreach($frontpages as $frontpage) {
-                if ($frontpage->code != $_GET['frontpage']) {
-                    $new_frontpages[] = $frontpage;
-                }
-            }
-            update_option("frontpageengine_frontpages", json_encode($new_frontpages));
-        }
-    }
+    // function process_bulk_action() {
+    //     if ('delete' === $this->current_action()) {
+    //         $frontpages_json = get_option("frontpageengine_frontpages", '[{"name":"Main","code":"main","slots":10}]' );
+    //         $frontpages = json_decode($frontpages_json);
+    //         $new_frontpages = array();
+    //         foreach($frontpages as $frontpage) {
+    //             if ($frontpage->code != $_GET['frontpage']) {
+    //                 $new_frontpages[] = $frontpage;
+    //             }
+    //         }
+    //         update_option("frontpageengine_frontpages", json_encode($new_frontpages));
+    //     }
+    // }
 
     function prepare_items() {
         global $wpdb;
-        $this->process_bulk_action();
+        // $this->process_bulk_action();
         $frontpages = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages ORDER BY `display_order` DESC");
         // print_r($frontpages);
         $columns = $this->get_columns();
