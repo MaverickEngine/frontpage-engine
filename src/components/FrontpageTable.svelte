@@ -73,6 +73,23 @@
         updating = false;
     }
 
+    const chooseTime = (post) => {
+        const date = prompt("Enter a date and time to lock the post until (YYYY-MM-DD HH:MM)", formatTime(new Date(post.slot.lock_until)));
+        if (date) {
+            // Check date is valid
+            if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(date)) {
+                alert("Invalid date format");
+                return;
+            }
+            // Check date is in the future
+            if (new Date(date).getTime() < new Date().getTime()) {
+                alert("Date must be in the future");
+                return;
+            }
+            doLock(post, date);
+        }
+    }
+
     const doUnlock = async (post) => {
         updating = true;
         $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${post.slot.frontpage_id}`, {
@@ -114,7 +131,7 @@
 
     const formatTime = (time) => {
         const date = new Date(time);
-        return date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
+        return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0") + " " + date.getHours() + ":" + String(date.getMinutes()).padStart(2, "0");
     }
 
     const formatTimeSql = (time) => {
@@ -175,7 +192,7 @@
                     {#if (post.locked)}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <span class="dashicons dashicons-lock" on:click={doUnlock(post)}></span>
-                        {formatTime(post.slot.lock_until)}
+                        <span class="dot-underline" on:click={chooseTime(post)} on:keypress={chooseTime(post)}>{formatTime(post.slot.lock_until)}</span>
                     {:else}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <span class="dashicons dashicons-unlock" on:click={doLock(post)}></span>
@@ -214,5 +231,10 @@
 
     .column-header-title {
         width: 500px;
+    }
+
+    .dot-underline {
+        text-decoration: underline dotted;
+        cursor: pointer;
     }
 </style>
