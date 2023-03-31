@@ -2313,7 +2313,7 @@ var frontpage_engine = (function () {
     	return child_ctx;
     }
 
-    // (120:12) {#if (mode === "development")}
+    // (138:12) {#if (mode === "development")}
     function create_if_block_3$1(ctx) {
     	let th0;
     	let t1;
@@ -2355,7 +2355,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (146:16) {#if (!post.locked && !!post.slot.post_id)}
+    // (164:16) {#if (!post.locked && !!post.slot.post_id)}
     function create_if_block_2$1(ctx) {
     	let label;
     	let t1;
@@ -2406,7 +2406,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (156:16) {#if (!!post.slot.post_id)}
+    // (174:16) {#if (!!post.slot.post_id)}
     function create_if_block$2(ctx) {
     	let if_block_anchor;
 
@@ -2447,7 +2447,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (161:20) {:else}
+    // (179:20) {:else}
     function create_else_block(ctx) {
     	let span0;
     	let t;
@@ -2494,7 +2494,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (157:20) {#if (post.locked)}
+    // (175:20) {#if (post.locked)}
     function create_if_block_1$1(ctx) {
     	let span;
     	let t0;
@@ -2537,7 +2537,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (133:8) {#each $featuredPosts as post, index (post.id)}
+    // (151:8) {#each $featuredPosts as post, index (post.id)}
     function create_each_block$2(key_1, ctx) {
     	let tr;
     	let th0;
@@ -2898,16 +2898,39 @@ var frontpage_engine = (function () {
     	};
 
     	const dragDrop = async (e, target) => {
-    		$$invalidate(0, updating = true);
-    		e.dataTransfer.dropEffect = 'move';
-    		const start = parseInt(e.dataTransfer.getData("text/plain"));
-    		const post_id = $featuredPosts[start].id;
-    		const from = $featuredPosts[start].slot.id;
-    		const to = $featuredPosts[target].slot.id;
-    		set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}`, { post_id, from, to })).posts.map(map_posts), $featuredPosts);
-    		dispatch("updated");
-    		$$invalidate(1, hovering = null);
-    		$$invalidate(0, updating = false);
+    		try {
+    			$$invalidate(0, updating = true);
+    			e.dataTransfer.dropEffect = 'move';
+    			const start = parseInt(e.dataTransfer.getData("text/plain"));
+    			const post_id = $featuredPosts[start].id;
+    			const from = $featuredPosts[start].slot.id;
+    			const to = $featuredPosts[target].slot.id;
+
+    			if (!from || !to) {
+    				throw "From or to is missing";
+    			}
+
+    			if (from === to) {
+    				throw "From and to are the same";
+    			}
+
+    			if (!post_id) {
+    				throw "Post id is missing";
+    			}
+
+    			// if (!$featuredPosts[target].slot.post_id) {
+    			//     throw "Target slot is empty";
+    			// }
+    			set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}`, { post_id, from, to })).posts.map(map_posts), $featuredPosts);
+
+    			dispatch("updated");
+    			$$invalidate(1, hovering = null);
+    			$$invalidate(0, updating = false);
+    		} catch(e) {
+    			console.error(e);
+    			$$invalidate(1, hovering = null);
+    			$$invalidate(0, updating = false);
+    		}
     	};
 
     	const doLock = async (post, date) => {

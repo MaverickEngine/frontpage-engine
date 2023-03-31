@@ -25,20 +25,38 @@
     }
 
     const dragDrop = async (e, target) => {
-        updating = true;
-        e.dataTransfer.dropEffect = 'move'; 
-        const start = parseInt(e.dataTransfer.getData("text/plain"));
-        const post_id = $featuredPosts[start].id;
-        const from = $featuredPosts[start].slot.id;
-        const to = $featuredPosts[target].slot.id;
-        $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}`, {
-            post_id,
-            from,
-            to,
-        })).posts.map(map_posts);
-        dispatch("updated");
-        hovering = null
-        updating = false;
+        try {
+            updating = true;
+            e.dataTransfer.dropEffect = 'move'; 
+            const start = parseInt(e.dataTransfer.getData("text/plain"));
+            const post_id = $featuredPosts[start].id;
+            const from = $featuredPosts[start].slot.id;
+            const to = $featuredPosts[target].slot.id;
+            if (!from || !to) {
+                throw "From or to is missing";
+            }
+            if (from === to) {
+                throw "From and to are the same";
+            }
+            if (!post_id) {
+                throw "Post id is missing";
+            }
+            // if (!$featuredPosts[target].slot.post_id) {
+            //     throw "Target slot is empty";
+            // }
+            $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}`, {
+                post_id,
+                from,
+                to,
+            })).posts.map(map_posts);
+            dispatch("updated");
+            hovering = null
+            updating = false;
+        } catch (e) {
+            console.error(e);
+            hovering = null
+            updating = false;
+        }
     }
 
     const doLock = async (post, date) => {
