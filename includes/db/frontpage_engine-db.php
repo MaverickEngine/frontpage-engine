@@ -12,7 +12,7 @@ class FrontPageEngineDB {
         $table_name = $wpdb->prefix . 'frontpage_engine_frontpages';
         $sql = "CREATE TABLE $table_name (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
-            name tinytext NOT NULL,
+            name varchar(100) NOT NULL,
             ordering_code varchar(100) NOT NULL,
             featured_code varchar(100) NOT NULL,
             post_types varchar(255) NOT NULL,

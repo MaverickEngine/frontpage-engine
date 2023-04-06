@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const FRONTPAGEENGINE_VERSION = '0.0.12';
+const FRONTPAGEENGINE_VERSION = '0.0.14';
 $frontpageengine_menu_slug = "frontpage-engine-menu";
 
 require_once(plugin_dir_path( __FILE__ ).'includes/admin/tables/frontpage_engine-frontpages_table.php');
