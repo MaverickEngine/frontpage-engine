@@ -1,5 +1,7 @@
 <?php
 
+require_once("frontpage_engine-lib.php");
+
 class FrontpageEngineAdminSettings {
     public function __construct() {
         add_action('admin_menu', [ $this, 'manage_page' ]);
@@ -30,6 +32,9 @@ class FrontpageEngineAdminSettings {
                 break;
             case 'delete':
                 $this->delete_frontpage();
+                break;
+            case 'delete_confirm':
+                $this->delete_confirm();
                 break;
             case 'new':
                 $this->new_frontpage();
@@ -129,7 +134,20 @@ class FrontpageEngineAdminSettings {
                 }
             }
         }
+        if (isset($_POST['frontpageengine_frontpage_import_legacy'])) {
+            $this->import_legacy($id);
+        }
         return $id;
+    }
+
+    public function import_legacy(int $frontpage_id) {
+        $frontpagelib = new FrontPageEngineLib();
+        $posts = $frontpagelib->_get_featured_posts( $frontpage_id );
+        $slots = $frontpagelib->_get_slots($frontpage_id);
+        $i = 0;
+        foreach ($slots as $slot) {
+            $frontpagelib->_set_slot_post($slot->id, $posts[$i++]->ID);
+        }
     }
 
     // TODO: A confirmation page
@@ -141,12 +159,47 @@ class FrontpageEngineAdminSettings {
         if (!isset($_GET['frontpage_id'])) {
             wp_die('ID required');
         }
+        if (!isset($_POST['frontpageengine_delete_confirm'])) {
+            $this->delete_confirm();
+            exit;
+        }
+        if (!isset($_GET['frontpage_id'])) {
+            wp_die('ID required');
+        }
+        $id = intval($_GET['frontpage_id']);
+        $frontpagelib = new FrontPageEngineLib();
+        $frontpage = $frontpagelib->_get_frontpage($id);
+        if (!$frontpage) {
+            wp_die('Frontpage not found');
+        }
+        if (isset($_POST['frontpageengine_delete_confirm'])) {
+            if (empty($_POST["frontpageengine_frontpage_name"])) {
+                $this->delete_confirm('Name required');
+                exit;
+            }
+            if ($frontpage->name != $_POST["frontpageengine_frontpage_name"]) {
+                $this->delete_confirm('Name does not match');
+                exit;
+            }
+        }
         $table_name = $wpdb->prefix . 'frontpage_engine_frontpages';
-        $wpdb->delete($table_name, ['id' => intval($_GET['frontpage_id'])]);
+        $wpdb->delete($table_name, ['id' => $id]);
         $table_name = $wpdb->prefix . 'frontpage_engine_frontpage_slots';
-        $wpdb->delete($table_name, ['frontpage_id' => intval($_GET['frontpage_id'])]);
-        wp_redirect(admin_url( 'admin.php?page=frontpageengine_manage' ));
-        exit;
+        $wpdb->delete($table_name, ['frontpage_id' => $id]);
+        require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/delete_success.php';
+    }
+
+    public function delete_confirm($error = null) {
+        if (!check_admin_referer( 'delete' )) {
+            wp_die('You do not have sufficient permissions to access this page.');
+        }
+        if (!isset($_GET['frontpage_id'])) {
+            wp_die('ID required');
+        }
+        $frontpage_id = intval($_GET['frontpage_id']);
+        $frontpagelib = new FrontPageEngineLib();
+        $frontpage = $frontpagelib->_get_frontpage($frontpage_id);
+        require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/delete_confirm.php';
     }
 
     public function manage_frontpage() {

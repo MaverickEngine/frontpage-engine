@@ -35,10 +35,10 @@
                 </tr>
                 <tr>
                     <th scope="row">
-                        <label for="frontpageengine_frontpage_slots"><?php _e( 'Number of slots', 'frontpageengine' ); ?></label>
+                        <label for="frontpageengine_frontpage_number_of_slots"><?php _e( 'Number of slots', 'frontpageengine' ); ?></label>
                     </th>
                     <td>
-                        <input type="number" name="frontpageengine_frontpage_slots" id="frontpageengine_frontpage_slots" value="10" />
+                        <input type="number" name="frontpageengine_frontpage_number_of_slots" id="frontpageengine_frontpage_number_of_slots" value="10" />
                     </td>
                 </tr>
                 <tr>
@@ -66,6 +66,14 @@
                     </th>
                     <td>
                         <input type="checkbox" name="frontpageengine_frontpage_automate" id="frontpageengine_frontpage_automate" value="1" />
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="frontpageengine_frontpage_import_legacy"><?php _e( 'Import from legacy front page?', 'frontpageengine' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="checkbox" name="frontpageengine_frontpage_import_legacy" id="frontpageengine_frontpage_import_legacy" value="1" />
                     </td>
                 </tr>
             </tbody>
