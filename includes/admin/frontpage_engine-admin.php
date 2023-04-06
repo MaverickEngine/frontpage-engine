@@ -5,6 +5,7 @@ class FrontpageEngineAdmin {
     function __construct() {
         add_action('admin_init', [ $this, 'inlinePage'], 1);
         add_action('admin_menu', [ $this, 'menu' ]);
+        add_action('admin_init', [ $this, 'hideLegacyMenu'], 1);
     }
 
     function menu() {
@@ -63,6 +64,17 @@ class FrontpageEngineAdmin {
             require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/select_article_iframe.php';
             exit;
         }
+    }
+
+    public function hideLegacyMenu() {
+        global $submenu;
+        ?>
+        <style>
+            #toplevel_page_featured-flagged-post {
+                display: none;
+            }
+        </style>
+        <?php
     }
 
     private function get_frontpage() {

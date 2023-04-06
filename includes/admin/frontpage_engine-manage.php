@@ -150,7 +150,6 @@ class FrontpageEngineAdminSettings {
         }
     }
 
-    // TODO: A confirmation page
     public function delete_frontpage() {
         global $wpdb;
         if (!check_admin_referer( 'delete' )) {
