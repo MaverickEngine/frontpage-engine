@@ -2,13 +2,6 @@
     const mode = process.env.NODE_ENV;
     import AnalyticsGraph from "./AnalyticsGraph.svelte";
     export let post;
-    const fake_analytics = {
-        hits: [
-            100,
-            20,
-            50,            
-        ],
-    };
 </script>
 
 <td class="column-image">
@@ -28,7 +21,11 @@
 </td>
 <td class="column-author">{post.author}</td>
 <td class="column-published">{post.date_published}</td>
-<td class="column-analytics"><AnalyticsGraph analytics={fake_analytics}/></td>
+<td class="column-analytics">
+    {#if post.analytics?.hits_last_hour}
+    <AnalyticsGraph hits_last_hour={post.analytics.hits_last_hour}/>
+    {/if}
+</td>
 
 <style>
     .column-image {

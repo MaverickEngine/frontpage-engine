@@ -1,5 +1,7 @@
 <script lang="ts">
-    export let analytics;
+    import { totalHits } from '../stores.js';
+    import Pie from './Pie.svelte';
+    export let hits_last_hour;
     const colors = [
         "#003f5c",
         "#58508d",
@@ -7,29 +9,21 @@
         "#ff6361",
         "#ffa600",
     ];
-    const height = 80;
-    const max_hit = Math.max(...analytics.hits);
+    const height = 60;
 </script>
 
-{#if (analytics && analytics.hits)}
+{#if (hits_last_hour)}
 <div class="analytics-graph" style="height: {height}px;">
-    {#each analytics.hits as hit, i}
-        <div class="hit" style="height: {hit/max_hit * height}%; background-color: {colors[i]} "></div>
-    {/each}
+    <Pie size={height} percent={ hits_last_hour / $totalHits * 100 } />
+    { Number(hits_last_hour).toLocaleString() }
 </div>
 {/if}
 
 <style>
     .analytics-graph {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         justify-content: flex-start;
-        align-items: flex-end;
-    }
-
-    .hit {
-        width: 20px;
-        background-color: #000;
-        margin: 0 1px;
+        align-items: center;
     }
 </style>

@@ -4,10 +4,9 @@
     import AddPostTable from "./components/AddPostTable.svelte";
     import Modal from "./components/Modal.svelte";
     import { FrontPageEngineSocketServer } from './websocket.js';
-    import { featuredPosts, featuredPostsDynamic, unorderedPosts, slots, analytics } from './stores.js';
-    import { wp_api_post } from "./lib/wp_api.js";
+    import { featuredPosts, unorderedPosts, totalHits, dev } from './stores.js';
     import { apiGet, apiPost } from "./lib/ajax.ts";
-    import { map_posts, applyLockedSlots, applySlots, applyAnalytics } from "./lib/posts.js";
+    import { map_posts } from "./lib/posts.js";
     import { v4 as uuidv4 } from 'uuid';
     import Message from "./components/Message.svelte";
     import { createEventDispatcher } from 'svelte';
@@ -21,6 +20,7 @@
     let show_group_actions = false;
     const uuid = uuidv4();
     let messages = [];
+    $dev = false;
 
     let socket = null;
     onMount(async () => {
@@ -31,11 +31,7 @@
             await getPosts();
         });
         await getPosts();
-        // await getUnorderedPosts();
-        // await getAnalytics();
-        // setInterval(getUnorderedPosts, 60000); // Check for new posts every minute
-        // setInterval(getAnalytics, 60000); // Check analystics every minute
-        // setInterval(getSlots, 600000); // Check slots every 10 minutes
+        await getAnalytics();
         setInterval(getPosts, 600000); // Check posts every 10 minutes
     });
 
@@ -43,27 +39,16 @@
         socket.close();
     });
 
-    const getAnalytics = async() => {
-        return true; // Dev
-        $analytics = await wp_api_post("frontpage_engine_fetch_analytics", {
-            id: frontpage_id,
-        });
-    };
-
     const getPosts = async () => {
-        const wp_posts = await apiGet("frontpageengine/v1/get_posts/" + frontpage_id, {
-            id: frontpage_id,
-        },
-        "getPosts");
+        const wp_posts = await apiGet(`frontpageengine/v1/get_posts/${frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`);
         $featuredPosts = wp_posts.posts.map(map_posts);
+        $totalHits = $featuredPosts.filter(post => (post.analytics?.hits_last_hour)).reduce((a, b) => a + b.analytics.hits_last_hour, 0);
         console.log("featuredPosts", $featuredPosts);
     }
 
-    const getUnorderedPosts = async () => {
-        const wp_posts = await wp_api_post("frontpage_engine_fetch_unordered_posts", {
-            id: frontpage_id,
-        });
-        $unorderedPosts = wp_posts.map(map_posts);
+    const getAnalytics = async () => {
+        const analytics = await apiGet(`frontpageengine/v1/analytics/${frontpage_id}`);
+        console.log("analytics", analytics);
     }
 
     const updated = async () => {
@@ -92,22 +77,15 @@
     }
 
     const autoSort = async () => {
-        console.log("autoSort");
-        const posts = $featuredPosts.filter(post => post.locked === false);
-        const lockedPosts = $featuredPosts.filter(post => post.locked === true);
-        const no_analytics = posts.filter(post => !(post.analytics));
-        const with_analytics = posts.filter(post => (post.analytics));
-        with_analytics.sort((a, b) => {
-            return b.analytics.hits - a.analytics.hits;
-        });
-        const combined_posts = [...with_analytics, ...no_analytics];
-        
-        // Put all locked posts back in original position
-        for(let i = 0; i < lockedPosts.length; i++) {
-            combined_posts.splice(Number(lockedPosts[i].slot.display_order), 0, lockedPosts[i]);
+        try {
+            const wp_posts = await apiGet(`frontpageengine/v1/autosort/${frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`);
+            $featuredPosts = wp_posts.posts.map(map_posts);
+        } catch (error) {
+            console.error(error);
+            messages.push({ type: "error", message: error.message || error });
+            messages = messages;
+            // console.log(messages);
         }
-        $featuredPosts = combined_posts;
-        await updatePosts();
     }
 
     let group_action;

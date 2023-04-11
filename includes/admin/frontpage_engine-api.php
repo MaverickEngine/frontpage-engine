@@ -79,6 +79,22 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                 return current_user_can( 'edit_others_posts' );
             }
         ));
+
+        register_rest_route('frontpageengine/v1', '/autosort/(?P<frontpage_id>\d+)', array(
+            'methods' => 'GET',
+            'callback' => array( $this, 'autosort' ),
+            'permission_callback' => function () {
+                return current_user_can( 'edit_others_posts' );
+            }
+        ));
+
+        register_rest_route('frontpageengine/v1', '/analytics/(?P<frontpage_id>\d+)', array(
+            'methods' => 'GET',
+            'callback' => array( $this, 'analytics' ),
+            'permission_callback' => function () {
+                return current_user_can( 'edit_others_posts' );
+            }
+        ));
     }
 
     /**
@@ -128,12 +144,43 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                 $post->slot = $slot;
                 return $this->_project_post($post);
             }, $slots);
+            if ($request->get_param('simulate_analytics') !== null) {
+                $posts = array_map(function($post) {
+                    if (isset($post->id)) {
+                        $post->analytics = new stdClass();
+                        $post->analytics->hits_last_hour = $this->_generate_hash($post->id, 100, 1000);
+                    }
+                    return $post;
+                }, $posts);
+            } else {
+                $analytics = $this->_analytics($frontpage_id);
+                $posts = array_map(function($post) use ($analytics) {
+                    if (isset($post->id)) {
+                        $post_analytics = array_filter($analytics, function($a) use ($post) {
+                            return $a->post_id == $post->id;
+                        });
+                        if (count($post_analytics) > 0) {
+                            $post->analytics = $post_analytics[0];
+                        } else {
+                            $post->analytics = new stdClass();
+                            $post->analytics->hits_last_hour = 0;
+                        }
+                    }
+                    return $post;
+                }, $posts);
+            }
             return ["posts" => $posts];
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
         }
     }
 
+    /**
+     * Move a post to a new position
+     *
+     * @param WP_REST_Request $request
+     * @return array
+     */
     public function move_post(WP_REST_Request $request) {
         try {
             $frontpage_id = intval($request->get_param('frontpage_id'));
@@ -146,6 +193,12 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
         }
     }
 
+    /**
+     * Lock a slot
+     *
+     * @param WP_REST_Request $request
+     * @return array
+     */
     public function lock_post(WP_REST_Request $request) {
         global $wpdb;
         try {
@@ -175,6 +228,12 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
         }
     }
 
+    /**
+     * Unlock a slot
+     *
+     * @param WP_REST_Request $request
+     * @return array
+     */
     public function unlock_post(WP_REST_Request $request) {
         global $wpdb;
         try {
@@ -203,6 +262,12 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
         }
     }
 
+    /**
+     * Add a post to a frontpage
+     *
+     * @param WP_REST_Request $request
+     * @return array
+     */
     public function add_post(WP_REST_Request $request) {
         try {
             $frontpage_id = intval($request->get_param('frontpage_id'));
@@ -224,6 +289,12 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
         }
     }
 
+    /**
+     * Remove a post from a frontpage
+     *
+     * @param WP_REST_Request $request
+     * @return array
+     */
     public function remove_post(WP_REST_Request $request) {
         try {
             $frontpage_id = intval($request->get_param('frontpage_id'));
@@ -238,6 +309,12 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
         }
     }
 
+    /**
+     * Get a list of posts that are not featured
+     *
+     * @param WP_REST_Request $request
+     * @return array
+     */
     public function unfeatured_posts(WP_REST_Request $request) {
         try {
             $frontpage_id = intval($request->get_param('frontpage_id'));
@@ -260,6 +337,37 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             );
             $posts = get_posts( $params );
             return array("posts" => array_map([$this, "_map_wp_post"], $posts));
+        } catch (Exception $e) {
+            return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+        }
+    }
+
+    /**
+     * Get the analytics data for a frontpage
+     *
+     * @param WP_REST_Request $request
+     * @return array
+     */
+    public function autosort(WP_REST_Request $request) {
+        try {
+            $frontpage_id = intval($request->get_param('frontpage_id'));
+            $this->_do_autosort($frontpage_id);
+            return $this->get_posts($request);
+        } catch (Exception $e) {
+            return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+        }
+    }
+
+    /**
+     * Get the analytics data for a frontpage
+     *
+     * @param WP_REST_Request $request
+     * @return array
+     */
+    public function analytics(WP_REST_Request $request) {
+        try {
+            $analytics = $this->_analytics($request->get_param('frontpage_id'));
+            return array("analytics" => $analytics);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
         }

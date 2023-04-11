@@ -9,6 +9,7 @@ export const map_posts = (post) => {
         order: post.menu_order,
         slot: post.slot,
         locked: !!(post.slot?.lock_until),
+        analytics: post.analytics || {},
     }
 };
 

@@ -1,23 +1,19 @@
 <script>
     const mode = process.env.NODE_ENV;
-    import { analytics, featuredPosts, slots } from '../stores.js';
+    import { featuredPosts, dev } from '../stores.js';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import { flip } from 'svelte/animate';
-    import { wp_api_post } from "../lib/wp_api.js";
-    import { apiGet, apiPost } from "../lib/ajax.ts";
-    import { applyLockedSlots, map_posts } from '../lib/posts.js';
+    import { apiPost } from "../lib/ajax.ts";
+    import { map_posts } from '../lib/posts.js';
 
     import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
-    
-    // export let frontpage_id;
 
     let hovering = false;
     export let updating = false;
 
     const dragStart = (e, i) => {
-        // console.log("dragStart", i);
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.dropEffect = 'move';
         const start = i;
@@ -41,10 +37,7 @@
             if (!post_id) {
                 throw "Post id is missing";
             }
-            // if (!$featuredPosts[target].slot.post_id) {
-            //     throw "Target slot is empty";
-            // }
-            $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}`, {
+            $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`, {
                 post_id,
                 from,
                 to,
@@ -65,7 +58,7 @@
         if (date) {
             lock_until = new Date(date).getTime();
         }
-        $featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${post.slot.frontpage_id}`, {
+        $featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${post.slot.frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`, {
             lock_until: formatTimeSql(new Date(lock_until)),
             post_id: post.slot.post_id,
         })).posts.map(map_posts);
@@ -92,7 +85,7 @@
 
     const doUnlock = async (post) => {
         updating = true;
-        $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${post.slot.frontpage_id}`, {
+        $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${post.slot.frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`, {
             post_id: post.slot.post_id,
         })).posts.map(map_posts);
         updating = false;
@@ -103,7 +96,7 @@
         if (confirm("Are you sure you want to remove this post from the frontpage?")) {
             updating = true;
             try {
-                $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${post.slot.frontpage_id}`, {
+                $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${post.slot.frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`, {
                     post_id: post.id,
                 })).posts.map(map_posts);
                 dispatch("updated");

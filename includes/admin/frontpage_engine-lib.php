@@ -273,4 +273,98 @@ class FrontPageEngineLib {
             throw new Exception($wpdb->last_error);
         }
     }
+
+    protected function _generate_hash(String $s, int $min, int $max) : int {
+        $hash = crc32($s);
+        $hash = ($hash % ($max - $min)) + $min;
+        return $hash;
+    }
+
+    public function _simulate_analytics($frontpage_id) {
+        $slots = $this->_get_slots($frontpage_id);
+        $analytics = array();
+        foreach ($slots as $slot) {
+            if (!empty($slot->post_id)) {
+                $analytics[intval($slot->post_id)] = array(
+                    "post_id" => intval($slot->post_id),
+                    "hits_last_hour" => $this->_generate_hash($slot->post_id, 100, 1000),
+                );
+            }
+        }
+        return array("analytics" => $analytics);
+    }
+
+    public function _analytics($frontpage_id) {
+        $slots = $this->_get_slots($frontpage_id);
+        $analytics = array();
+        $post_ids = array_map(function($slot) {
+            return $slot->post_id;
+        }, $slots);
+        if (!get_option("revengine_content_promoter_api_url")) {
+            foreach ($post_ids as $post_id) {
+                $analytics[intval($post_id)] = array(
+                    "post_id" => intval($post_id),
+                    "hits_last_hour" => 0,
+                );
+            }
+            return array("analytics" => $analytics);
+        }
+        $response = wp_remote_post(get_option("revengine_content_promoter_api_url") . "/analytics/posts", array(
+            "body" => (array(
+                "post_ids" => $post_ids,
+            )),
+        ));
+        if (is_wp_error($response)) {
+            throw new Exception($response->get_error_message());
+        }
+        $post_hits = json_decode(wp_remote_retrieve_body($response));
+        foreach ($post_hits as $post_hit) {
+            $analytics[intval($post_hit->post_id)] = array(
+                "post_id" => intval($post_hit->post_id),
+                "hits_last_hour" => $post_hit->hits,
+            );
+        }
+        return array("analytics" => $analytics);
+    }
+
+    protected function _do_autosort($frontpage_id) {
+        global $wpdb;
+        $current_slots = $this->_get_slots($frontpage_id);
+        $analytics = $this->_analytics($frontpage_id)["analytics"];
+        $slots = array();
+        $posts = array();
+        $i = 0;
+        foreach ($current_slots as $slot) {
+            if (!empty($slot->post_id) && empty($slot->lock_until)) {
+                $slots[$i] = new stdClass();
+                $slots[$i]->id = $slot->id;
+                $slots[$i]->display_order = $slot->display_order;
+                $posts[$i] = new stdClass();
+                $posts[$i]->post_id = $slot->post_id;
+                $posts[$i]->hits_last_hour = $analytics[intval($slot->post_id)]["hits_last_hour"];
+                $i++;
+            }
+        }
+        usort($posts, function($a, $b) {
+            if ($a->hits_last_hour === $b->hits_last_hour) {
+                return 0;
+            }
+            return ($a->hits_last_hour > $b->hits_last_hour) ? -1 : 1;
+        });
+        for($i = 0; $i < count($posts); $i++) {
+            $slots[$i]->post_id = $posts[$i]->post_id;
+            $slots[$i]->hits_last_hour = $posts[$i]->hits_last_hour;
+        }
+        $sql = "UPDATE {$wpdb->prefix}frontpage_engine_frontpage_slots SET post_id = CASE ";
+        $sql .= implode(" ", array_map(array($this, '_case_map'), $slots));
+        $sql .= " END WHERE id IN (";
+        $sql .= implode(", ", array_map(function($slot) { return $slot->id; }, $slots));
+        $sql .= ")";
+        // phpcs:ignore
+        $wpdb->query($sql);
+        $this->_set_featured_posts($frontpage_id);
+        if ($wpdb->last_error) {
+            throw new Exception($wpdb->last_error);
+        }
+    }
 }
