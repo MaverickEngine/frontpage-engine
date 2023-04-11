@@ -144,31 +144,6 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                 $post->slot = $slot;
                 return $this->_project_post($post);
             }, $slots);
-            if ($request->get_param('simulate_analytics') !== null) {
-                $posts = array_map(function($post) {
-                    if (isset($post->id)) {
-                        $post->analytics = new stdClass();
-                        $post->analytics->hits_last_hour = $this->_generate_hash($post->id, 100, 1000);
-                    }
-                    return $post;
-                }, $posts);
-            } else {
-                $analytics = $this->_analytics($frontpage_id);
-                $posts = array_map(function($post) use ($analytics) {
-                    if (isset($post->id)) {
-                        $post_analytics = array_filter($analytics, function($a) use ($post) {
-                            return $a->post_id == $post->id;
-                        });
-                        if (count($post_analytics) > 0) {
-                            $post->analytics = $post_analytics[0];
-                        } else {
-                            $post->analytics = new stdClass();
-                            $post->analytics->hits_last_hour = 0;
-                        }
-                    }
-                    return $post;
-                }, $posts);
-            }
             return ["posts" => $posts];
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
@@ -343,7 +318,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
     }
 
     /**
-     * Get the analytics data for a frontpage
+     * Autosort the frontpage
      *
      * @param WP_REST_Request $request
      * @return array
@@ -351,7 +326,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
     public function autosort(WP_REST_Request $request) {
         try {
             $frontpage_id = intval($request->get_param('frontpage_id'));
-            $this->_do_autosort($frontpage_id);
+            $this->_do_autosort($frontpage_id, ($request->get_param("simulate_analytics") !== null));
             return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
@@ -366,7 +341,11 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
      */
     public function analytics(WP_REST_Request $request) {
         try {
-            $analytics = $this->_analytics($request->get_param('frontpage_id'));
+            if ($request->get_param("simulate_analytics") !== null) {
+                $analytics = $this->_simulate_analytics($request->get_param('frontpage_id'));
+            } else {
+                $analytics = $this->_analytics($request->get_param('frontpage_id'));
+            }
             return array("analytics" => $analytics);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );

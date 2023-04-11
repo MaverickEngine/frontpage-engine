@@ -1,6 +1,7 @@
 <script>
     const mode = process.env.NODE_ENV;
     import AnalyticsGraph from "./AnalyticsGraph.svelte";
+    import { analytics } from "../stores";
     export let post;
 </script>
 
@@ -22,8 +23,8 @@
 <td class="column-author">{post.author}</td>
 <td class="column-published">{post.date_published}</td>
 <td class="column-analytics">
-    {#if post.analytics?.hits_last_hour}
-    <AnalyticsGraph hits_last_hour={post.analytics.hits_last_hour}/>
+    {#if $analytics.find(analytic => post.id === analytic.post_id)}
+    <AnalyticsGraph hits_last_hour={$analytics.find(analytic => post.id === analytic.post_id).hits_last_hour}/>
     {/if}
 </td>
 

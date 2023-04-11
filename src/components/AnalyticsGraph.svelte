@@ -12,7 +12,7 @@
     const height = 60;
 </script>
 
-{#if (hits_last_hour)}
+{#if (hits_last_hour !== null)}
 <div class="analytics-graph" style="height: {height}px;">
     <Pie size={height} percent={ hits_last_hour / $totalHits * 100 } />
     { Number(hits_last_hour).toLocaleString() }

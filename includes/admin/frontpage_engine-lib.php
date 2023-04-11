@@ -291,7 +291,7 @@ class FrontPageEngineLib {
                 );
             }
         }
-        return array("analytics" => $analytics);
+        return $analytics;
     }
 
     public function _analytics($frontpage_id) {
@@ -307,7 +307,7 @@ class FrontPageEngineLib {
                     "hits_last_hour" => 0,
                 );
             }
-            return array("analytics" => $analytics);
+            return $analytics;
         }
         $response = wp_remote_post(get_option("revengine_content_promoter_api_url") . "/analytics/posts", array(
             "body" => (array(
@@ -324,13 +324,17 @@ class FrontPageEngineLib {
                 "hits_last_hour" => $post_hit->hits,
             );
         }
-        return array("analytics" => $analytics);
+        return $analytics;
     }
 
-    protected function _do_autosort($frontpage_id) {
+    protected function _do_autosort(int $frontpage_id, $simulate = false) {
         global $wpdb;
         $current_slots = $this->_get_slots($frontpage_id);
-        $analytics = $this->_analytics($frontpage_id)["analytics"];
+        if ($simulate) {
+            $analytics = $this->_simulate_analytics($frontpage_id);
+        } else {
+            $analytics = $this->_analytics($frontpage_id);
+        }
         $slots = array();
         $posts = array();
         $i = 0;

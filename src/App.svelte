@@ -4,7 +4,7 @@
     import AddPostTable from "./components/AddPostTable.svelte";
     import Modal from "./components/Modal.svelte";
     import { FrontPageEngineSocketServer } from './websocket.js';
-    import { featuredPosts, unorderedPosts, totalHits, dev } from './stores.js';
+    import { featuredPosts, unorderedPosts, totalHits, analytics, dev } from './stores.js';
     import { apiGet, apiPost } from "./lib/ajax.ts";
     import { map_posts } from "./lib/posts.js";
     import { v4 as uuidv4 } from 'uuid';
@@ -33,6 +33,7 @@
         await getPosts();
         await getAnalytics();
         setInterval(getPosts, 600000); // Check posts every 10 minutes
+        setInterval(getAnalytics, 60000); // Check analytics every minute
     });
 
     onDestroy(() => {
@@ -42,13 +43,17 @@
     const getPosts = async () => {
         const wp_posts = await apiGet(`frontpageengine/v1/get_posts/${frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`);
         $featuredPosts = wp_posts.posts.map(map_posts);
-        $totalHits = $featuredPosts.filter(post => (post.analytics?.hits_last_hour)).reduce((a, b) => a + b.analytics.hits_last_hour, 0);
         console.log("featuredPosts", $featuredPosts);
     }
 
     const getAnalytics = async () => {
-        const analytics = await apiGet(`frontpageengine/v1/analytics/${frontpage_id}`);
-        console.log("analytics", analytics);
+        if ($dev) {
+            $analytics = Object.values((await apiGet(`frontpageengine/v1/analytics/${frontpage_id}?simulate_analytics=1`)).analytics);
+        } else {
+            $analytics = Object.values((await apiGet(`frontpageengine/v1/analytics/${frontpage_id}`)).analytics);
+        }
+        $totalHits = $analytics.reduce((a, b) => a + b.hits_last_hour, 0);
+        console.log("totalHits", $totalHits);
     }
 
     const updated = async () => {
