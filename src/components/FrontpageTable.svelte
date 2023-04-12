@@ -11,6 +11,7 @@
 	const dispatch = createEventDispatcher();
 
     let hovering = false;
+    let rowHovering = false;
     export let updating = false;
 
     const dragStart = (e, i) => {
@@ -169,6 +170,8 @@
             ondragover="return false"
             class:is-active={hovering === index}
             class:is-locked={post.locked}
+            on:mouseover={() => rowHovering = index}
+            on:focus={() => rowHovering = index}
         >
             <th scope="row" class="check-column">
                 {#if (!post.locked && !!post.slot.post_id)}
@@ -179,6 +182,7 @@
             <PostRow 
                 post={post} 
                 index={index}
+                hovering={rowHovering === index}
             />
             <th scope="row" class="lock-column">
                 {#if (!!post.slot.post_id)}

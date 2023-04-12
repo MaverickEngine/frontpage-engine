@@ -1,8 +1,10 @@
 <script>
     const mode = process.env.NODE_ENV;
+    import {fade} from 'svelte/transition';
     import AnalyticsGraph from "./AnalyticsGraph.svelte";
     import { analytics } from "../stores";
     export let post;
+    export let hovering;
 </script>
 
 <td class="column-image">
@@ -17,8 +19,15 @@
 {/if}
 <td class="column-title">
     <strong>
-        <a class="row-title" href={post.link}>{post.title}</a>
+        <a class="row-title" href={post.edit_link}>{post.title}</a>
     </strong>
+    {#if hovering && !post.is_blank}
+    <p in:fade out:fade>
+        <a target="_blank" href={post.link} rel="noreferrer">View</a> 
+        | 
+        <a target="_blank" href={post.edit_link} rel="noreferrer">Edit</a> 
+    </p>
+    {/if}
 </td>
 <td class="column-author">{post.author}</td>
 <td class="column-published">{post.date_published}</td>

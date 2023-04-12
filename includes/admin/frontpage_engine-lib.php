@@ -8,19 +8,19 @@ class FrontPageEngineLib {
     }
 
     protected function _map_wp_post($post) {
-        $link      = get_edit_post_link( $post->ID );
         $post_type = get_post_type_object( $post->post_type );
-        $thumb     = get_the_post_thumbnail_url( $post->ID, array( 50, 50 ) );
-        $data                   = array();
-        $data['id']             = $post->ID;
+        $thumb = get_the_post_thumbnail_url( $post->ID, array( 50, 50 ) );
+        $data = array();
+        $data['id'] = $post->ID;
         $data['image'] = ( $thumb ) ? $thumb : '';
-        $data['post_title']          = $post->post_title;
-        $data['post_link']           = $link;
-        $data['post_author']    = get_the_author_meta( 'display_name', $post->post_author );
-        $data['post_date']      = get_the_time( 'Y/m/d H:i:s', $post->ID );
-        $data['menu_order']     = $post->menu_order;
-        $data['post_type']      = $post_type->labels->singular_name;
-        $data['post_status']    = $post->post_status;
+        $data['post_title'] = $post->post_title;
+        $data['edit_post_link'] = get_edit_post_link( $post->ID );
+        $data['post_link']= get_permalink( $post->ID );
+        $data['post_author']= get_the_author_meta( 'display_name', $post->post_author );
+        $data['post_date'] = get_the_time( 'Y/m/d H:i:s', $post->ID );
+        $data['menu_order'] = $post->menu_order;
+        $data['post_type'] = $post_type->labels->singular_name;
+        $data['post_status'] = $post->post_status;
         return $data;
     }
 
@@ -158,14 +158,15 @@ class FrontPageEngineLib {
         if (!$post->slot) {
             $post->slot = $this->_get_slot($post->slot_id);
         }
-        $new_post->slot        = $post->slot;
-        $new_post->post_link   = get_edit_post_link( $post->ID );
-        $new_post->id          = $post->ID;
-        $new_post->image       = get_the_post_thumbnail_url( $post->ID, array( 50, 50 ) );
-        $new_post->post_title  = $post->post_title;
+        $new_post->slot = $post->slot;
+        $new_post->edit_post_link = get_edit_post_link( $post->ID );
+        $new_post->post_link = get_permalink( $post->ID );
+        $new_post->id = $post->ID;
+        $new_post->image = get_the_post_thumbnail_url( $post->ID, array( 50, 50 ) );
+        $new_post->post_title = $post->post_title;
         $new_post->post_author = get_the_author_meta( 'display_name', $post->post_author );
-        $new_post->post_date   = get_the_time( 'Y/m/d H:i:s', $post->ID );
-        $new_post->post_status  = $post->post_status;
+        $new_post->post_date = get_the_time( 'Y/m/d H:i:s', $post->ID );
+        $new_post->post_status = $post->post_status;
         return $new_post;
     }
 
