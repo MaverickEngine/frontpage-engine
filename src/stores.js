@@ -6,5 +6,4 @@ export const unfeaturedPosts = writable([]);
 export const unorderedPosts = writable([]);
 export const slots = writable([]);
 export const totalHits = writable(0);
-export const dev = writable(true);
 export const analytics = writable([]);

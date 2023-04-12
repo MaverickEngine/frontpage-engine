@@ -34,6 +34,7 @@
     }
     .column-image img {
         width: 50px;
-        height: 50px;
+        height: 40px;
+        object-fit: cover;
     }
 </style>

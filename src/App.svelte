@@ -1,10 +1,11 @@
 <script>
+    const mode = process.env.NODE_ENV;
     import { onMount, onDestroy } from 'svelte';
     import FrontpageTable from "./components/FrontpageTable.svelte";
     import AddPostTable from "./components/AddPostTable.svelte";
     import Modal from "./components/Modal.svelte";
     import { FrontPageEngineSocketServer } from './websocket.js';
-    import { featuredPosts, unorderedPosts, totalHits, analytics, dev } from './stores.js';
+    import { featuredPosts, unorderedPosts, totalHits, analytics } from './stores.js';
     import { apiGet, apiPost } from "./lib/ajax.ts";
     import { map_posts } from "./lib/posts.js";
     import { v4 as uuidv4 } from 'uuid';
@@ -20,7 +21,6 @@
     let show_group_actions = false;
     const uuid = uuidv4();
     let messages = [];
-    $dev = false;
 
     let socket = null;
     onMount(async () => {
@@ -41,13 +41,13 @@
     });
 
     const getPosts = async () => {
-        const wp_posts = await apiGet(`frontpageengine/v1/get_posts/${frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`);
+        const wp_posts = await apiGet(`frontpageengine/v1/get_posts/${frontpage_id}?${(mode === "development") ? "simulate_analytics=1" : ""}`);
         $featuredPosts = wp_posts.posts.map(map_posts);
         console.log("featuredPosts", $featuredPosts);
     }
 
     const getAnalytics = async () => {
-        if ($dev) {
+        if ((mode === "development")) {
             $analytics = Object.values((await apiGet(`frontpageengine/v1/analytics/${frontpage_id}?simulate_analytics=1`)).analytics);
         } else {
             $analytics = Object.values((await apiGet(`frontpageengine/v1/analytics/${frontpage_id}`)).analytics);
@@ -83,7 +83,7 @@
 
     const autoSort = async () => {
         try {
-            const wp_posts = await apiGet(`frontpageengine/v1/autosort/${frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`);
+            const wp_posts = await apiGet(`frontpageengine/v1/autosort/${frontpage_id}?${(mode === "development") ? "simulate_analytics=1" : ""}`);
             $featuredPosts = wp_posts.posts.map(map_posts);
         } catch (error) {
             console.error(error);

@@ -1,6 +1,6 @@
 <script>
     const mode = process.env.NODE_ENV;
-    import { featuredPosts, dev } from '../stores.js';
+    import { featuredPosts } from '../stores.js';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import { flip } from 'svelte/animate';
@@ -37,7 +37,7 @@
             if (!post_id) {
                 throw "Post id is missing";
             }
-            $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`, {
+            $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}?${mode == "development" ? "simulate_analytics=1" : ""}`, {
                 post_id,
                 from,
                 to,
@@ -58,7 +58,7 @@
         if (date) {
             lock_until = new Date(date).getTime();
         }
-        $featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${post.slot.frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`, {
+        $featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${post.slot.frontpage_id}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
             lock_until: formatTimeSql(new Date(lock_until)),
             post_id: post.slot.post_id,
         })).posts.map(map_posts);
@@ -85,7 +85,7 @@
 
     const doUnlock = async (post) => {
         updating = true;
-        $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${post.slot.frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`, {
+        $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${post.slot.frontpage_id}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
             post_id: post.slot.post_id,
         })).posts.map(map_posts);
         updating = false;
@@ -96,7 +96,7 @@
         if (confirm("Are you sure you want to remove this post from the frontpage?")) {
             updating = true;
             try {
-                $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${post.slot.frontpage_id}?${$dev ? "simulate_analytics=1" : ""}`, {
+                $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${post.slot.frontpage_id}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
                     post_id: post.id,
                 })).posts.map(map_posts);
                 dispatch("updated");
