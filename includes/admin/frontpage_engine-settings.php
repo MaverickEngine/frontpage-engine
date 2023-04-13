@@ -3,28 +3,54 @@
 require_once("frontpage_engine-lib.php");
 
 class FrontpageEngineAdminSettings {
+    private $options = [
+        "frontpageengine_development_mode",
+        "frontpageengine_revengine_address",
+    ];
+
     public function __construct() {
-        add_action('admin_menu', [ $this, 'manage_page' ]);
+        add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_menu', [$this, 'menu']);
+        // add_action('admin_menu', [ $this, 'manage_page' ]);
     }
 
-    public function manage_page() {
-        add_submenu_page(
-            'frontpage-engine-menu',
-			'FrontpageEngine Manage',
-			'Manage Front Pages',
-			'manage_options',
-			'frontpageengine_manage',
-			[ $this, 'frontpageengine_manage' ]
-		);
+    public function register_settings() {
+        foreach($this->options as $option) {
+            register_setting( 'frontpageengine-settings-group', $option );
+        }
     }
 
-    public function frontpageengine_manage() {
+    public function menu() {
+        global $frontpageengine_menu_slug;
+        add_submenu_page('options-general.php', 'FrontPage Engine', 'FrontPage Engine', 'manage_categories', $frontpageengine_menu_slug . "-settings", [$this, "settings"] );
+    }
+
+    public function settings() {
         if (!current_user_can('manage_options')) {
             wp_die('You do not have sufficient permissions to access this page.');
         }
-        if (!isset($_GET['action'] )) {
+        if (!$this->check_actions()) {
             require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/settings.php';
-            return;
+        }
+    }
+
+    // public function manage_page() {
+    //     add_submenu_page(
+    //         'frontpage-engine-menu',
+	// 		'FrontpageEngine Manage',
+	// 		'Manage Front Pages',
+	// 		'manage_options',
+	// 		'frontpageengine_manage',
+	// 		[ $this, 'frontpageengine_manage' ]
+	// 	);
+    // }
+
+    public function check_actions() {
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have sufficient permissions to access this page.');
+        }
+        if (!isset($_GET['action'])) {
+            return false;
         }
         switch ($_GET['action']) {
             case 'edit':
@@ -45,6 +71,7 @@ class FrontpageEngineAdminSettings {
             default: 
                 wp_die('Invalid action');
         }
+        return true;
     }
 
     public function new_frontpage() {

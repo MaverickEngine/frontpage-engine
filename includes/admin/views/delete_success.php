@@ -8,7 +8,7 @@
             The front page <?php print esc_html($frontpage->name); ?> has been deleted.
         </p>
         <p>
-            <a href="<?php print esc_attr(admin_url('admin.php?page=frontpageengine_manage')) ?>" class="button">
+            <a href="?page=<?php print esc_attr($_GET["page"]) ?>&tab=pages" class="button">
                 <?php _e( 'Back to Front Pages', 'frontpageengine' ); ?>
             </a>
         </p>

@@ -60,14 +60,14 @@
                         ?>
                     </td>
                 </tr>
-                <tr>
+                <!-- <tr>
                     <th scope="row">
                         <label for="frontpageengine_frontpage_automate"><?php _e( 'Automate slots?', 'frontpageengine' ); ?></label>
                     </th>
                     <td>
                         <input type="checkbox" name="frontpageengine_frontpage_automate" id="frontpageengine_frontpage_automate" value="1" />
                     </td>
-                </tr>
+                </tr> -->
                 <tr>
                     <th scope="row">
                         <label for="frontpageengine_frontpage_import_legacy"><?php _e( 'Import from legacy front page?', 'frontpageengine' ); ?></label>

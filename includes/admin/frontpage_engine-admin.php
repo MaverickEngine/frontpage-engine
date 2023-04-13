@@ -1,29 +1,29 @@
 <?php
 
 class FrontpageEngineAdmin {
+    
 
-    function __construct() {
-        add_action('admin_init', [ $this, 'inlinePage'], 1);
-        add_action('admin_menu', [ $this, 'menu' ]);
-        add_action('admin_init', [ $this, 'hideLegacyMenu'], 1);
+    public function __construct() {
+        add_action('admin_init', [$this, 'inlinePage'], 1);
+        add_action('admin_menu', [$this, 'menu']);
+        add_action('admin_head', [$this, 'hideLegacyMenu']);
     }
 
-    function menu() {
+    public function menu() {
         global $wpdb;
         global $frontpageengine_menu_slug;
         add_menu_page( 'frontpage-engine-menu', 'FrontPage Engine', 'manage_categories', $frontpageengine_menu_slug, null, 'dashicons-editor-kitchensink', 2 );
         $frontpages = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages ORDER BY display_order ASC");
         if (count($frontpages) !== 0) {
             $frontpage = array_shift($frontpages);
-            add_menu_page( $frontpage->name, 'FrontPage Engine', 'manage_categories', 'frontpage-engine-menu', [$this, 'orderFrontPage'], 'dashicons-editor-kitchensink', 2 );
+            add_submenu_page($frontpageengine_menu_slug, $frontpage->name, $frontpage->name, 'manage_categories', 'frontpage-engine-menu', [$this, 'orderFrontPage'], 'dashicons-editor-kitchensink', 2 );
         }
         foreach($frontpages as $frontpage) {
             add_submenu_page($frontpageengine_menu_slug, $frontpage->name, $frontpage->name, 'manage_categories', 'frontpage-engine-menu-'.$frontpage->id, [$this, 'orderFrontPage'] );
         }
-        
     }
 
-    function orderFrontPage() {
+    public function orderFrontPage() {
         $frontpage = $this->get_frontpage();
         if (empty($frontpage)) {
             wp_die("Front Page not found");
@@ -67,7 +67,6 @@ class FrontpageEngineAdmin {
     }
 
     public function hideLegacyMenu() {
-        global $submenu;
         ?>
         <style>
             #toplevel_page_featured-flagged-post {

@@ -34,14 +34,14 @@ function frontpage_engine_admin_init() {
 add_action( 'init', 'frontpage_engine_admin_init' );
 
 // Settings
-function frontpage_engine_manage_init() {
+function frontpage_engine_settings_init() {
     if (!is_admin()) {
         return;
     }
-    require_once(plugin_dir_path( __FILE__ ) . 'includes/admin/frontpage_engine-manage.php' );
-    new FrontpageEngineAdminSettings([]);
+    require_once(plugin_dir_path( __FILE__ ) . 'includes/admin/frontpage_engine-settings.php' );
+    new FrontpageEngineAdminSettings();
 }
-add_action( 'init', 'frontpage_engine_manage_init' );
+add_action( 'init', 'frontpage_engine_settings_init' );
 
 // API
 function frontpage_engine_api_init() {

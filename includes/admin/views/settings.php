@@ -1,19 +1,23 @@
+<?php
+$default_tab = null;
+$frontpage_engine_tab = isset($_GET['tab']) ? $_GET['tab'] : $default_tab;
+?>
 <div class="wrap">
-    <form method="post" action="options.php">
-        <?php settings_fields( 'frontpageengine-settings-group' ); ?>
-        <?php do_settings_sections( 'frontpageengine-settings-group' ); ?>
-        <h1>
-            <?php _e( 'Front Pages', 'frontpageengine' ); ?>
-            <a href="<?php echo esc_url(admin_url( 'admin.php?page=frontpageengine_manage&action=new' )); ?>" class="page-title-action"><?php _e( 'Add New', 'frontpageengine' ); ?></a>
-        </h1>
-        <?php settings_errors(); ?>
-        <hr>
-
-        <?php
-            $frontpages_table = new FrontPageEngineFrontpagesTable();
-            $frontpages_table->prepare_items();
-            $frontpages_table->display();
-        ?>
-        <?php submit_button(); ?>
-    </form>
+    <h1><?php _e( 'FrontPage Engine Settings', 'frontpageengine' ); ?></h1>
+    <nav class="nav-tab-wrapper">
+        <a href="?page=frontpage-engine-menu-settings" class="nav-tab <?php if($frontpage_engine_tab===null):?>nav-tab-active<?php endif; ?>">Settings</a>
+        <a href="?page=frontpage-engine-menu-settings&tab=pages" class="nav-tab <?php if($frontpage_engine_tab==='pages'):?>nav-tab-active<?php endif; ?>">Front Pages</a>
+    </nav>
+    <div class="tab-content">
+    <?php switch($frontpage_engine_tab) :
+      case 'settings':
+        include( plugin_dir_path( __FILE__ ) . 'settings-general.php' );
+        break;
+    case 'pages':
+        include( plugin_dir_path( __FILE__ ) . 'settings-pages.php' );
+        break;
+    default:
+        include( plugin_dir_path( __FILE__ ) . 'settings-general.php' );
+        break;
+    endswitch; ?>
 </div>

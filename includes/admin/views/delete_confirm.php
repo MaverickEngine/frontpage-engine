@@ -23,7 +23,7 @@
         </p>
         <p>
             <input type="submit" name="frontpageengine_delete_confirm" value="<?php _e( 'Delete', 'frontpageengine' ); ?>" class="button button-primary" />
-            <a href="<?php print esc_attr(admin_url('admin.php?page=frontpageengine_manage')) ?>" class="button"><?php _e( 'Cancel', 'frontpageengine' ); ?></a>
+            <a href="?page=<?php print esc_attr($_GET["page"]) ?>&tab=pages" class="button"><?php _e( 'Cancel', 'frontpageengine' ); ?></a>
         </p>
     </form>
 </div>
