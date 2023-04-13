@@ -90,7 +90,15 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
 
         register_rest_route('frontpageengine/v1', '/analytics/(?P<frontpage_id>\d+)', array(
             'methods' => 'GET',
-            'callback' => array( $this, 'analytics' ),
+            'callback' => array( $this, 'get_analytics' ),
+            'permission_callback' => function () {
+                return current_user_can( 'edit_others_posts' );
+            }
+        ));
+
+        register_rest_route('frontpageengine/v1', '/analytics', array(
+            'methods' => 'POST',
+            'callback' => array( $this, 'post_analytics' ),
             'permission_callback' => function () {
                 return current_user_can( 'edit_others_posts' );
             }
@@ -293,12 +301,17 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
     public function unfeatured_posts(WP_REST_Request $request) {
         try {
             $frontpage_id = intval($request->get_param('frontpage_id'));
+            $page = intval($request->get_param('page')) ?: 1;
+            $per_page = intval($request->get_param('per_page')) ?: 50;
+            $search = $request->get_param('search') ?: "";
             $frontpage = $this->_get_frontpage($frontpage_id);
             $params = array(
                 'post_type'   => explode(",", $frontpage->post_types),
                 'post_status' => 'publish',
             );
-            $params['numberposts'] = 100;
+            $params['numberposts'] = $per_page;
+            $params['offset'] = ($page - 1) * $per_page;
+            $params['s'] = $search;
             $params['orderby'] = 'publish_date';
             $params['order'] = 'DESC';
             $params['tax_query'] = array(
@@ -339,12 +352,26 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
      * @param WP_REST_Request $request
      * @return array
      */
-    public function analytics(WP_REST_Request $request) {
+    public function get_analytics(WP_REST_Request $request) {
         try {
             if ($request->get_param("simulate_analytics") !== null) {
-                $analytics = $this->_simulate_analytics($request->get_param('frontpage_id'));
+                $analytics = $this->_frontpage_analytics($request->get_param('frontpage_id'), true);
             } else {
-                $analytics = $this->_analytics($request->get_param('frontpage_id'));
+                $analytics = $this->_frontpage_analytics($request->get_param('frontpage_id'));
+            }
+            return array("analytics" => $analytics);
+        } catch (Exception $e) {
+            return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+        }
+    }
+
+    public function post_analytics(WP_REST_Request $request) {
+        try {
+            $post_ids = $request->get_param('post_ids');
+            if ($request->get_param("simulate_analytics") !== null) {
+                $analytics = $this->_analytics($post_ids, true);
+            } else {
+                $analytics = $this->_analytics($post_ids);
             }
             return array("analytics" => $analytics);
         } catch (Exception $e) {

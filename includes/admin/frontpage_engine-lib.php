@@ -281,26 +281,20 @@ class FrontPageEngineLib {
         return $hash;
     }
 
-    public function _simulate_analytics($frontpage_id) {
+    public function _frontpage_analytics($frontpage_id, $simulate = false) {
         $slots = $this->_get_slots($frontpage_id);
-        $analytics = array();
-        foreach ($slots as $slot) {
-            if (!empty($slot->post_id)) {
-                $analytics[intval($slot->post_id)] = array(
-                    "post_id" => intval($slot->post_id),
-                    "hits_last_hour" => $this->_generate_hash($slot->post_id, 100, 1000),
-                );
-            }
+        $post_ids = array_filter(array_map(function($slot) {
+            return $slot->post_id;
+        }, $slots), function($post_id) {
+            return $post_id;
+        });
+        if ($simulate) {
+            return $this->_simulate_analytics($post_ids);
         }
-        return $analytics;
+        return $this->_analytics($post_ids);
     }
 
-    public function _analytics($frontpage_id) {
-        $slots = $this->_get_slots($frontpage_id);
-        $analytics = array();
-        $post_ids = array_map(function($slot) {
-            return $slot->post_id;
-        }, $slots);
+    public function _analytics(Array $post_ids) {
         if (!get_option("revengine_content_promoter_api_url")) {
             foreach ($post_ids as $post_id) {
                 $analytics[intval($post_id)] = array(
@@ -328,13 +322,24 @@ class FrontPageEngineLib {
         return $analytics;
     }
 
+    public function _simulate_analytics(Array $post_ids) {
+        $analytics = array();
+        foreach ($post_ids as $post_id) {
+            $analytics[intval($post_id)] = array(
+                "post_id" => intval($post_id),
+                "hits_last_hour" => $this->_generate_hash($post_id, 100, 1000),
+            );
+        }
+        return $analytics;
+    }
+
     protected function _do_autosort(int $frontpage_id, $simulate = false) {
         global $wpdb;
         $current_slots = $this->_get_slots($frontpage_id);
         if ($simulate) {
-            $analytics = $this->_simulate_analytics($frontpage_id);
+            $analytics = $this->_frontpage_analytics($frontpage_id, true);
         } else {
-            $analytics = $this->_analytics($frontpage_id);
+            $analytics = $this->_frontpage_analytics($frontpage_id);
         }
         $slots = array();
         $posts = array();

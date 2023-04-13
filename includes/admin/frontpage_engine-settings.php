@@ -22,7 +22,7 @@ class FrontpageEngineAdminSettings {
 
     public function menu() {
         global $frontpageengine_menu_slug;
-        add_submenu_page('options-general.php', 'FrontPage Engine', 'FrontPage Engine', 'manage_categories', $frontpageengine_menu_slug . "-settings", [$this, "settings"] );
+        add_submenu_page('options-general.php', 'Frontpage Engine', 'Frontpage Engine', 'manage_categories', $frontpageengine_menu_slug . "-settings", [$this, "settings"] );
     }
 
     public function settings() {

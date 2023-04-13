@@ -1769,7 +1769,7 @@ var frontpage_engine = (function () {
     function instance$5($$self, $$props, $$invalidate) {
     	let $analytics;
     	component_subscribe($$self, analytics, $$value => $$invalidate(2, $analytics = $$value));
-    	const mode = "production";
+    	const mode = "development";
     	let { post } = $$props;
     	let { hovering } = $$props;
     	let { total_hits } = $$props;
@@ -2547,7 +2547,7 @@ var frontpage_engine = (function () {
     function instance$4($$self, $$props, $$invalidate) {
     	let $featuredPosts;
     	component_subscribe($$self, featuredPosts, $$value => $$invalidate(3, $featuredPosts = $$value));
-    	const mode = "production";
+    	const mode = "development";
     	const dispatch = createEventDispatcher();
     	let hovering = false;
     	let rowHovering = false;
@@ -2602,7 +2602,7 @@ var frontpage_engine = (function () {
 
     		set_store_value(
     			featuredPosts,
-    			$featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${post.slot.frontpage_id}?${""}`, {
+    			$featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${post.slot.frontpage_id}?${"simulate_analytics=1" }`, {
     				lock_until: formatTimeSql(new Date(lock_until)),
     				post_id: post.slot.post_id
     			})).posts.map(map_posts),
@@ -2635,7 +2635,7 @@ var frontpage_engine = (function () {
 
     	const doUnlock = async post => {
     		$$invalidate(0, updating = true);
-    		set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${post.slot.frontpage_id}?${""}`, { post_id: post.slot.post_id })).posts.map(map_posts), $featuredPosts);
+    		set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${post.slot.frontpage_id}?${"simulate_analytics=1" }`, { post_id: post.slot.post_id })).posts.map(map_posts), $featuredPosts);
     		$$invalidate(0, updating = false);
     		dispatch("updated");
     	};
@@ -3102,7 +3102,7 @@ var frontpage_engine = (function () {
     	let $featuredPosts;
     	component_subscribe($$self, unfeaturedPosts, $$value => $$invalidate(9, $unfeaturedPosts = $$value));
     	component_subscribe($$self, featuredPosts, $$value => $$invalidate(10, $featuredPosts = $$value));
-    	const mode = "production";
+    	const mode = "development";
     	const dispatch = createEventDispatcher();
     	let { frontpage_id } = $$props;
     	let posts = [];
@@ -3128,7 +3128,7 @@ var frontpage_engine = (function () {
     		console.log("post_ids", post_ids);
 
     		{
-    			analytics = Object.values((await apiPost(`frontpageengine/v1/analytics`, { post_ids })).analytics);
+    			analytics = Object.values((await apiPost(`frontpageengine/v1/analytics?simulate_analytics=1`, { post_ids })).analytics);
     		}
 
     		total_hits = analytics.reduce((a, b) => a + b.hits_last_hour, 0);
@@ -4592,7 +4592,7 @@ var frontpage_engine = (function () {
     	component_subscribe($$self, totalHits, $$value => $$invalidate(20, $totalHits = $$value));
     	component_subscribe($$self, analytics, $$value => $$invalidate(21, $analytics = $$value));
     	component_subscribe($$self, unorderedPosts, $$value => $$invalidate(6, $unorderedPosts = $$value));
-    	const mode = "production";
+    	const mode = "development";
     	const dispatch = createEventDispatcher();
     	let { frontpage_id } = $$props;
     	let { url } = $$props;
@@ -4623,14 +4623,14 @@ var frontpage_engine = (function () {
     	});
 
     	const getPosts = async () => {
-    		const wp_posts = await apiGet(`frontpageengine/v1/get_posts/${frontpage_id}?${""}`);
+    		const wp_posts = await apiGet(`frontpageengine/v1/get_posts/${frontpage_id}?${"simulate_analytics=1" }`);
     		set_store_value(featuredPosts, $featuredPosts = wp_posts.posts.map(map_posts), $featuredPosts);
     		console.log("featuredPosts", $featuredPosts);
     	};
 
     	const getAnalytics = async () => {
     		{
-    			set_store_value(analytics, $analytics = Object.values((await apiGet(`frontpageengine/v1/analytics/${frontpage_id}`)).analytics), $analytics);
+    			set_store_value(analytics, $analytics = Object.values((await apiGet(`frontpageengine/v1/analytics/${frontpage_id}?simulate_analytics=1`)).analytics), $analytics);
     		}
 
     		set_store_value(totalHits, $totalHits = $analytics.reduce((a, b) => a + b.hits_last_hour, 0), $totalHits);
@@ -4784,4 +4784,4 @@ var frontpage_engine = (function () {
     return app;
 
 })();
-//# sourceMappingURL=frontpage_engine.js.map
+//# sourceMappingURL=frontpage_engine.dev.js.map

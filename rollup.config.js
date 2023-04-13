@@ -49,7 +49,7 @@ if (test) {
 			json()
 		]
 	}
-} else if (dev) {
+} else {
 	config = [
 		{
 			input: "src/frontpage_engine.js",
@@ -58,7 +58,7 @@ if (test) {
 					sourcemap: true,
 					format: 'iife',
 					name: "frontpage_engine",
-					file: "dist/frontpage_engine.js"
+					file: "dist/frontpage_engine.dev.js"
 				},
 			],
 			plugins: [
@@ -74,15 +74,12 @@ if (test) {
 					'process.env.NODE_ENV': JSON.stringify('development'),
 					'process.env.VERSION': JSON.stringify(pkg.version),
 				}),
-				commonjs(),
 				typescript(),
+				commonjs(),
 				json(),
 				!production && serve(),
 			]
 		},
-	];
-} else {
-	config = [
 		{
 			input: "src/frontpage_engine.js",
 			output: [
@@ -106,8 +103,8 @@ if (test) {
 					'process.env.NODE_ENV': JSON.stringify('production'),
 					'process.env.VERSION': JSON.stringify(pkg.version),
 				}),
-				commonjs(),
 				typescript(),
+				commonjs(),
 				json(),
 				!production && serve(),
 				production && terser() && strip()
