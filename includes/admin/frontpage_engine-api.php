@@ -103,6 +103,22 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                 return current_user_can( 'edit_others_posts' );
             }
         ));
+
+        register_rest_route('frontpageengine/v1', '/slot/manual/(?P<frontpage_id>\d+)/(?P<slot_id>\d+)', array(
+            'methods' => 'GET',
+            'callback' => array( $this, 'set_manual' ),
+            'permission_callback' => function () {
+                return current_user_can( 'edit_others_posts' );
+            }
+        ));
+
+        register_rest_route('frontpageengine/v1', '/slot/auto/(?P<frontpage_id>\d+)/(?P<slot_id>\d+)', array(
+            'methods' => 'GET',
+            'callback' => array( $this, 'set_auto' ),
+            'permission_callback' => function () {
+                return current_user_can( 'edit_others_posts' );
+            }
+        ));
     }
 
     /**
@@ -259,11 +275,16 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             $position = $request->get_param('position');
             $slots = $this->_get_slots($frontpage_id);
             $slot = null;
+            error_log("Position: " . $position);
             if ($position === "top") {
                 $slot = $slots[0];
             }
             if ($position === "bottom") {
                 $slot = $slots[$frontpage->number_of_slots - 1];
+            }
+            if ($position === "auto") {
+                error_log("Auto slot");
+                $slot = $this->_auto_slot($frontpage_id, $post_id, ($request->get_param("simulate_analytics") !== null));
             }
             $this->_insert_post($frontpage_id, $post_id, $slot->id);
             return $this->get_posts($request);
@@ -369,11 +390,31 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
         try {
             $post_ids = $request->get_param('post_ids');
             if ($request->get_param("simulate_analytics") !== null) {
-                $analytics = $this->_analytics($post_ids, true);
+                $analytics = $this->_simulate_analytics($post_ids);
             } else {
                 $analytics = $this->_analytics($post_ids);
             }
             return array("analytics" => $analytics);
+        } catch (Exception $e) {
+            return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+        }
+    }
+
+    public function set_manual(WP_REST_Request $request) {
+        try {
+            $slot_id = intval($request->get_param('slot_id'));
+            $this->_update_slot($slot_id, array("manual_order" => true));
+            return $this->get_posts($request);
+        } catch (Exception $e) {
+            return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+        }
+    }
+
+    public function set_auto(WP_REST_Request $request) {
+        try {
+            $slot_id = intval($request->get_param('slot_id'));
+            $this->_update_slot($slot_id, array("manual_order" => false));
+            return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
         }

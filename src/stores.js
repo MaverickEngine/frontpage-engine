@@ -7,3 +7,4 @@ export const unorderedPosts = writable([]);
 export const slots = writable([]);
 export const totalHits = writable(0);
 export const analytics = writable([]);
+export const frontpageId = writable(0);

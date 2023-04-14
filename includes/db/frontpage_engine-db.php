@@ -35,12 +35,14 @@ class FrontPageEngineDB {
             display_order tinyint(3) NOT NULL,
             post_id mediumint(9) DEFAULT NULL,
             lock_until datetime,
+            manual_order boolean NOT NULL DEFAULT 0,
             PRIMARY KEY  (id),
             INDEX frontpage_id (frontpage_id),
             INDEX automate (automate),
             INDEX display_order (display_order),
             INDEX post_id (post_id),
             INDEX lock_until (lock_until),
+            INDEX manual_order (manual_order),
             UNIQUE KEY frontpage_id_display_order (frontpage_id,display_order)
         ) $charset_collate;";
         dbDelta( $sql );

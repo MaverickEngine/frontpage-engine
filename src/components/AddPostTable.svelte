@@ -1,30 +1,31 @@
-<script>
+<script lang="ts">
     const mode = process.env.NODE_ENV;
     import { featuredPosts, unfeaturedPosts, unorderedPosts } from '../stores.js';
     import Search from "./Search.svelte";
-    import { fly } from 'svelte/transition';
+    import { fly, fade } from 'svelte/transition';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
-    import { apiGet, apiPost } from "../lib/ajax.ts";
+    import { apiGet, apiPost } from "../lib/ajax";
     import { map_posts } from "../lib/posts.js";
 
     import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
     
     export let frontpage_id;
+    export let total_hits = 0;
 
     let posts = [];
     let analytics = [];
-    let total_hits = 0;
     let search = "";
     let page = 1;
     let per_page = 10;
+    let rowHovering = -1;
     export let updating = false;
 
     const featurePost = async (post, position) => {
         updating = true;
         try {
-            $featuredPosts = (await apiPost(`frontpageengine/v1/add_post/${frontpage_id}`, {
+            $featuredPosts = (await apiPost(`frontpageengine/v1/add_post/${frontpage_id}?${(mode === "development") ? "simulate_analytics=1" : ""}`, {
                 post_id: post.id,
                 position,
             })).posts.map(map_posts);
@@ -53,14 +54,11 @@
 
     const getAnalytics = async () => {
         const post_ids = posts.map(p => p.id);
-        console.log("post_ids", post_ids);
-        if ((mode === "development")) {
-            analytics = Object.values((await apiPost(`frontpageengine/v1/analytics?simulate_analytics=1`, {post_ids})).analytics);
-        } else {
-            analytics = Object.values((await apiPost(`frontpageengine/v1/analytics`, {post_ids})).analytics);
-        }
-        total_hits = analytics.reduce((a, b) => a + b.hits_last_hour, 0);
-        console.log("totalHits", total_hits);
+        const result = await apiPost(`frontpageengine/v1/analytics?${(mode === "development") ? "simulate_analytics=1" : ""}`, {post_ids});
+        analytics = Object.values(result.analytics);
+        
+        // total_hits = analytics.reduce((a, b) => a + b.hits_last_hour, 0);
+        // console.log("totalHits", total_hits);
     }
 
     onMount(async () => {
@@ -89,7 +87,7 @@
                 <th scope="col" class="manage-column">Author</th>
                 <th scope="col" class="manage-column">Published</th>
                 <th></th>
-                <th></th>
+                <th>Insert</th>
             </tr>
         </thead>
         <tbody>
@@ -97,14 +95,19 @@
             <tr 
                 id="post-{post.id}"
                 out:fly|local="{{ y: -200, duration: 600 }}"
+                on:mouseover={() => rowHovering = index}
+                on:focus={() => rowHovering = index}
             >
                 <th scope="row" class="check-column">
                     <label class="screen-reader-text" for="cb-select-1">Select</label>
                     <input class="cb-select-1" type="checkbox" />
                 </th>
                 <PostRow 
-                    post={post} 
-                    index={index}
+                    {post} 
+                    {index}
+                    {total_hits}
+                    {analytics}
+                    hovering={rowHovering === index}
                 />
                 <th>
                     <button 

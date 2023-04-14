@@ -3,8 +3,9 @@
     import { featuredPosts } from '../stores.js';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
+    import SvelteTooltip from 'svelte-tooltip';
     import { flip } from 'svelte/animate';
-    import { apiPost } from "../lib/ajax.ts";
+    import { apiPost, apiGet } from "../lib/ajax.ts";
     import { map_posts } from '../lib/posts.js';
 
     import { createEventDispatcher } from 'svelte';
@@ -14,6 +15,7 @@
     let rowHovering = false;
     export let updating = false;
     export let total_hits = 0;
+    export let analytics = [];
 
     const dragStart = (e, i) => {
         e.dataTransfer.effectAllowed = 'move';
@@ -64,6 +66,20 @@
             lock_until: formatTimeSql(new Date(lock_until)),
             post_id: post.slot.post_id,
         })).posts.map(map_posts);
+        dispatch("updated");
+        updating = false;
+    }
+
+    const doManual = async(slot) => {
+        updating = true;
+        $featuredPosts = (await apiGet(`frontpageengine/v1/slot/manual/${slot.frontpage_id}/${slot.id}`)).posts.map(map_posts);
+        dispatch("updated");
+        updating = false;
+    }
+
+    const doAuto = async(slot) => {
+        updating = true;
+        $featuredPosts = (await apiGet(`frontpageengine/v1/slot/auto/${slot.frontpage_id}/${slot.id}`)).posts.map(map_posts);
         dispatch("updated");
         updating = false;
     }
@@ -185,18 +201,38 @@
                 index={index}
                 hovering={rowHovering === index}
                 {total_hits}
+                {analytics}
             />
             <th scope="row" class="lock-column">
                 {#if (!!post.slot.post_id)}
                     {#if (post.locked)}
-                        <!-- svelte-ignore a11y-click-events-have-key-events -->
-                        <span class="dashicons dashicons-lock" on:click={doUnlock(post)}></span>
-                        <span class="dot-underline" on:click={chooseTime(post)} on:keypress={chooseTime(post)}>{formatTime(post.slot.lock_until)}</span>
+                        <SvelteTooltip tip="This post is locked to this slot." left color="#FFB74D">
+                            <!-- svelte-ignore a11y-click-events-have-key-events -->
+                            <span class="dashicons dashicons-lock" on:click={doUnlock(post)}></span>
+                        </SvelteTooltip>
+                        <SvelteTooltip tip="Click to edit unlock time." left color="#FFB74D">
+                            <span class="dot-underline" on:click={chooseTime(post)} on:keypress={chooseTime(post)}>{formatTime(post.slot.lock_until)}</span>
+                        </SvelteTooltip>
                     {:else}
-                        <!-- svelte-ignore a11y-click-events-have-key-events -->
-                        <span class="dashicons dashicons-unlock" on:click={doLock(post)}></span>
-                        <!-- svelte-ignore a11y-click-events-have-key-events -->
-                        <span class="dashicons dashicons-trash" on:click={doRemove(post)}></span>
+                        <SvelteTooltip tip="Click to lock this post in this slot." left color="#FFB74D">
+                            <!-- svelte-ignore a11y-click-events-have-key-events -->
+                            <span class="dashicons dashicons-unlock" on:click={doLock(post)}></span>
+                        </SvelteTooltip>
+                        <SvelteTooltip tip="Remove this post from this slot." left color="#FFB74D">
+                            <!-- svelte-ignore a11y-click-events-have-key-events -->
+                            <span class="dashicons dashicons-trash" on:click={doRemove(post)}></span>
+                        </SvelteTooltip>
+                        {#if (post.manual)}
+                            <SvelteTooltip tip="This slot is manually ordered." left color="#FFB74D">
+                                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                <span class="dashicons dashicons-businessperson" on:click={doAuto(post.slot)}></span>
+                            </SvelteTooltip>
+                        {:else}
+                            <SvelteTooltip tip="This slot is automatically ordered." left color="#FFB74D">
+                                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                <span class="dashicons dashicons-chart-pie" on:click={doManual(post.slot)}></span>
+                            </SvelteTooltip>
+                        {/if}
                     {/if}
                 {/if}
             </th>
@@ -236,4 +272,5 @@
         text-decoration: underline dotted;
         cursor: pointer;
     }
+    
 </style>

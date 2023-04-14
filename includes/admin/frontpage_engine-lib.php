@@ -54,9 +54,12 @@ class FrontPageEngineLib {
     protected function _clear_featured_posts(int $frontpage_id) {
         $frontpage = $this->_get_frontpage($frontpage_id);
         $posts = $this->_get_featured_posts($frontpage_id);
+        global $wpdb;
+        $del = array($frontpage->ordering_code, $frontpage->featured_code,);  
+        $sql = "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ('".implode("','",$del)."')";
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query($sql);
         foreach ( $posts as $post ) {
-            delete_post_meta( $post->ID, $frontpage->ordering_code );
-            delete_post_meta( $post->ID, $frontpage->featured_code );
             wp_remove_object_terms( $post->ID, $frontpage->featured_code, 'flag' );
         }
     }
@@ -65,6 +68,7 @@ class FrontPageEngineLib {
         $frontpage = $this->_get_frontpage($frontpage_id);
         $slots = $this->_get_slots($frontpage_id);
         $this->_clear_featured_posts($frontpage_id);
+        // $sql = "UPDATE {$wpdb->postmeta} SET meta_key IN ('".implode("','",$del)."')";
         foreach ( $slots as $slot ) {
             if ( $slot->post_id ) {
                 update_post_meta( $slot->post_id, $frontpage->ordering_code, $slot->display_order );
@@ -345,7 +349,7 @@ class FrontPageEngineLib {
         $posts = array();
         $i = 0;
         foreach ($current_slots as $slot) {
-            if (!empty($slot->post_id) && empty($slot->lock_until)) {
+            if (!empty($slot->post_id) && empty($slot->lock_until) && empty($slot->manual_order)) {
                 $slots[$i] = new stdClass();
                 $slots[$i]->id = $slot->id;
                 $slots[$i]->display_order = $slot->display_order;
@@ -373,6 +377,40 @@ class FrontPageEngineLib {
         // phpcs:ignore
         $wpdb->query($sql);
         $this->_set_featured_posts($frontpage_id);
+        if ($wpdb->last_error) {
+            throw new Exception($wpdb->last_error);
+        }
+    }
+
+    public function _auto_slot($frontpage_id, $post_id, $simulate = false) {
+        // Get all the slots
+        $slots = $this->_get_slots($frontpage_id);
+        // Get analytics for all posts on the frontpage
+        $analytics = $this->_frontpage_analytics($frontpage_id, $simulate);
+        // Get analytics for post_id
+        if ($simulate) {
+            $post_analytics = $this->_simulate_analytics(array($post_id));
+        } else {
+            $post_analytics = $this->_analytics(array($post_id));
+        }
+        if (empty($post_analytics[$post_id])) {
+            return $slots[count($slots) - 1];
+        }
+        $hits = $post_analytics[$post_id]["hits_last_hour"];
+        // Find the first slot with less hits than the post
+        foreach ($slots as $slot) {
+            if (empty($slot->lock_until) && $analytics[$slot->post_id]["hits_last_hour"] < $hits) {
+                return $slot;
+            }
+        }
+        return $slots[count($slots) - 1];
+    }
+
+    protected function _update_slot(int $slot_id, Array $data) {
+        global $wpdb;
+        $wpdb->update("{$wpdb->prefix}frontpage_engine_frontpage_slots", $data, array(
+            "id" => $slot_id,
+        ));
         if ($wpdb->last_error) {
             throw new Exception($wpdb->last_error);
         }

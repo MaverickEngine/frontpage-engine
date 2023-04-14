@@ -58,6 +58,7 @@
 
     const updated = async () => {
         socket.sendMessage({ name: "frontpage_updated", message: "Updated front page", uuid });
+        await getAnalytics();
     }
 
     async function onMove(e) {
@@ -146,16 +147,16 @@
     {#if show_unordered_modal}
     <Modal on:close="{() => show_unordered_modal = false}">
         <h2>Posts awaiting placement</h2>
-        <AddPostTable frontpage_id={frontpage_id} type="unordered" on:updated={updated} />
+        <AddPostTable frontpage_id={frontpage_id} type="unordered" on:updated={updated} total_hits={$totalHits} />
     </Modal>
     {/if}
     {#if show_modal}
     <Modal on:close="{() => show_modal = false}">
         <h2 slot="header">Add Posts</h2>
-        <AddPostTable frontpage_id={frontpage_id} on:updated={updated} />
+        <AddPostTable frontpage_id={frontpage_id} on:updated={updated} total_hits={$totalHits} />
     </Modal>
     {/if}
-    <FrontpageTable frontpage_id={frontpage_id} total_hits={$totalHits} on:updated={updated} updating={updating} on:moved={onMove} />
+    <FrontpageTable frontpage_id={frontpage_id} total_hits={$totalHits} on:updated={updated} updating={updating} on:moved={onMove} analytics={$analytics} />
 </main>
 
 <style>

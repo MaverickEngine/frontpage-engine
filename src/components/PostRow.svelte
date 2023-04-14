@@ -2,10 +2,11 @@
     const mode = process.env.NODE_ENV;
     import {fade} from 'svelte/transition';
     import AnalyticsGraph from "./AnalyticsGraph.svelte";
-    import { analytics } from "../stores";
     export let post;
     export let hovering;
     export let total_hits;
+    export let analytics;
+    export let index;
 </script>
 
 <td class="column-image">
@@ -33,8 +34,8 @@
 <td class="column-author">{post.author}</td>
 <td class="column-published">{post.date_published}</td>
 <td class="column-analytics">
-    {#if $analytics.find(analytic => post.id === analytic.post_id)}
-    <AnalyticsGraph hits_last_hour={$analytics.find(analytic => post.id === analytic.post_id).hits_last_hour } total_hits={ total_hits } />
+    {#if analytics.find(analytic => post.id === analytic.post_id)}
+    <AnalyticsGraph hits_last_hour={analytics.find(analytic => post.id === analytic.post_id).hits_last_hour } total_hits={ total_hits } />
     {/if}
 </td>
 
