@@ -13,6 +13,7 @@
     let hovering = false;
     let rowHovering = false;
     export let updating = false;
+    export let total_hits = 0;
 
     const dragStart = (e, i) => {
         e.dataTransfer.effectAllowed = 'move';
@@ -183,6 +184,7 @@
                 post={post} 
                 index={index}
                 hovering={rowHovering === index}
+                {total_hits}
             />
             <th scope="row" class="lock-column">
                 {#if (!!post.slot.post_id)}

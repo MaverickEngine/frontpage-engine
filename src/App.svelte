@@ -155,7 +155,7 @@
         <AddPostTable frontpage_id={frontpage_id} on:updated={updated} />
     </Modal>
     {/if}
-    <FrontpageTable frontpage_id={frontpage_id} on:updated={updated} updating={updating} on:moved={onMove} />
+    <FrontpageTable frontpage_id={frontpage_id} total_hits={$totalHits} on:updated={updated} updating={updating} on:moved={onMove} />
 </main>
 
 <style>
