@@ -19,21 +19,36 @@
     let search = "";
     let page = 1;
     let per_page = 10;
+    export let updating = false;
 
     const featurePost = async (post, position) => {
-        $featuredPosts = (await apiPost(`frontpageengine/v1/add_post/${frontpage_id}`, {
-            post_id: post.id,
-            position,
-        })).posts.map(map_posts);
-        posts = posts.filter(p => p.id !== post.id);
-        dispatch("updated");
+        updating = true;
+        try {
+            $featuredPosts = (await apiPost(`frontpageengine/v1/add_post/${frontpage_id}`, {
+                post_id: post.id,
+                position,
+            })).posts.map(map_posts);
+            posts = posts.filter(p => p.id !== post.id);
+            dispatch("updated");
+        } catch (e) {
+            console.error(e);
+        } finally {
+            updating = false;
+        }
     }
 
     const getPosts = async() => {
-        const result = await apiGet(`frontpageengine/v1/unfeatured_posts/${frontpage_id}?search=${search}&page=${page}&per_page=${per_page}`);
-        $unfeaturedPosts = result.posts.map(map_posts);
-        posts = $unfeaturedPosts;
-        getAnalytics();
+        updating = true;
+        try {
+            const result = await apiGet(`frontpageengine/v1/unfeatured_posts/${frontpage_id}?search=${search}&page=${page}&per_page=${per_page}`);
+            $unfeaturedPosts = result.posts.map(map_posts);
+            posts = $unfeaturedPosts;
+            getAnalytics();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            updating = false;
+        }
     }
 
     const getAnalytics = async () => {
@@ -57,7 +72,7 @@
     <div class="frontpageengine-addpost-search">
         <Search bind:value={search} on:search={getPosts} />
     </div>
-    <table class="wp-list-table widefat fixed striped table-view-list featuredposts">
+    <table class="wp-list-table widefat fixed striped table-view-list featuredposts {updating  ? "is-updating" : ""}">
         <thead>
             <tr>
                 <td class="manage-column check-column">
@@ -93,19 +108,19 @@
                 />
                 <th>
                     <button 
-                        class="button button-primary"
+                        class="button"
                         on:click="{featurePost(post, "top")}"
                     >
                         Top
                     </button>
                     <button 
-                        class="button button-primary"
+                        class="button"
                         on:click="{featurePost(post, "bottom")}"
                     >
                         Bottom
                     </button>
                     <button 
-                        class="button button-primary"
+                        class="button"
                         on:click="{featurePost(post, "auto")}"
                     >
                         Auto
@@ -119,8 +134,9 @@
 </div>
 
 <style>
-    tr.is-active {
-        background-color: rgb(128, 162, 213) !important;
+    table.is-updating {
+        opacity: 0.5;
+        pointer-events: none;
     }
 
     .column-header-image {
@@ -133,5 +149,9 @@
 
     .frontpageengine-addpost-search {
         margin-bottom: 20px;
+    }
+
+    .button {
+        margin-bottom: 5px;
     }
 </style>
