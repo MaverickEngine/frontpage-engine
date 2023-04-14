@@ -275,7 +275,6 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             $position = $request->get_param('position');
             $slots = $this->_get_slots($frontpage_id);
             $slot = null;
-            error_log("Position: " . $position);
             if ($position === "top") {
                 $slot = $slots[0];
             }
@@ -283,7 +282,6 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                 $slot = $slots[$frontpage->number_of_slots - 1];
             }
             if ($position === "auto") {
-                error_log("Auto slot");
                 $slot = $this->_auto_slot($frontpage_id, $post_id, ($request->get_param("simulate_analytics") !== null));
             }
             $this->_insert_post($frontpage_id, $post_id, $slot->id);
