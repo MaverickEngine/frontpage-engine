@@ -68,11 +68,30 @@ class FrontPageEngineLib {
         $frontpage = $this->_get_frontpage($frontpage_id);
         $slots = $this->_get_slots($frontpage_id);
         $this->_clear_featured_posts($frontpage_id);
-        // $sql = "UPDATE {$wpdb->postmeta} SET meta_key IN ('".implode("','",$del)."')";
+        global $wpdb;
+        $sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES ";
+        foreach($slots as $slot) {
+            if (!empty($slot->post_id)) {
+                $sql .= "({$slot->post_id}, '{$frontpage->featured_code}', 1),";
+            }
+        }
+        $sql = rtrim($sql, ',');
+        $sql .= " ON DUPLICATE KEY UPDATE meta_value = 1";
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query($sql);
+        if ($wpdb->last_error) {
+            throw new Exception($wpdb->last_error);
+        }
         foreach ( $slots as $slot ) {
             if ( $slot->post_id ) {
-                update_post_meta( $slot->post_id, $frontpage->ordering_code, $slot->display_order );
-                update_post_meta( $slot->post_id, $frontpage->featured_code, true );
+                $sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES ";
+                $sql .= "({$slot->post_id}, '{$frontpage->ordering_code}', {$slot->display_order})";
+                $sql .= " ON DUPLICATE KEY UPDATE meta_value = {$slot->display_order}";
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $wpdb->query($sql);
+                if ($wpdb->last_error) {
+                    throw new Exception($wpdb->last_error);
+                }
                 wp_set_object_terms( $slot->post_id, [$frontpage->featured_code], 'flag', true );
             }
         }
