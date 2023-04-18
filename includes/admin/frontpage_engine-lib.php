@@ -55,13 +55,14 @@ class FrontPageEngineLib {
         $frontpage = $this->_get_frontpage($frontpage_id);
         $posts = $this->_get_featured_posts($frontpage_id);
         global $wpdb;
-        $del = array($frontpage->ordering_code, $frontpage->featured_code,);  
+        $del = array($frontpage->ordering_code, $frontpage->featured_code);  
         $sql = "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ('".implode("','",$del)."')";
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $wpdb->query($sql);
         foreach ( $posts as $post ) {
             wp_remove_object_terms( $post->ID, $frontpage->featured_code, 'flag' );
         }
+        update_postmeta_cache( wp_list_pluck( $posts, 'ID' ) );
     }
 
     protected function _set_featured_posts(int $frontpage_id) {
@@ -95,6 +96,7 @@ class FrontPageEngineLib {
                 wp_set_object_terms( $slot->post_id, [$frontpage->featured_code], 'flag', true );
             }
         }
+        update_postmeta_cache( wp_list_pluck( $slots, 'post_id' ) );
     }
 
     public function _get_featured_posts(int $frontpage_id) {
