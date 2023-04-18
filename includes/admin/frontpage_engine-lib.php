@@ -83,16 +83,21 @@ class FrontPageEngineLib {
         if ($wpdb->last_error) {
             throw new Exception($wpdb->last_error);
         }
+        $sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES ";
+        foreach($slots as $slot) {
+            if (!empty($slot->post_id)) {
+                $sql .= "({$slot->post_id}, '{$frontpage->ordering_code}', {$slot->display_order}),";
+            }
+        }
+        $sql = rtrim($sql, ',');
+        $sql .= " ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)";
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query($sql);
+        if ($wpdb->last_error) {
+            throw new Exception($wpdb->last_error);
+        }
         foreach ( $slots as $slot ) {
             if ( $slot->post_id ) {
-                $sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES ";
-                $sql .= "({$slot->post_id}, '{$frontpage->ordering_code}', {$slot->display_order})";
-                $sql .= " ON DUPLICATE KEY UPDATE meta_value = {$slot->display_order}";
-                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-                $wpdb->query($sql);
-                if ($wpdb->last_error) {
-                    throw new Exception($wpdb->last_error);
-                }
                 wp_set_object_terms( $slot->post_id, [$frontpage->featured_code], 'flag', true );
             }
         }
