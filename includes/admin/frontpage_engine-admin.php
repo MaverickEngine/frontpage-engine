@@ -12,7 +12,7 @@ class FrontpageEngineAdmin {
     public function menu() {
         global $wpdb;
         global $frontpageengine_menu_slug;
-        add_menu_page( 'frontpage-engine-menu', 'Frontpage Engine', 'manage_categories', $frontpageengine_menu_slug, null, 'dashicons-editor-kitchensink', 2 );
+        add_menu_page( 'Frontpage Engine', 'Frontpage Engine', 'manage_categories', $frontpageengine_menu_slug, null, 'dashicons-editor-kitchensink', 2 );
         $frontpages = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages ORDER BY display_order ASC");
         if (count($frontpages) !== 0) {
             $frontpage = array_shift($frontpages);
