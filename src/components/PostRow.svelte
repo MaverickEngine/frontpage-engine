@@ -21,7 +21,11 @@
 {/if}
 <td class="column-title">
     <strong>
+        {#if !post.is_blank}
         <a class="row-title" href={post.edit_link}>{post.title}</a>
+        {:else}
+        {post.title}
+        {/if}
     </strong>
     {#if hovering && !post.is_blank}
     <p in:fade out:fade>
@@ -32,7 +36,11 @@
     {/if}
 </td>
 <td class="column-author">{post.author}</td>
-<td class="column-published">{post.date_published}</td>
+<td class="column-published">
+    {#if !post.is_blank}
+    {post.date_published}
+    {/if}
+</td>
 <td class="column-analytics">
     {#if analytics.find(analytic => post.id === analytic.post_id)}
     <AnalyticsGraph hits_last_hour={analytics.find(analytic => post.id === analytic.post_id).hits_last_hour } total_hits={ total_hits } />
