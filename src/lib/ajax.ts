@@ -1,10 +1,14 @@
 const wp = (window as any).wp;
-export function apiPost(path: string, data: any) {
+export function apiPost(path: string, data: any, uid: string = null) {
     return new Promise((resolve, reject) => {
+        console.log({ uid });
         wp.apiRequest({
             path,
             data,
             type: "POST",
+            headers: {
+                "x-wssb-uid": uid,
+            },
         })
         .done(async (response) => {
             if (response.error) {
@@ -60,6 +64,9 @@ export function apiPut(path: string, data: any) {
             path,
             data,
             type: "PUT",
+            headers: {
+                "x-wssb-uid": (window as any).wssb_uid,
+            },
         })
         .done(async (response) => {
             if (response.error) {

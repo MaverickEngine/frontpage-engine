@@ -8,3 +8,4 @@ export const slots = writable([]);
 export const totalHits = writable(0);
 export const analytics = writable([]);
 export const frontpageId = writable(0);
+export const unique_id = writable(0);

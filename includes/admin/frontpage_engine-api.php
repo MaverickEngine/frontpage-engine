@@ -186,6 +186,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             $post_id = intval($request->get_param('post_id'));
             $to = intval($request->get_param('to'));
             $this->_insert_post($frontpage_id, $post_id, $to);
+            $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
@@ -221,6 +222,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                     '%d',
                 )
             );
+            $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
@@ -255,6 +257,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                     '%d',
                 )
             );
+            $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
@@ -285,6 +288,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                 $slot = $this->_auto_slot($frontpage_id, $post_id, ($request->get_param("simulate_analytics") !== null));
             }
             $this->_insert_post($frontpage_id, $post_id, $slot->id);
+            $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
@@ -305,6 +309,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                 throw new Exception("Invalid parameters");
             }
             $this->_remove_post($frontpage_id, $post_id);
+            $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
@@ -359,6 +364,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
         try {
             $frontpage_id = intval($request->get_param('frontpage_id'));
             $this->_do_autosort($frontpage_id, ($request->get_param("simulate_analytics") !== null));
+            $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
@@ -400,8 +406,10 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
 
     public function set_manual(WP_REST_Request $request) {
         try {
+            $frontpage_id = intval($request->get_param('frontpage_id'));
             $slot_id = intval($request->get_param('slot_id'));
             $this->_update_slot($slot_id, array("manual_order" => true));
+            $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
@@ -410,8 +418,10 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
 
     public function set_auto(WP_REST_Request $request) {
         try {
+            $frontpage_id = intval($request->get_param('frontpage_id'));
             $slot_id = intval($request->get_param('slot_id'));
             $this->_update_slot($slot_id, array("manual_order" => false));
+            $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {
             return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );

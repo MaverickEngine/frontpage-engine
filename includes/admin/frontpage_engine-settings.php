@@ -6,6 +6,8 @@ class FrontpageEngineAdminSettings {
     private $options = [
         "frontpageengine_development_mode",
         "frontpageengine_revengine_address",
+        "frontpageengine_wssb_ws_address",
+        "frontpageengine_wssb_web_address",
     ];
 
     public function __construct() {

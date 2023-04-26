@@ -1,93 +1,6 @@
 var frontpage_engine = (function () {
     'use strict';
 
-    class FrontPageEngineSocketServer {
-        constructor(domain = "http://localhost", channel = "default") {
-            this.domain = domain;
-            this.channel = channel;
-            this.connect();
-            this.callbacks = [];
-            this.me = null;
-        }
-
-        connect() {
-            this.socket = new WebSocket('wss://wssb.revengine.dailymaverick.co.za/_ws/');
-            this.socket.onopen = this.onOpen.bind(this);
-            this.socket.onclose = this.onClose.bind(this);
-            this.socket.onmessage = this.onMessage.bind(this);
-            if (this.channel) {
-                this.subscribe();
-            }
-        }
-
-        close() {
-            this.channel = null;
-            this.domain = null;
-            this.socket.close();
-        }
-
-        subscribe(channel = null) {
-            if (channel) {
-                this.channel = channel;
-            }
-            if (this.socket.readyState === WebSocket.OPEN) {
-                this.socket.send(JSON.stringify({ event: "subscribe", channel: this.channel, domain: this.domain }));
-            } else {
-                this.socket.onopen = () => {
-                    this.socket.send(JSON.stringify({ event: "subscribe", channel: this.channel, domain: this.domain }));
-                };
-            }
-        }
-
-        on(name, callback) {
-            this.callbacks.push({ name, callback });
-        }
-
-        onOpen(event) {
-            console.log(event);
-        }
-
-        onMessage(message) {
-            // console.log({ data: message.data });
-            const data = JSON.parse(message.data);
-            Promise.all(this.callbacks.map(callback => {
-                if (callback.name === data.name) {
-                    // console.log("Calling callback", callback.name);
-                    return callback.callback(data);
-                }
-            }));
-        }
-
-        onClose(event) {
-            // Reconnect
-            console.log("Reconnecting...");
-            this.connect();
-            console.log(event);
-        }
-
-        sendMessage(message) {
-            // console.log("Sending message", message);
-            if (typeof message !== 'object' || Array.isArray(message) || message === null) {
-                message = { message };
-            }
-            if (!message.message) {
-                throw new Error('Invalid message');
-            }
-            if (!message.event) {
-                message.event = "message";
-            }
-            message.channel = this.channel;
-            message.domain = this.domain;
-            // console.log(message);
-            // Wait for the connection to be established before sending a message.
-            if (this.socket.readyState === WebSocket.OPEN) {
-                this.socket.send(JSON.stringify(message));
-            } else {
-                setTimeout(() => this.sendMessage(message), 100);
-            }
-        }
-    }
-
     function noop() { }
     const identity = x => x;
     function assign(tar, src) {
@@ -1066,6 +979,7 @@ var frontpage_engine = (function () {
     const unorderedPosts = writable([]);
     const totalHits = writable(0);
     const analytics = writable([]);
+    const unique_id = writable(0);
 
     function cubicOut(t) {
         const f = t - 1.0;
@@ -1403,7 +1317,7 @@ var frontpage_engine = (function () {
     }
 
     // (13:4) {#if post.image}
-    function create_if_block_3$2(ctx) {
+    function create_if_block_5(ctx) {
     	let img;
     	let img_src_value;
     	let img_alt_value;
@@ -1436,7 +1350,7 @@ var frontpage_engine = (function () {
     }
 
     // (17:0) {#if (mode=="development")}
-    function create_if_block_2$2(ctx) {
+    function create_if_block_4$1(ctx) {
     	let td0;
     	let t0_value = /*post*/ ctx[0].slot?.id + "";
     	let t0;
@@ -1485,8 +1399,60 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (26:4) {#if hovering && !post.is_blank}
-    function create_if_block_1$2(ctx) {
+    // (26:8) {:else}
+    function create_else_block$2(ctx) {
+    	let t_value = /*post*/ ctx[0].title + "";
+    	let t;
+
+    	return {
+    		c() {
+    			t = text(t_value);
+    		},
+    		m(target, anchor) {
+    			insert(target, t, anchor);
+    		},
+    		p(ctx, dirty) {
+    			if (dirty & /*post*/ 1 && t_value !== (t_value = /*post*/ ctx[0].title + "")) set_data(t, t_value);
+    		},
+    		d(detaching) {
+    			if (detaching) detach(t);
+    		}
+    	};
+    }
+
+    // (24:8) {#if !post.is_blank}
+    function create_if_block_3$2(ctx) {
+    	let a;
+    	let t_value = /*post*/ ctx[0].title + "";
+    	let t;
+    	let a_href_value;
+
+    	return {
+    		c() {
+    			a = element("a");
+    			t = text(t_value);
+    			attr(a, "class", "row-title");
+    			attr(a, "href", a_href_value = /*post*/ ctx[0].edit_link);
+    		},
+    		m(target, anchor) {
+    			insert(target, a, anchor);
+    			append(a, t);
+    		},
+    		p(ctx, dirty) {
+    			if (dirty & /*post*/ 1 && t_value !== (t_value = /*post*/ ctx[0].title + "")) set_data(t, t_value);
+
+    			if (dirty & /*post*/ 1 && a_href_value !== (a_href_value = /*post*/ ctx[0].edit_link)) {
+    				attr(a, "href", a_href_value);
+    			}
+    		},
+    		d(detaching) {
+    			if (detaching) detach(a);
+    		}
+    	};
+    }
+
+    // (30:4) {#if hovering && !post.is_blank}
+    function create_if_block_2$2(ctx) {
     	let p;
     	let a0;
     	let t0;
@@ -1555,7 +1521,28 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (37:4) {#if analytics.find(analytic => post.id === analytic.post_id)}
+    // (40:4) {#if !post.is_blank}
+    function create_if_block_1$2(ctx) {
+    	let t_value = /*post*/ ctx[0].date_published + "";
+    	let t;
+
+    	return {
+    		c() {
+    			t = text(t_value);
+    		},
+    		m(target, anchor) {
+    			insert(target, t, anchor);
+    		},
+    		p(ctx, dirty) {
+    			if (dirty & /*post*/ 1 && t_value !== (t_value = /*post*/ ctx[0].date_published + "")) set_data(t, t_value);
+    		},
+    		d(detaching) {
+    			if (detaching) detach(t);
+    		}
+    	};
+    }
+
+    // (45:4) {#if analytics.find(analytic => post.id === analytic.post_id)}
     function create_if_block$4(ctx) {
     	let analyticsgraph;
     	let current;
@@ -1602,27 +1589,30 @@ var frontpage_engine = (function () {
     	let t1;
     	let td1;
     	let strong;
-    	let a;
-    	let t2_value = /*post*/ ctx[0].title + "";
     	let t2;
-    	let a_href_value;
     	let t3;
-    	let t4;
     	let td2;
-    	let t5_value = /*post*/ ctx[0].author + "";
+    	let t4_value = /*post*/ ctx[0].author + "";
+    	let t4;
     	let t5;
-    	let t6;
     	let td3;
-    	let t7_value = /*post*/ ctx[0].date_published + "";
-    	let t7;
-    	let t8;
+    	let t6;
     	let td4;
     	let show_if = /*analytics*/ ctx[3].find(/*func*/ ctx[6]);
     	let current;
-    	let if_block0 = /*post*/ ctx[0].image && create_if_block_3$2(ctx);
-    	let if_block1 = /*mode*/ ctx[4] == "development" && create_if_block_2$2(ctx);
-    	let if_block2 = /*hovering*/ ctx[1] && !/*post*/ ctx[0].is_blank && create_if_block_1$2(ctx);
-    	let if_block3 = show_if && create_if_block$4(ctx);
+    	let if_block0 = /*post*/ ctx[0].image && create_if_block_5(ctx);
+    	let if_block1 = /*mode*/ ctx[4] == "development" && create_if_block_4$1(ctx);
+
+    	function select_block_type(ctx, dirty) {
+    		if (!/*post*/ ctx[0].is_blank) return create_if_block_3$2;
+    		return create_else_block$2;
+    	}
+
+    	let current_block_type = select_block_type(ctx);
+    	let if_block2 = current_block_type(ctx);
+    	let if_block3 = /*hovering*/ ctx[1] && !/*post*/ ctx[0].is_blank && create_if_block_2$2(ctx);
+    	let if_block4 = !/*post*/ ctx[0].is_blank && create_if_block_1$2(ctx);
+    	let if_block5 = show_if && create_if_block$4(ctx);
 
     	return {
     		c() {
@@ -1633,22 +1623,19 @@ var frontpage_engine = (function () {
     			t1 = space();
     			td1 = element("td");
     			strong = element("strong");
-    			a = element("a");
-    			t2 = text(t2_value);
-    			t3 = space();
-    			if (if_block2) if_block2.c();
-    			t4 = space();
-    			td2 = element("td");
-    			t5 = text(t5_value);
-    			t6 = space();
-    			td3 = element("td");
-    			t7 = text(t7_value);
-    			t8 = space();
-    			td4 = element("td");
+    			if_block2.c();
+    			t2 = space();
     			if (if_block3) if_block3.c();
+    			t3 = space();
+    			td2 = element("td");
+    			t4 = text(t4_value);
+    			t5 = space();
+    			td3 = element("td");
+    			if (if_block4) if_block4.c();
+    			t6 = space();
+    			td4 = element("td");
+    			if (if_block5) if_block5.c();
     			attr(td0, "class", "column-image svelte-1w5zk1b");
-    			attr(a, "class", "row-title");
-    			attr(a, "href", a_href_value = /*post*/ ctx[0].edit_link);
     			attr(td1, "class", "column-title");
     			attr(td2, "class", "column-author");
     			attr(td3, "class", "column-published");
@@ -1662,19 +1649,18 @@ var frontpage_engine = (function () {
     			insert(target, t1, anchor);
     			insert(target, td1, anchor);
     			append(td1, strong);
-    			append(strong, a);
-    			append(a, t2);
-    			append(td1, t3);
-    			if (if_block2) if_block2.m(td1, null);
-    			insert(target, t4, anchor);
+    			if_block2.m(strong, null);
+    			append(td1, t2);
+    			if (if_block3) if_block3.m(td1, null);
+    			insert(target, t3, anchor);
     			insert(target, td2, anchor);
-    			append(td2, t5);
-    			insert(target, t6, anchor);
+    			append(td2, t4);
+    			insert(target, t5, anchor);
     			insert(target, td3, anchor);
-    			append(td3, t7);
-    			insert(target, t8, anchor);
+    			if (if_block4) if_block4.m(td3, null);
+    			insert(target, t6, anchor);
     			insert(target, td4, anchor);
-    			if (if_block3) if_block3.m(td4, null);
+    			if (if_block5) if_block5.m(td4, null);
     			current = true;
     		},
     		p(ctx, [dirty]) {
@@ -1682,7 +1668,7 @@ var frontpage_engine = (function () {
     				if (if_block0) {
     					if_block0.p(ctx, dirty);
     				} else {
-    					if_block0 = create_if_block_3$2(ctx);
+    					if_block0 = create_if_block_5(ctx);
     					if_block0.c();
     					if_block0.m(td0, null);
     				}
@@ -1692,51 +1678,31 @@ var frontpage_engine = (function () {
     			}
 
     			if (/*mode*/ ctx[4] == "development") if_block1.p(ctx, dirty);
-    			if ((!current || dirty & /*post*/ 1) && t2_value !== (t2_value = /*post*/ ctx[0].title + "")) set_data(t2, t2_value);
 
-    			if (!current || dirty & /*post*/ 1 && a_href_value !== (a_href_value = /*post*/ ctx[0].edit_link)) {
-    				attr(a, "href", a_href_value);
+    			if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block2) {
+    				if_block2.p(ctx, dirty);
+    			} else {
+    				if_block2.d(1);
+    				if_block2 = current_block_type(ctx);
+
+    				if (if_block2) {
+    					if_block2.c();
+    					if_block2.m(strong, null);
+    				}
     			}
 
     			if (/*hovering*/ ctx[1] && !/*post*/ ctx[0].is_blank) {
-    				if (if_block2) {
-    					if_block2.p(ctx, dirty);
-
-    					if (dirty & /*hovering, post*/ 3) {
-    						transition_in(if_block2, 1);
-    					}
-    				} else {
-    					if_block2 = create_if_block_1$2(ctx);
-    					if_block2.c();
-    					transition_in(if_block2, 1);
-    					if_block2.m(td1, null);
-    				}
-    			} else if (if_block2) {
-    				group_outros();
-
-    				transition_out(if_block2, 1, 1, () => {
-    					if_block2 = null;
-    				});
-
-    				check_outros();
-    			}
-
-    			if ((!current || dirty & /*post*/ 1) && t5_value !== (t5_value = /*post*/ ctx[0].author + "")) set_data(t5, t5_value);
-    			if ((!current || dirty & /*post*/ 1) && t7_value !== (t7_value = /*post*/ ctx[0].date_published + "")) set_data(t7, t7_value);
-    			if (dirty & /*analytics, post*/ 9) show_if = /*analytics*/ ctx[3].find(/*func*/ ctx[6]);
-
-    			if (show_if) {
     				if (if_block3) {
     					if_block3.p(ctx, dirty);
 
-    					if (dirty & /*analytics, post*/ 9) {
+    					if (dirty & /*hovering, post*/ 3) {
     						transition_in(if_block3, 1);
     					}
     				} else {
-    					if_block3 = create_if_block$4(ctx);
+    					if_block3 = create_if_block_2$2(ctx);
     					if_block3.c();
     					transition_in(if_block3, 1);
-    					if_block3.m(td4, null);
+    					if_block3.m(td1, null);
     				}
     			} else if (if_block3) {
     				group_outros();
@@ -1747,16 +1713,56 @@ var frontpage_engine = (function () {
 
     				check_outros();
     			}
+
+    			if ((!current || dirty & /*post*/ 1) && t4_value !== (t4_value = /*post*/ ctx[0].author + "")) set_data(t4, t4_value);
+
+    			if (!/*post*/ ctx[0].is_blank) {
+    				if (if_block4) {
+    					if_block4.p(ctx, dirty);
+    				} else {
+    					if_block4 = create_if_block_1$2(ctx);
+    					if_block4.c();
+    					if_block4.m(td3, null);
+    				}
+    			} else if (if_block4) {
+    				if_block4.d(1);
+    				if_block4 = null;
+    			}
+
+    			if (dirty & /*analytics, post*/ 9) show_if = /*analytics*/ ctx[3].find(/*func*/ ctx[6]);
+
+    			if (show_if) {
+    				if (if_block5) {
+    					if_block5.p(ctx, dirty);
+
+    					if (dirty & /*analytics, post*/ 9) {
+    						transition_in(if_block5, 1);
+    					}
+    				} else {
+    					if_block5 = create_if_block$4(ctx);
+    					if_block5.c();
+    					transition_in(if_block5, 1);
+    					if_block5.m(td4, null);
+    				}
+    			} else if (if_block5) {
+    				group_outros();
+
+    				transition_out(if_block5, 1, 1, () => {
+    					if_block5 = null;
+    				});
+
+    				check_outros();
+    			}
     		},
     		i(local) {
     			if (current) return;
-    			transition_in(if_block2);
     			transition_in(if_block3);
+    			transition_in(if_block5);
     			current = true;
     		},
     		o(local) {
-    			transition_out(if_block2);
     			transition_out(if_block3);
+    			transition_out(if_block5);
     			current = false;
     		},
     		d(detaching) {
@@ -1766,14 +1772,16 @@ var frontpage_engine = (function () {
     			if (if_block1) if_block1.d(detaching);
     			if (detaching) detach(t1);
     			if (detaching) detach(td1);
-    			if (if_block2) if_block2.d();
-    			if (detaching) detach(t4);
-    			if (detaching) detach(td2);
-    			if (detaching) detach(t6);
-    			if (detaching) detach(td3);
-    			if (detaching) detach(t8);
-    			if (detaching) detach(td4);
+    			if_block2.d();
     			if (if_block3) if_block3.d();
+    			if (detaching) detach(t3);
+    			if (detaching) detach(td2);
+    			if (detaching) detach(t5);
+    			if (detaching) detach(td3);
+    			if (if_block4) if_block4.d();
+    			if (detaching) detach(t6);
+    			if (detaching) detach(td4);
+    			if (if_block5) if_block5.d();
     		}
     	};
     }
@@ -2161,13 +2169,18 @@ var frontpage_engine = (function () {
     }
 
     var wp = window.wp;
-    function apiPost(path, data) {
+    function apiPost(path, data, uid) {
         var _this = this;
+        if (uid === void 0) { uid = null; }
         return new Promise(function (resolve, reject) {
+            console.log({ uid: uid });
             wp.apiRequest({
                 path: path,
                 data: data,
-                type: "POST"
+                type: "POST",
+                headers: {
+                    "x-wssb-uid": uid
+                }
             })
                 .done(function (response) { return __awaiter(_this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
@@ -2245,9 +2258,9 @@ var frontpage_engine = (function () {
 
     function get_each_context$2(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[25] = list[i];
-    	child_ctx[26] = list;
-    	child_ctx[27] = i;
+    	child_ctx[26] = list[i];
+    	child_ctx[27] = list;
+    	child_ctx[28] = i;
     	return child_ctx;
     }
 
@@ -2302,7 +2315,7 @@ var frontpage_engine = (function () {
     	let dispose;
 
     	function input_change_handler() {
-    		/*input_change_handler*/ ctx[17].call(input, /*each_value*/ ctx[26], /*index*/ ctx[27]);
+    		/*input_change_handler*/ ctx[17].call(input, /*each_value*/ ctx[27], /*index*/ ctx[28]);
     	}
 
     	return {
@@ -2320,7 +2333,7 @@ var frontpage_engine = (function () {
     			insert(target, label, anchor);
     			insert(target, t1, anchor);
     			insert(target, input, anchor);
-    			input.checked = /*post*/ ctx[25].checked;
+    			input.checked = /*post*/ ctx[26].checked;
 
     			if (!mounted) {
     				dispose = listen(input, "change", input_change_handler);
@@ -2331,7 +2344,7 @@ var frontpage_engine = (function () {
     			ctx = new_ctx;
 
     			if (dirty & /*$featuredPosts*/ 32) {
-    				input.checked = /*post*/ ctx[25].checked;
+    				input.checked = /*post*/ ctx[26].checked;
     			}
     		},
     		d(detaching) {
@@ -2354,7 +2367,7 @@ var frontpage_engine = (function () {
     	const if_blocks = [];
 
     	function select_block_type(ctx, dirty) {
-    		if (/*post*/ ctx[25].locked) return 0;
+    		if (/*post*/ ctx[26].locked) return 0;
     		return 1;
     	}
 
@@ -2449,7 +2462,7 @@ var frontpage_engine = (function () {
     	const if_blocks = [];
 
     	function select_block_type_1(ctx, dirty) {
-    		if (/*post*/ ctx[25].manual) return 0;
+    		if (/*post*/ ctx[26].manual) return 0;
     		return 1;
     	}
 
@@ -2477,14 +2490,14 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const sveltetooltip0_changes = {};
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 268435488) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 536870944) {
     				sveltetooltip0_changes.$$scope = { dirty, ctx };
     			}
 
     			sveltetooltip0.$set(sveltetooltip0_changes);
     			const sveltetooltip1_changes = {};
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 268435488) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 536870944) {
     				sveltetooltip1_changes.$$scope = { dirty, ctx };
     			}
 
@@ -2581,14 +2594,14 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const sveltetooltip0_changes = {};
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 268435488) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 536870944) {
     				sveltetooltip0_changes.$$scope = { dirty, ctx };
     			}
 
     			sveltetooltip0.$set(sveltetooltip0_changes);
     			const sveltetooltip1_changes = {};
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 268435488) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 536870944) {
     				sveltetooltip1_changes.$$scope = { dirty, ctx };
     			}
 
@@ -2629,7 +2642,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doLock*/ ctx[9](/*post*/ ctx[25]))) /*doLock*/ ctx[9](/*post*/ ctx[25]).apply(this, arguments);
+    					if (is_function(/*doLock*/ ctx[9](/*post*/ ctx[26]))) /*doLock*/ ctx[9](/*post*/ ctx[26]).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -2662,7 +2675,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doRemove*/ ctx[14](/*post*/ ctx[25]))) /*doRemove*/ ctx[14](/*post*/ ctx[25]).apply(this, arguments);
+    					if (is_function(/*doRemove*/ ctx[14](/*post*/ ctx[26]))) /*doRemove*/ ctx[14](/*post*/ ctx[26]).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -2705,7 +2718,7 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const sveltetooltip_changes = {};
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 268435488) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 536870944) {
     				sveltetooltip_changes.$$scope = { dirty, ctx };
     			}
 
@@ -2752,7 +2765,7 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const sveltetooltip_changes = {};
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 268435488) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 536870944) {
     				sveltetooltip_changes.$$scope = { dirty, ctx };
     			}
 
@@ -2789,7 +2802,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doManual*/ ctx[10](/*post*/ ctx[25].slot))) /*doManual*/ ctx[10](/*post*/ ctx[25].slot).apply(this, arguments);
+    					if (is_function(/*doManual*/ ctx[10](/*post*/ ctx[26].slot))) /*doManual*/ ctx[10](/*post*/ ctx[26].slot).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -2822,7 +2835,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doAuto*/ ctx[11](/*post*/ ctx[25].slot))) /*doAuto*/ ctx[11](/*post*/ ctx[25].slot).apply(this, arguments);
+    					if (is_function(/*doAuto*/ ctx[11](/*post*/ ctx[26].slot))) /*doAuto*/ ctx[11](/*post*/ ctx[26].slot).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -2855,7 +2868,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doUnlock*/ ctx[13](/*post*/ ctx[25]))) /*doUnlock*/ ctx[13](/*post*/ ctx[25]).apply(this, arguments);
+    					if (is_function(/*doUnlock*/ ctx[13](/*post*/ ctx[26]))) /*doUnlock*/ ctx[13](/*post*/ ctx[26]).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -2875,7 +2888,7 @@ var frontpage_engine = (function () {
     // (213:24) <SvelteTooltip tip="Click to edit unlock time." left color="#FFB74D">
     function create_default_slot$1(ctx) {
     	let span;
-    	let t_value = /*formatTime*/ ctx[16](/*post*/ ctx[25].slot.lock_until) + "";
+    	let t_value = /*formatTime*/ ctx[16](/*post*/ ctx[26].slot.lock_until) + "";
     	let t;
     	let mounted;
     	let dispose;
@@ -2893,10 +2906,10 @@ var frontpage_engine = (function () {
     			if (!mounted) {
     				dispose = [
     					listen(span, "click", function () {
-    						if (is_function(/*chooseTime*/ ctx[12](/*post*/ ctx[25]))) /*chooseTime*/ ctx[12](/*post*/ ctx[25]).apply(this, arguments);
+    						if (is_function(/*chooseTime*/ ctx[12](/*post*/ ctx[26]))) /*chooseTime*/ ctx[12](/*post*/ ctx[26]).apply(this, arguments);
     					}),
     					listen(span, "keypress", function () {
-    						if (is_function(/*chooseTime*/ ctx[12](/*post*/ ctx[25]))) /*chooseTime*/ ctx[12](/*post*/ ctx[25]).apply(this, arguments);
+    						if (is_function(/*chooseTime*/ ctx[12](/*post*/ ctx[26]))) /*chooseTime*/ ctx[12](/*post*/ ctx[26]).apply(this, arguments);
     					})
     				];
 
@@ -2905,7 +2918,7 @@ var frontpage_engine = (function () {
     		},
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
-    			if (dirty & /*$featuredPosts*/ 32 && t_value !== (t_value = /*formatTime*/ ctx[16](/*post*/ ctx[25].slot.lock_until) + "")) set_data(t, t_value);
+    			if (dirty & /*$featuredPosts*/ 32 && t_value !== (t_value = /*formatTime*/ ctx[16](/*post*/ ctx[26].slot.lock_until) + "")) set_data(t, t_value);
     		},
     		d(detaching) {
     			if (detaching) detach(span);
@@ -2931,38 +2944,38 @@ var frontpage_engine = (function () {
     	let current;
     	let mounted;
     	let dispose;
-    	let if_block0 = !/*post*/ ctx[25].locked && !!/*post*/ ctx[25].slot.post_id && create_if_block_3$1(ctx);
+    	let if_block0 = !/*post*/ ctx[26].locked && !!/*post*/ ctx[26].slot.post_id && create_if_block_3$1(ctx);
 
     	postrow = new PostRow({
     			props: {
-    				post: /*post*/ ctx[25],
-    				index: /*index*/ ctx[27],
-    				hovering: /*rowHovering*/ ctx[4] === /*index*/ ctx[27],
+    				post: /*post*/ ctx[26],
+    				index: /*index*/ ctx[28],
+    				hovering: /*rowHovering*/ ctx[4] === /*index*/ ctx[28],
     				total_hits: /*total_hits*/ ctx[1],
     				analytics: /*analytics*/ ctx[2]
     			}
     		});
 
-    	let if_block1 = !!/*post*/ ctx[25].slot.post_id && create_if_block$2(ctx);
+    	let if_block1 = !!/*post*/ ctx[26].slot.post_id && create_if_block$2(ctx);
 
     	function dragstart_handler(...args) {
-    		return /*dragstart_handler*/ ctx[18](/*index*/ ctx[27], ...args);
+    		return /*dragstart_handler*/ ctx[18](/*index*/ ctx[28], ...args);
     	}
 
     	function drop_handler(...args) {
-    		return /*drop_handler*/ ctx[19](/*index*/ ctx[27], ...args);
+    		return /*drop_handler*/ ctx[19](/*index*/ ctx[28], ...args);
     	}
 
     	function dragenter_handler() {
-    		return /*dragenter_handler*/ ctx[20](/*post*/ ctx[25], /*index*/ ctx[27]);
+    		return /*dragenter_handler*/ ctx[20](/*post*/ ctx[26], /*index*/ ctx[28]);
     	}
 
     	function mouseover_handler() {
-    		return /*mouseover_handler*/ ctx[21](/*index*/ ctx[27]);
+    		return /*mouseover_handler*/ ctx[21](/*index*/ ctx[28]);
     	}
 
     	function focus_handler() {
-    		return /*focus_handler*/ ctx[22](/*index*/ ctx[27]);
+    		return /*focus_handler*/ ctx[22](/*index*/ ctx[28]);
     	}
 
     	return {
@@ -2982,12 +2995,12 @@ var frontpage_engine = (function () {
     			attr(th0, "class", "check-column");
     			attr(th1, "scope", "row");
     			attr(th1, "class", "lock-column");
-    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[25].id);
-    			attr(tr, "draggable", tr_draggable_value = !/*post*/ ctx[25].locked && !!/*post*/ ctx[25].slot.post_id);
+    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[26].id);
+    			attr(tr, "draggable", tr_draggable_value = !/*post*/ ctx[26].locked && !!/*post*/ ctx[26].slot.post_id);
     			attr(tr, "ondragover", "return false");
     			attr(tr, "class", "svelte-1slu00a");
-    			toggle_class(tr, "is-active", /*hovering*/ ctx[3] === /*index*/ ctx[27]);
-    			toggle_class(tr, "is-locked", /*post*/ ctx[25].locked);
+    			toggle_class(tr, "is-active", /*hovering*/ ctx[3] === /*index*/ ctx[28]);
+    			toggle_class(tr, "is-locked", /*post*/ ctx[26].locked);
     			this.first = tr;
     		},
     		m(target, anchor) {
@@ -3017,7 +3030,7 @@ var frontpage_engine = (function () {
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
 
-    			if (!/*post*/ ctx[25].locked && !!/*post*/ ctx[25].slot.post_id) {
+    			if (!/*post*/ ctx[26].locked && !!/*post*/ ctx[26].slot.post_id) {
     				if (if_block0) {
     					if_block0.p(ctx, dirty);
     				} else {
@@ -3031,14 +3044,14 @@ var frontpage_engine = (function () {
     			}
 
     			const postrow_changes = {};
-    			if (dirty & /*$featuredPosts*/ 32) postrow_changes.post = /*post*/ ctx[25];
-    			if (dirty & /*$featuredPosts*/ 32) postrow_changes.index = /*index*/ ctx[27];
-    			if (dirty & /*rowHovering, $featuredPosts*/ 48) postrow_changes.hovering = /*rowHovering*/ ctx[4] === /*index*/ ctx[27];
+    			if (dirty & /*$featuredPosts*/ 32) postrow_changes.post = /*post*/ ctx[26];
+    			if (dirty & /*$featuredPosts*/ 32) postrow_changes.index = /*index*/ ctx[28];
+    			if (dirty & /*rowHovering, $featuredPosts*/ 48) postrow_changes.hovering = /*rowHovering*/ ctx[4] === /*index*/ ctx[28];
     			if (dirty & /*total_hits*/ 2) postrow_changes.total_hits = /*total_hits*/ ctx[1];
     			if (dirty & /*analytics*/ 4) postrow_changes.analytics = /*analytics*/ ctx[2];
     			postrow.$set(postrow_changes);
 
-    			if (!!/*post*/ ctx[25].slot.post_id) {
+    			if (!!/*post*/ ctx[26].slot.post_id) {
     				if (if_block1) {
     					if_block1.p(ctx, dirty);
 
@@ -3061,20 +3074,20 @@ var frontpage_engine = (function () {
     				check_outros();
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 32 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[25].id)) {
+    			if (!current || dirty & /*$featuredPosts*/ 32 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[26].id)) {
     				attr(tr, "id", tr_id_value);
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 32 && tr_draggable_value !== (tr_draggable_value = !/*post*/ ctx[25].locked && !!/*post*/ ctx[25].slot.post_id)) {
+    			if (!current || dirty & /*$featuredPosts*/ 32 && tr_draggable_value !== (tr_draggable_value = !/*post*/ ctx[26].locked && !!/*post*/ ctx[26].slot.post_id)) {
     				attr(tr, "draggable", tr_draggable_value);
     			}
 
     			if (!current || dirty & /*hovering, $featuredPosts*/ 40) {
-    				toggle_class(tr, "is-active", /*hovering*/ ctx[3] === /*index*/ ctx[27]);
+    				toggle_class(tr, "is-active", /*hovering*/ ctx[3] === /*index*/ ctx[28]);
     			}
 
     			if (!current || dirty & /*$featuredPosts*/ 32) {
-    				toggle_class(tr, "is-locked", /*post*/ ctx[25].locked);
+    				toggle_class(tr, "is-locked", /*post*/ ctx[26].locked);
     			}
     		},
     		r() {
@@ -3141,7 +3154,7 @@ var frontpage_engine = (function () {
     	let dispose;
     	let if_block = /*mode*/ ctx[6] === "development" && create_if_block_4();
     	let each_value = /*$featuredPosts*/ ctx[5];
-    	const get_key = ctx => /*post*/ ctx[25].id;
+    	const get_key = ctx => /*post*/ ctx[26].id;
 
     	for (let i = 0; i < each_value.length; i += 1) {
     		let child_ctx = get_each_context$2(ctx, each_value, i);
@@ -3285,7 +3298,9 @@ var frontpage_engine = (function () {
 
     function instance$5($$self, $$props, $$invalidate) {
     	let $featuredPosts;
+    	let $unique_id;
     	component_subscribe($$self, featuredPosts, $$value => $$invalidate(5, $featuredPosts = $$value));
+    	component_subscribe($$self, unique_id, $$value => $$invalidate(23, $unique_id = $$value));
     	const mode = "development";
     	const dispatch = createEventDispatcher();
     	let hovering = false;
@@ -3322,7 +3337,7 @@ var frontpage_engine = (function () {
     				throw "Post id is missing";
     			}
 
-    			set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}?${mode == "development" ? "simulate_analytics=1" : ""}`, { post_id, from, to })).posts.map(map_posts), $featuredPosts);
+    			set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}?${mode == "development" ? "simulate_analytics=1" : ""}`, { post_id, from, to }, $unique_id)).posts.map(map_posts), $featuredPosts);
     			dispatch("updated");
     			$$invalidate(3, hovering = null);
     			$$invalidate(0, updating = false);
@@ -4310,485 +4325,100 @@ var frontpage_engine = (function () {
     	}
     }
 
-    // Unique ID creation requires a high quality random # generator. In the browser we therefore
-    // require the crypto API and do not support built-in fallback to lower quality random number
-    // generators (like Math.random()).
-    let getRandomValues;
-    const rnds8 = new Uint8Array(16);
-    function rng() {
-      // lazy load so that environments that need to polyfill have a chance to do so
-      if (!getRandomValues) {
-        // getRandomValues needs to be invoked in a context where "this" is a Crypto implementation.
-        getRandomValues = typeof crypto !== 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
-
-        if (!getRandomValues) {
-          throw new Error('crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported');
-        }
-      }
-
-      return getRandomValues(rnds8);
-    }
-
-    var REGEX = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
-
-    function validate(uuid) {
-      return typeof uuid === 'string' && REGEX.test(uuid);
-    }
-
-    /**
-     * Convert array of 16 byte values to UUID string format of the form:
-     * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-     */
-
-    const byteToHex = [];
-
-    for (let i = 0; i < 256; ++i) {
-      byteToHex.push((i + 0x100).toString(16).slice(1));
-    }
-
-    function unsafeStringify(arr, offset = 0) {
-      // Note: Be careful editing this code!  It's been tuned for performance
-      // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-      return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
-    }
-
-    function parse(uuid) {
-      if (!validate(uuid)) {
-        throw TypeError('Invalid UUID');
-      }
-
-      let v;
-      const arr = new Uint8Array(16); // Parse ########-....-....-....-............
-
-      arr[0] = (v = parseInt(uuid.slice(0, 8), 16)) >>> 24;
-      arr[1] = v >>> 16 & 0xff;
-      arr[2] = v >>> 8 & 0xff;
-      arr[3] = v & 0xff; // Parse ........-####-....-....-............
-
-      arr[4] = (v = parseInt(uuid.slice(9, 13), 16)) >>> 8;
-      arr[5] = v & 0xff; // Parse ........-....-####-....-............
-
-      arr[6] = (v = parseInt(uuid.slice(14, 18), 16)) >>> 8;
-      arr[7] = v & 0xff; // Parse ........-....-....-####-............
-
-      arr[8] = (v = parseInt(uuid.slice(19, 23), 16)) >>> 8;
-      arr[9] = v & 0xff; // Parse ........-....-....-....-############
-      // (Use "/" to avoid 32-bit truncation when bit-shifting high-order bytes)
-
-      arr[10] = (v = parseInt(uuid.slice(24, 36), 16)) / 0x10000000000 & 0xff;
-      arr[11] = v / 0x100000000 & 0xff;
-      arr[12] = v >>> 24 & 0xff;
-      arr[13] = v >>> 16 & 0xff;
-      arr[14] = v >>> 8 & 0xff;
-      arr[15] = v & 0xff;
-      return arr;
-    }
-
-    function stringToBytes(str) {
-      str = unescape(encodeURIComponent(str)); // UTF8 escape
-
-      const bytes = [];
-
-      for (let i = 0; i < str.length; ++i) {
-        bytes.push(str.charCodeAt(i));
-      }
-
-      return bytes;
-    }
-
-    const DNS = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
-    const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
-    function v35(name, version, hashfunc) {
-      function generateUUID(value, namespace, buf, offset) {
-        var _namespace;
-
-        if (typeof value === 'string') {
-          value = stringToBytes(value);
+    class FrontPageEngineSocketServer {
+        constructor(url, domain = "http://localhost", channel, uid = null) {
+            this.url = url;
+            if (!this.url) {
+                throw new Error("No Websocket URL provided");
+            }
+            this.domain = domain;
+            this.channel = channel;
+            this.callbacks = [];
+            this.uid = uid;
+            this.connect();
         }
 
-        if (typeof namespace === 'string') {
-          namespace = parse(namespace);
+        connect() {
+            this.socket = new WebSocket(this.url);
+            // this.socket.onopen = this.onOpen.bind(this);
+            this.socket.onclose = this.onClose.bind(this);
+            this.socket.onmessage = this.onMessage.bind(this);
+            this.socket.onopen = this.onConnect.bind(this);
         }
 
-        if (((_namespace = namespace) === null || _namespace === void 0 ? void 0 : _namespace.length) !== 16) {
-          throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
-        } // Compute hash of namespace and value, Per 4.3
-        // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
-        // hashfunc([...namespace, ... value])`
-
-
-        let bytes = new Uint8Array(16 + value.length);
-        bytes.set(namespace);
-        bytes.set(value, namespace.length);
-        bytes = hashfunc(bytes);
-        bytes[6] = bytes[6] & 0x0f | version;
-        bytes[8] = bytes[8] & 0x3f | 0x80;
-
-        if (buf) {
-          offset = offset || 0;
-
-          for (let i = 0; i < 16; ++i) {
-            buf[offset + i] = bytes[i];
-          }
-
-          return buf;
+        close() {
+            this.channel = null;
+            this.domain = null;
+            this.socket.close();
         }
 
-        return unsafeStringify(bytes);
-      } // Function#name is not settable on some platforms (#270)
-
-
-      try {
-        generateUUID.name = name; // eslint-disable-next-line no-empty
-      } catch (err) {} // For CommonJS default export support
-
-
-      generateUUID.DNS = DNS;
-      generateUUID.URL = URL;
-      return generateUUID;
-    }
-
-    /*
-     * Browser-compatible JavaScript MD5
-     *
-     * Modification of JavaScript MD5
-     * https://github.com/blueimp/JavaScript-MD5
-     *
-     * Copyright 2011, Sebastian Tschan
-     * https://blueimp.net
-     *
-     * Licensed under the MIT license:
-     * https://opensource.org/licenses/MIT
-     *
-     * Based on
-     * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
-     * Digest Algorithm, as defined in RFC 1321.
-     * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
-     * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
-     * Distributed under the BSD License
-     * See http://pajhome.org.uk/crypt/md5 for more info.
-     */
-    function md5(bytes) {
-      if (typeof bytes === 'string') {
-        const msg = unescape(encodeURIComponent(bytes)); // UTF8 escape
-
-        bytes = new Uint8Array(msg.length);
-
-        for (let i = 0; i < msg.length; ++i) {
-          bytes[i] = msg.charCodeAt(i);
-        }
-      }
-
-      return md5ToHexEncodedArray(wordsToMd5(bytesToWords(bytes), bytes.length * 8));
-    }
-    /*
-     * Convert an array of little-endian words to an array of bytes
-     */
-
-
-    function md5ToHexEncodedArray(input) {
-      const output = [];
-      const length32 = input.length * 32;
-      const hexTab = '0123456789abcdef';
-
-      for (let i = 0; i < length32; i += 8) {
-        const x = input[i >> 5] >>> i % 32 & 0xff;
-        const hex = parseInt(hexTab.charAt(x >>> 4 & 0x0f) + hexTab.charAt(x & 0x0f), 16);
-        output.push(hex);
-      }
-
-      return output;
-    }
-    /**
-     * Calculate output length with padding and bit length
-     */
-
-
-    function getOutputLength(inputLength8) {
-      return (inputLength8 + 64 >>> 9 << 4) + 14 + 1;
-    }
-    /*
-     * Calculate the MD5 of an array of little-endian words, and a bit length.
-     */
-
-
-    function wordsToMd5(x, len) {
-      /* append padding */
-      x[len >> 5] |= 0x80 << len % 32;
-      x[getOutputLength(len) - 1] = len;
-      let a = 1732584193;
-      let b = -271733879;
-      let c = -1732584194;
-      let d = 271733878;
-
-      for (let i = 0; i < x.length; i += 16) {
-        const olda = a;
-        const oldb = b;
-        const oldc = c;
-        const oldd = d;
-        a = md5ff(a, b, c, d, x[i], 7, -680876936);
-        d = md5ff(d, a, b, c, x[i + 1], 12, -389564586);
-        c = md5ff(c, d, a, b, x[i + 2], 17, 606105819);
-        b = md5ff(b, c, d, a, x[i + 3], 22, -1044525330);
-        a = md5ff(a, b, c, d, x[i + 4], 7, -176418897);
-        d = md5ff(d, a, b, c, x[i + 5], 12, 1200080426);
-        c = md5ff(c, d, a, b, x[i + 6], 17, -1473231341);
-        b = md5ff(b, c, d, a, x[i + 7], 22, -45705983);
-        a = md5ff(a, b, c, d, x[i + 8], 7, 1770035416);
-        d = md5ff(d, a, b, c, x[i + 9], 12, -1958414417);
-        c = md5ff(c, d, a, b, x[i + 10], 17, -42063);
-        b = md5ff(b, c, d, a, x[i + 11], 22, -1990404162);
-        a = md5ff(a, b, c, d, x[i + 12], 7, 1804603682);
-        d = md5ff(d, a, b, c, x[i + 13], 12, -40341101);
-        c = md5ff(c, d, a, b, x[i + 14], 17, -1502002290);
-        b = md5ff(b, c, d, a, x[i + 15], 22, 1236535329);
-        a = md5gg(a, b, c, d, x[i + 1], 5, -165796510);
-        d = md5gg(d, a, b, c, x[i + 6], 9, -1069501632);
-        c = md5gg(c, d, a, b, x[i + 11], 14, 643717713);
-        b = md5gg(b, c, d, a, x[i], 20, -373897302);
-        a = md5gg(a, b, c, d, x[i + 5], 5, -701558691);
-        d = md5gg(d, a, b, c, x[i + 10], 9, 38016083);
-        c = md5gg(c, d, a, b, x[i + 15], 14, -660478335);
-        b = md5gg(b, c, d, a, x[i + 4], 20, -405537848);
-        a = md5gg(a, b, c, d, x[i + 9], 5, 568446438);
-        d = md5gg(d, a, b, c, x[i + 14], 9, -1019803690);
-        c = md5gg(c, d, a, b, x[i + 3], 14, -187363961);
-        b = md5gg(b, c, d, a, x[i + 8], 20, 1163531501);
-        a = md5gg(a, b, c, d, x[i + 13], 5, -1444681467);
-        d = md5gg(d, a, b, c, x[i + 2], 9, -51403784);
-        c = md5gg(c, d, a, b, x[i + 7], 14, 1735328473);
-        b = md5gg(b, c, d, a, x[i + 12], 20, -1926607734);
-        a = md5hh(a, b, c, d, x[i + 5], 4, -378558);
-        d = md5hh(d, a, b, c, x[i + 8], 11, -2022574463);
-        c = md5hh(c, d, a, b, x[i + 11], 16, 1839030562);
-        b = md5hh(b, c, d, a, x[i + 14], 23, -35309556);
-        a = md5hh(a, b, c, d, x[i + 1], 4, -1530992060);
-        d = md5hh(d, a, b, c, x[i + 4], 11, 1272893353);
-        c = md5hh(c, d, a, b, x[i + 7], 16, -155497632);
-        b = md5hh(b, c, d, a, x[i + 10], 23, -1094730640);
-        a = md5hh(a, b, c, d, x[i + 13], 4, 681279174);
-        d = md5hh(d, a, b, c, x[i], 11, -358537222);
-        c = md5hh(c, d, a, b, x[i + 3], 16, -722521979);
-        b = md5hh(b, c, d, a, x[i + 6], 23, 76029189);
-        a = md5hh(a, b, c, d, x[i + 9], 4, -640364487);
-        d = md5hh(d, a, b, c, x[i + 12], 11, -421815835);
-        c = md5hh(c, d, a, b, x[i + 15], 16, 530742520);
-        b = md5hh(b, c, d, a, x[i + 2], 23, -995338651);
-        a = md5ii(a, b, c, d, x[i], 6, -198630844);
-        d = md5ii(d, a, b, c, x[i + 7], 10, 1126891415);
-        c = md5ii(c, d, a, b, x[i + 14], 15, -1416354905);
-        b = md5ii(b, c, d, a, x[i + 5], 21, -57434055);
-        a = md5ii(a, b, c, d, x[i + 12], 6, 1700485571);
-        d = md5ii(d, a, b, c, x[i + 3], 10, -1894986606);
-        c = md5ii(c, d, a, b, x[i + 10], 15, -1051523);
-        b = md5ii(b, c, d, a, x[i + 1], 21, -2054922799);
-        a = md5ii(a, b, c, d, x[i + 8], 6, 1873313359);
-        d = md5ii(d, a, b, c, x[i + 15], 10, -30611744);
-        c = md5ii(c, d, a, b, x[i + 6], 15, -1560198380);
-        b = md5ii(b, c, d, a, x[i + 13], 21, 1309151649);
-        a = md5ii(a, b, c, d, x[i + 4], 6, -145523070);
-        d = md5ii(d, a, b, c, x[i + 11], 10, -1120210379);
-        c = md5ii(c, d, a, b, x[i + 2], 15, 718787259);
-        b = md5ii(b, c, d, a, x[i + 9], 21, -343485551);
-        a = safeAdd(a, olda);
-        b = safeAdd(b, oldb);
-        c = safeAdd(c, oldc);
-        d = safeAdd(d, oldd);
-      }
-
-      return [a, b, c, d];
-    }
-    /*
-     * Convert an array bytes to an array of little-endian words
-     * Characters >255 have their high-byte silently ignored.
-     */
-
-
-    function bytesToWords(input) {
-      if (input.length === 0) {
-        return [];
-      }
-
-      const length8 = input.length * 8;
-      const output = new Uint32Array(getOutputLength(length8));
-
-      for (let i = 0; i < length8; i += 8) {
-        output[i >> 5] |= (input[i / 8] & 0xff) << i % 32;
-      }
-
-      return output;
-    }
-    /*
-     * Add integers, wrapping at 2^32. This uses 16-bit operations internally
-     * to work around bugs in some JS interpreters.
-     */
-
-
-    function safeAdd(x, y) {
-      const lsw = (x & 0xffff) + (y & 0xffff);
-      const msw = (x >> 16) + (y >> 16) + (lsw >> 16);
-      return msw << 16 | lsw & 0xffff;
-    }
-    /*
-     * Bitwise rotate a 32-bit number to the left.
-     */
-
-
-    function bitRotateLeft(num, cnt) {
-      return num << cnt | num >>> 32 - cnt;
-    }
-    /*
-     * These functions implement the four basic operations the algorithm uses.
-     */
-
-
-    function md5cmn(q, a, b, x, s, t) {
-      return safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b);
-    }
-
-    function md5ff(a, b, c, d, x, s, t) {
-      return md5cmn(b & c | ~b & d, a, b, x, s, t);
-    }
-
-    function md5gg(a, b, c, d, x, s, t) {
-      return md5cmn(b & d | c & ~d, a, b, x, s, t);
-    }
-
-    function md5hh(a, b, c, d, x, s, t) {
-      return md5cmn(b ^ c ^ d, a, b, x, s, t);
-    }
-
-    function md5ii(a, b, c, d, x, s, t) {
-      return md5cmn(c ^ (b | ~d), a, b, x, s, t);
-    }
-
-    v35('v3', 0x30, md5);
-
-    const randomUUID = typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID.bind(crypto);
-    var native = {
-      randomUUID
-    };
-
-    function v4(options, buf, offset) {
-      if (native.randomUUID && !buf && !options) {
-        return native.randomUUID();
-      }
-
-      options = options || {};
-      const rnds = options.random || (options.rng || rng)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
-
-      rnds[6] = rnds[6] & 0x0f | 0x40;
-      rnds[8] = rnds[8] & 0x3f | 0x80; // Copy bytes to buffer, if provided
-
-      if (buf) {
-        offset = offset || 0;
-
-        for (let i = 0; i < 16; ++i) {
-          buf[offset + i] = rnds[i];
+        subscribe(channel = null) {
+            if (channel) {
+                this.channel = channel;
+            }
+            if (this.socket.readyState === WebSocket.OPEN) {
+                this.socket.send(JSON.stringify({ event: "subscribe", channel: this.channel, domain: this.domain, uid: this.uid }));
+            } else {
+                this.socket.onopen = () => {
+                    this.socket.send(JSON.stringify({ event: "subscribe", channel: this.channel, domain: this.domain, uid: this.uid }));
+                };
+            }
         }
 
-        return buf;
-      }
+        on(name, callback) {
+            this.callbacks.push({ name, callback });
+        }
 
-      return unsafeStringify(rnds);
+        // onOpen(event) {
+        //     console.log(event);
+        // }
+
+        onConnect() {
+            this.subscribe();
+        }
+
+        onMessage(encodedMessage) {
+            // console.log({ data: message.data });
+            const message = JSON.parse(encodedMessage.data);
+            console.log("Received message", message);
+            Promise.all(this.callbacks.map(callback => {
+                console.log("Checking callback", callback.name, message.data);
+                if (callback.name === message.data) {
+                    console.log("Calling callback", callback.name);
+                    return callback.callback(message);
+                }
+            }));
+        }
+
+        onClose(event) {
+            // Reconnect
+            console.log("Reconnecting...");
+            this.connect();
+            console.log(event);
+        }
+
+        sendMessage(message) {
+            // console.log("Sending message", message);
+            if (typeof message !== 'object' || Array.isArray(message) || message === null) {
+                message = { message };
+            }
+            if (!message.message) {
+                throw new Error('Invalid message');
+            }
+            if (!message.event) {
+                message.event = "broadcast";
+            }
+            message.channel = this.channel;
+            message.domain = this.domain;
+            // console.log(message);
+            // Wait for the connection to be established before sending a message.
+            if (this.socket.readyState === WebSocket.OPEN) {
+                this.socket.send(JSON.stringify(message));
+            } else {
+                setTimeout(() => this.sendMessage(message), 100);
+            }
+        }
     }
-
-    // Adapted from Chris Veness' SHA1 code at
-    // http://www.movable-type.co.uk/scripts/sha1.html
-    function f(s, x, y, z) {
-      switch (s) {
-        case 0:
-          return x & y ^ ~x & z;
-
-        case 1:
-          return x ^ y ^ z;
-
-        case 2:
-          return x & y ^ x & z ^ y & z;
-
-        case 3:
-          return x ^ y ^ z;
-      }
-    }
-
-    function ROTL(x, n) {
-      return x << n | x >>> 32 - n;
-    }
-
-    function sha1(bytes) {
-      const K = [0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6];
-      const H = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0];
-
-      if (typeof bytes === 'string') {
-        const msg = unescape(encodeURIComponent(bytes)); // UTF8 escape
-
-        bytes = [];
-
-        for (let i = 0; i < msg.length; ++i) {
-          bytes.push(msg.charCodeAt(i));
-        }
-      } else if (!Array.isArray(bytes)) {
-        // Convert Array-like to Array
-        bytes = Array.prototype.slice.call(bytes);
-      }
-
-      bytes.push(0x80);
-      const l = bytes.length / 4 + 2;
-      const N = Math.ceil(l / 16);
-      const M = new Array(N);
-
-      for (let i = 0; i < N; ++i) {
-        const arr = new Uint32Array(16);
-
-        for (let j = 0; j < 16; ++j) {
-          arr[j] = bytes[i * 64 + j * 4] << 24 | bytes[i * 64 + j * 4 + 1] << 16 | bytes[i * 64 + j * 4 + 2] << 8 | bytes[i * 64 + j * 4 + 3];
-        }
-
-        M[i] = arr;
-      }
-
-      M[N - 1][14] = (bytes.length - 1) * 8 / Math.pow(2, 32);
-      M[N - 1][14] = Math.floor(M[N - 1][14]);
-      M[N - 1][15] = (bytes.length - 1) * 8 & 0xffffffff;
-
-      for (let i = 0; i < N; ++i) {
-        const W = new Uint32Array(80);
-
-        for (let t = 0; t < 16; ++t) {
-          W[t] = M[i][t];
-        }
-
-        for (let t = 16; t < 80; ++t) {
-          W[t] = ROTL(W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16], 1);
-        }
-
-        let a = H[0];
-        let b = H[1];
-        let c = H[2];
-        let d = H[3];
-        let e = H[4];
-
-        for (let t = 0; t < 80; ++t) {
-          const s = Math.floor(t / 20);
-          const T = ROTL(a, 5) + f(s, b, c, d) + e + K[s] + W[t] >>> 0;
-          e = d;
-          d = c;
-          c = ROTL(b, 30) >>> 0;
-          b = a;
-          a = T;
-        }
-
-        H[0] = H[0] + a >>> 0;
-        H[1] = H[1] + b >>> 0;
-        H[2] = H[2] + c >>> 0;
-        H[3] = H[3] + d >>> 0;
-        H[4] = H[4] + e >>> 0;
-      }
-
-      return [H[0] >> 24 & 0xff, H[0] >> 16 & 0xff, H[0] >> 8 & 0xff, H[0] & 0xff, H[1] >> 24 & 0xff, H[1] >> 16 & 0xff, H[1] >> 8 & 0xff, H[1] & 0xff, H[2] >> 24 & 0xff, H[2] >> 16 & 0xff, H[2] >> 8 & 0xff, H[2] & 0xff, H[3] >> 24 & 0xff, H[3] >> 16 & 0xff, H[3] >> 8 & 0xff, H[3] & 0xff, H[4] >> 24 & 0xff, H[4] >> 16 & 0xff, H[4] >> 8 & 0xff, H[4] & 0xff];
-    }
-
-    v35('v5', 0x50, sha1);
 
     /* src/components/Message.svelte generated by Svelte v3.52.0 */
 
@@ -4880,13 +4510,13 @@ var frontpage_engine = (function () {
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[27] = list[i];
+    	child_ctx[30] = list[i];
     	return child_ctx;
     }
 
-    // (130:8) <Message type={message.type}>
+    // (144:8) <Message type={message.type}>
     function create_default_slot_2(ctx) {
-    	let t_value = /*message*/ ctx[27].message + "";
+    	let t_value = /*message*/ ctx[30].message + "";
     	let t;
 
     	return {
@@ -4897,7 +4527,7 @@ var frontpage_engine = (function () {
     			insert(target, t, anchor);
     		},
     		p(ctx, dirty) {
-    			if (dirty & /*messages*/ 2 && t_value !== (t_value = /*message*/ ctx[27].message + "")) set_data(t, t_value);
+    			if (dirty[0] & /*messages*/ 2 && t_value !== (t_value = /*message*/ ctx[30].message + "")) set_data(t, t_value);
     		},
     		d(detaching) {
     			if (detaching) detach(t);
@@ -4905,14 +4535,14 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (129:4) {#each messages as message}
+    // (143:4) {#each messages as message}
     function create_each_block(ctx) {
     	let message;
     	let current;
 
     	message = new Message({
     			props: {
-    				type: /*message*/ ctx[27].type,
+    				type: /*message*/ ctx[30].type,
     				$$slots: { default: [create_default_slot_2] },
     				$$scope: { ctx }
     			}
@@ -4928,9 +4558,9 @@ var frontpage_engine = (function () {
     		},
     		p(ctx, dirty) {
     			const message_changes = {};
-    			if (dirty & /*messages*/ 2) message_changes.type = /*message*/ ctx[27].type;
+    			if (dirty[0] & /*messages*/ 2) message_changes.type = /*message*/ ctx[30].type;
 
-    			if (dirty & /*$$scope, messages*/ 1073741826) {
+    			if (dirty[0] & /*messages*/ 2 | dirty[1] & /*$$scope*/ 4) {
     				message_changes.$$scope = { dirty, ctx };
     			}
 
@@ -4951,10 +4581,10 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (133:8) {#if $unorderedPosts.length > 0}
+    // (147:8) {#if $unorderedPosts.length > 0}
     function create_if_block_3(ctx) {
     	let div;
-    	let t_value = /*$unorderedPosts*/ ctx[8].length + "";
+    	let t_value = /*$unorderedPosts*/ ctx[9].length + "";
     	let t;
     	let mounted;
     	let dispose;
@@ -4971,12 +4601,12 @@ var frontpage_engine = (function () {
     			append(div, t);
 
     			if (!mounted) {
-    				dispose = listen(div, "click", /*click_handler*/ ctx[15]);
+    				dispose = listen(div, "click", /*click_handler*/ ctx[18]);
     				mounted = true;
     			}
     		},
     		p(ctx, dirty) {
-    			if (dirty & /*$unorderedPosts*/ 256 && t_value !== (t_value = /*$unorderedPosts*/ ctx[8].length + "")) set_data(t, t_value);
+    			if (dirty[0] & /*$unorderedPosts*/ 512 && t_value !== (t_value = /*$unorderedPosts*/ ctx[9].length + "")) set_data(t, t_value);
     		},
     		d(detaching) {
     			if (detaching) detach(div);
@@ -4986,7 +4616,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (139:8) {#if show_group_actions}
+    // (153:8) {#if show_group_actions}
     function create_if_block_2(ctx) {
     	let select;
     	let option0;
@@ -5006,26 +4636,26 @@ var frontpage_engine = (function () {
     			option1.__value = "remove";
     			option1.value = option1.__value;
     			attr(select, "class", "group-action");
-    			if (/*group_action*/ ctx[5] === void 0) add_render_callback(() => /*select_change_handler*/ ctx[18].call(select));
+    			if (/*group_action*/ ctx[6] === void 0) add_render_callback(() => /*select_change_handler*/ ctx[21].call(select));
     		},
     		m(target, anchor) {
     			insert(target, select, anchor);
     			append(select, option0);
     			append(select, option1);
-    			select_option(select, /*group_action*/ ctx[5]);
+    			select_option(select, /*group_action*/ ctx[6]);
 
     			if (!mounted) {
     				dispose = [
-    					listen(select, "change", /*select_change_handler*/ ctx[18]),
-    					listen(select, "change", /*onGroupAction*/ ctx[12])
+    					listen(select, "change", /*select_change_handler*/ ctx[21]),
+    					listen(select, "change", /*onGroupAction*/ ctx[13])
     				];
 
     				mounted = true;
     			}
     		},
     		p(ctx, dirty) {
-    			if (dirty & /*group_action*/ 32) {
-    				select_option(select, /*group_action*/ ctx[5]);
+    			if (dirty[0] & /*group_action*/ 64) {
+    				select_option(select, /*group_action*/ ctx[6]);
     			}
     		},
     		d(detaching) {
@@ -5036,7 +4666,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (147:4) {#if show_unordered_modal}
+    // (161:4) {#if show_unordered_modal}
     function create_if_block_1(ctx) {
     	let modal;
     	let current;
@@ -5048,7 +4678,7 @@ var frontpage_engine = (function () {
     			}
     		});
 
-    	modal.$on("close", /*close_handler*/ ctx[19]);
+    	modal.$on("close", /*close_handler*/ ctx[22]);
 
     	return {
     		c() {
@@ -5061,7 +4691,7 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const modal_changes = {};
 
-    			if (dirty & /*$$scope, frontpage_id, $totalHits*/ 1073741889) {
+    			if (dirty[0] & /*frontpage_id, $totalHits*/ 129 | dirty[1] & /*$$scope*/ 4) {
     				modal_changes.$$scope = { dirty, ctx };
     			}
 
@@ -5082,7 +4712,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (148:4) <Modal on:close="{() => show_unordered_modal = false}">
+    // (162:4) <Modal on:close="{() => show_unordered_modal = false}">
     function create_default_slot_1(ctx) {
     	let h2;
     	let t1;
@@ -5093,11 +4723,11 @@ var frontpage_engine = (function () {
     			props: {
     				frontpage_id: /*frontpage_id*/ ctx[0],
     				type: "unordered",
-    				total_hits: /*$totalHits*/ ctx[6]
+    				total_hits: /*$totalHits*/ ctx[7]
     			}
     		});
 
-    	addposttable.$on("updated", /*updated*/ ctx[9]);
+    	addposttable.$on("updated", /*updated*/ ctx[10]);
 
     	return {
     		c() {
@@ -5114,8 +4744,8 @@ var frontpage_engine = (function () {
     		},
     		p(ctx, dirty) {
     			const addposttable_changes = {};
-    			if (dirty & /*frontpage_id*/ 1) addposttable_changes.frontpage_id = /*frontpage_id*/ ctx[0];
-    			if (dirty & /*$totalHits*/ 64) addposttable_changes.total_hits = /*$totalHits*/ ctx[6];
+    			if (dirty[0] & /*frontpage_id*/ 1) addposttable_changes.frontpage_id = /*frontpage_id*/ ctx[0];
+    			if (dirty[0] & /*$totalHits*/ 128) addposttable_changes.total_hits = /*$totalHits*/ ctx[7];
     			addposttable.$set(addposttable_changes);
     		},
     		i(local) {
@@ -5135,7 +4765,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (153:4) {#if show_modal}
+    // (167:4) {#if show_modal}
     function create_if_block(ctx) {
     	let modal;
     	let current;
@@ -5150,7 +4780,7 @@ var frontpage_engine = (function () {
     			}
     		});
 
-    	modal.$on("close", /*close_handler_1*/ ctx[20]);
+    	modal.$on("close", /*close_handler_1*/ ctx[23]);
 
     	return {
     		c() {
@@ -5163,7 +4793,7 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const modal_changes = {};
 
-    			if (dirty & /*$$scope, frontpage_id, $totalHits*/ 1073741889) {
+    			if (dirty[0] & /*frontpage_id, $totalHits*/ 129 | dirty[1] & /*$$scope*/ 4) {
     				modal_changes.$$scope = { dirty, ctx };
     			}
 
@@ -5184,7 +4814,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (154:4) <Modal on:close="{() => show_modal = false}">
+    // (168:4) <Modal on:close="{() => show_modal = false}">
     function create_default_slot(ctx) {
     	let addposttable;
     	let current;
@@ -5192,11 +4822,11 @@ var frontpage_engine = (function () {
     	addposttable = new AddPostTable({
     			props: {
     				frontpage_id: /*frontpage_id*/ ctx[0],
-    				total_hits: /*$totalHits*/ ctx[6]
+    				total_hits: /*$totalHits*/ ctx[7]
     			}
     		});
 
-    	addposttable.$on("updated", /*updated*/ ctx[9]);
+    	addposttable.$on("updated", /*updated*/ ctx[10]);
 
     	return {
     		c() {
@@ -5208,8 +4838,8 @@ var frontpage_engine = (function () {
     		},
     		p(ctx, dirty) {
     			const addposttable_changes = {};
-    			if (dirty & /*frontpage_id*/ 1) addposttable_changes.frontpage_id = /*frontpage_id*/ ctx[0];
-    			if (dirty & /*$totalHits*/ 64) addposttable_changes.total_hits = /*$totalHits*/ ctx[6];
+    			if (dirty[0] & /*frontpage_id*/ 1) addposttable_changes.frontpage_id = /*frontpage_id*/ ctx[0];
+    			if (dirty[0] & /*$totalHits*/ 128) addposttable_changes.total_hits = /*$totalHits*/ ctx[7];
     			addposttable.$set(addposttable_changes);
     		},
     		i(local) {
@@ -5227,7 +4857,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (155:8) 
+    // (169:8) 
     function create_header_slot(ctx) {
     	let h2;
 
@@ -5276,22 +4906,22 @@ var frontpage_engine = (function () {
     		each_blocks[i] = null;
     	});
 
-    	let if_block0 = /*$unorderedPosts*/ ctx[8].length > 0 && create_if_block_3(ctx);
-    	let if_block1 = /*show_group_actions*/ ctx[4] && create_if_block_2(ctx);
+    	let if_block0 = /*$unorderedPosts*/ ctx[9].length > 0 && create_if_block_3(ctx);
+    	let if_block1 = /*show_group_actions*/ ctx[5] && create_if_block_2(ctx);
     	let if_block2 = /*show_unordered_modal*/ ctx[3] && create_if_block_1(ctx);
     	let if_block3 = /*show_modal*/ ctx[2] && create_if_block(ctx);
 
     	frontpagetable = new FrontpageTable({
     			props: {
     				frontpage_id: /*frontpage_id*/ ctx[0],
-    				total_hits: /*$totalHits*/ ctx[6],
-    				updating,
-    				analytics: /*$analytics*/ ctx[7]
+    				total_hits: /*$totalHits*/ ctx[7],
+    				updating: /*updating*/ ctx[4],
+    				analytics: /*$analytics*/ ctx[8]
     			}
     		});
 
-    	frontpagetable.$on("updated", /*updated*/ ctx[9]);
-    	frontpagetable.$on("moved", /*onMove*/ ctx[10]);
+    	frontpagetable.$on("updated", /*updated*/ ctx[10]);
+    	frontpagetable.$on("moved", /*onMove*/ ctx[11]);
 
     	return {
     		c() {
@@ -5354,15 +4984,15 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = [
-    					listen(a0, "click", /*click_handler_1*/ ctx[16]),
-    					listen(a1, "click", /*click_handler_2*/ ctx[17])
+    					listen(a0, "click", /*click_handler_1*/ ctx[19]),
+    					listen(a1, "click", /*click_handler_2*/ ctx[20])
     				];
 
     				mounted = true;
     			}
     		},
-    		p(ctx, [dirty]) {
-    			if (dirty & /*messages*/ 2) {
+    		p(ctx, dirty) {
+    			if (dirty[0] & /*messages*/ 2) {
     				each_value = /*messages*/ ctx[1];
     				let i;
 
@@ -5389,7 +5019,7 @@ var frontpage_engine = (function () {
     				check_outros();
     			}
 
-    			if (/*$unorderedPosts*/ ctx[8].length > 0) {
+    			if (/*$unorderedPosts*/ ctx[9].length > 0) {
     				if (if_block0) {
     					if_block0.p(ctx, dirty);
     				} else {
@@ -5402,7 +5032,7 @@ var frontpage_engine = (function () {
     				if_block0 = null;
     			}
 
-    			if (/*show_group_actions*/ ctx[4]) {
+    			if (/*show_group_actions*/ ctx[5]) {
     				if (if_block1) {
     					if_block1.p(ctx, dirty);
     				} else {
@@ -5419,7 +5049,7 @@ var frontpage_engine = (function () {
     				if (if_block2) {
     					if_block2.p(ctx, dirty);
 
-    					if (dirty & /*show_unordered_modal*/ 8) {
+    					if (dirty[0] & /*show_unordered_modal*/ 8) {
     						transition_in(if_block2, 1);
     					}
     				} else {
@@ -5442,7 +5072,7 @@ var frontpage_engine = (function () {
     				if (if_block3) {
     					if_block3.p(ctx, dirty);
 
-    					if (dirty & /*show_modal*/ 4) {
+    					if (dirty[0] & /*show_modal*/ 4) {
     						transition_in(if_block3, 1);
     					}
     				} else {
@@ -5462,9 +5092,10 @@ var frontpage_engine = (function () {
     			}
 
     			const frontpagetable_changes = {};
-    			if (dirty & /*frontpage_id*/ 1) frontpagetable_changes.frontpage_id = /*frontpage_id*/ ctx[0];
-    			if (dirty & /*$totalHits*/ 64) frontpagetable_changes.total_hits = /*$totalHits*/ ctx[6];
-    			if (dirty & /*$analytics*/ 128) frontpagetable_changes.analytics = /*$analytics*/ ctx[7];
+    			if (dirty[0] & /*frontpage_id*/ 1) frontpagetable_changes.frontpage_id = /*frontpage_id*/ ctx[0];
+    			if (dirty[0] & /*$totalHits*/ 128) frontpagetable_changes.total_hits = /*$totalHits*/ ctx[7];
+    			if (dirty[0] & /*updating*/ 16) frontpagetable_changes.updating = /*updating*/ ctx[4];
+    			if (dirty[0] & /*$analytics*/ 256) frontpagetable_changes.analytics = /*$analytics*/ ctx[8];
     			frontpagetable.$set(frontpagetable_changes);
     		},
     		i(local) {
@@ -5505,36 +5136,44 @@ var frontpage_engine = (function () {
     	};
     }
 
-    let updating = false;
-
     function instance($$self, $$props, $$invalidate) {
     	let $featuredPosts;
     	let $totalHits;
     	let $analytics;
+    	let $unique_id;
     	let $unorderedPosts;
-    	component_subscribe($$self, featuredPosts, $$value => $$invalidate(14, $featuredPosts = $$value));
-    	component_subscribe($$self, totalHits, $$value => $$invalidate(6, $totalHits = $$value));
-    	component_subscribe($$self, analytics, $$value => $$invalidate(7, $analytics = $$value));
-    	component_subscribe($$self, unorderedPosts, $$value => $$invalidate(8, $unorderedPosts = $$value));
+    	component_subscribe($$self, featuredPosts, $$value => $$invalidate(17, $featuredPosts = $$value));
+    	component_subscribe($$self, totalHits, $$value => $$invalidate(7, $totalHits = $$value));
+    	component_subscribe($$self, analytics, $$value => $$invalidate(8, $analytics = $$value));
+    	component_subscribe($$self, unique_id, $$value => $$invalidate(25, $unique_id = $$value));
+    	component_subscribe($$self, unorderedPosts, $$value => $$invalidate(9, $unorderedPosts = $$value));
     	const mode = "development";
     	const dispatch = createEventDispatcher();
     	let { frontpage_id } = $$props;
+    	let { frontpageengine_wssb_address } = $$props;
     	let { url } = $$props;
+    	let { uid } = $$props;
     	let show_modal = false;
     	let show_unordered_modal = false;
+    	let updating = false;
     	let show_group_actions = false;
-    	const uuid = v4();
     	let messages = [];
     	let socket = null;
 
     	onMount(async () => {
-    		socket = new FrontPageEngineSocketServer(url);
-    		socket.subscribe(`frontpage-${frontpage_id}`);
+    		try {
+    			set_store_value(unique_id, $unique_id = uid, $unique_id);
+    			socket = new FrontPageEngineSocketServer(frontpageengine_wssb_address, url, `frontpage-${frontpage_id}`, uid);
 
-    		socket.on("frontpage_updated", async message => {
-    			if (uuid === message.uuid) return;
-    			await getPosts();
-    		});
+    			socket.on("frontpage_updated", async message => {
+    				console.log("Got message", uid, message.sender);
+    				if (uid === message.sender) return;
+    				await getPosts();
+    			});
+    		} catch(e) {
+    			console.error("Error connecting to websocket server");
+    			console.error(e);
+    		}
 
     		await getPosts();
     		await getAnalytics();
@@ -5543,7 +5182,12 @@ var frontpage_engine = (function () {
     	});
 
     	onDestroy(() => {
-    		socket.close();
+    		try {
+    			socket.close();
+    		} catch(e) {
+    			console.error("Error closing websocket connection");
+    			console.error(e);
+    		}
     	});
 
     	const getPosts = async () => {
@@ -5562,12 +5206,7 @@ var frontpage_engine = (function () {
     	};
 
     	const updated = async () => {
-    		socket.sendMessage({
-    			name: "frontpage_updated",
-    			message: "Updated front page",
-    			uuid
-    		});
-
+    		// socket.sendMessage({ name: "frontpage_updated", message: "Updated front page", uuid });
     		await getAnalytics();
     	};
 
@@ -5596,6 +5235,7 @@ var frontpage_engine = (function () {
 
     	const autoSort = async () => {
     		try {
+    			$$invalidate(4, updating = true);
     			const wp_posts = await apiGet(`frontpageengine/v1/autosort/${frontpage_id}?${mode === "development" ? "simulate_analytics=1" : ""}`);
     			set_store_value(featuredPosts, $featuredPosts = wp_posts.posts.map(map_posts), $featuredPosts);
     		} catch(error) {
@@ -5607,7 +5247,9 @@ var frontpage_engine = (function () {
     			});
 
     			$$invalidate(1, messages);
-    		} // console.log(messages);
+    		} finally {
+    			$$invalidate(4, updating = false); // console.log(messages);
+    		}
     	};
 
     	let group_action;
@@ -5633,7 +5275,7 @@ var frontpage_engine = (function () {
     			}
     		}
 
-    		$$invalidate(5, group_action = "0");
+    		$$invalidate(6, group_action = "0");
     	};
 
     	const click_handler = () => $$invalidate(3, show_unordered_modal = true);
@@ -5642,7 +5284,7 @@ var frontpage_engine = (function () {
 
     	function select_change_handler() {
     		group_action = select_value(this);
-    		$$invalidate(5, group_action);
+    		$$invalidate(6, group_action);
     	}
 
     	const close_handler = () => $$invalidate(3, show_unordered_modal = false);
@@ -5650,15 +5292,17 @@ var frontpage_engine = (function () {
 
     	$$self.$$set = $$props => {
     		if ('frontpage_id' in $$props) $$invalidate(0, frontpage_id = $$props.frontpage_id);
-    		if ('url' in $$props) $$invalidate(13, url = $$props.url);
+    		if ('frontpageengine_wssb_address' in $$props) $$invalidate(14, frontpageengine_wssb_address = $$props.frontpageengine_wssb_address);
+    		if ('url' in $$props) $$invalidate(15, url = $$props.url);
+    		if ('uid' in $$props) $$invalidate(16, uid = $$props.uid);
     	};
 
     	$$self.$$.update = () => {
-    		if ($$self.$$.dirty & /*$featuredPosts, messages*/ 16386) {
+    		if ($$self.$$.dirty[0] & /*$featuredPosts, messages*/ 131074) {
     			if ($featuredPosts.length > 0) {
     				// $featuredPosts = applySlots($featuredPosts, $slots);
     				// $featuredPosts = applyAnalytics($featuredPosts, $analytics);
-    				$$invalidate(4, show_group_actions = $featuredPosts.filter(post => post.checked).length > 0);
+    				$$invalidate(5, show_group_actions = $featuredPosts.filter(post => post.checked).length > 0);
 
     				console.log(messages);
     			}
@@ -5670,6 +5314,7 @@ var frontpage_engine = (function () {
     		messages,
     		show_modal,
     		show_unordered_modal,
+    		updating,
     		show_group_actions,
     		group_action,
     		$totalHits,
@@ -5679,7 +5324,9 @@ var frontpage_engine = (function () {
     		onMove,
     		autoSort,
     		onGroupAction,
+    		frontpageengine_wssb_address,
     		url,
+    		uid,
     		$featuredPosts,
     		click_handler,
     		click_handler_1,
@@ -5693,10 +5340,26 @@ var frontpage_engine = (function () {
     class App extends SvelteComponent {
     	constructor(options) {
     		super();
-    		init(this, options, instance, create_fragment, safe_not_equal, { frontpage_id: 0, url: 13 }, add_css);
+
+    		init(
+    			this,
+    			options,
+    			instance,
+    			create_fragment,
+    			safe_not_equal,
+    			{
+    				frontpage_id: 0,
+    				frontpageengine_wssb_address: 14,
+    				url: 15,
+    				uid: 16
+    			},
+    			add_css,
+    			[-1, -1]
+    		);
     	}
     }
 
+    console.log(ajax_var);
     const app = new App({
         target: document.getElementById('frontpage-engine-app'),
         props: {
@@ -5706,6 +5369,8 @@ var frontpage_engine = (function () {
             url: ajax_var.url,
             action: ajax_var.action,
             frontpage_id: ajax_var.frontpage_id,
+            frontpageengine_wssb_address: ajax_var.frontpageengine_wssb_address,
+            uid: ajax_var.uid,
         }
     });
 

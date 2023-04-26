@@ -406,6 +406,7 @@ class FrontPageEngineLib {
         if ($wpdb->last_error) {
             throw new Exception($wpdb->last_error);
         }
+        $this->_ws_callback($frontpage_id);
     }
 
     public function _auto_slot($frontpage_id, $post_id, $simulate = false) {
@@ -440,5 +441,32 @@ class FrontPageEngineLib {
         if ($wpdb->last_error) {
             throw new Exception($wpdb->last_error);
         }
+    }
+
+    public function _ws_callback($frontpage_id, $uid = null) {
+        error_log("WS Callback");
+        $url = get_option("frontpageengine_wssb_web_address");
+        if (!$url) {
+            error_log("No WSSB web address set");
+            return;
+        }
+        if (!$uid) {
+            $uid = uniqid("frontpageengine-server-");
+        }
+        $domain = admin_url('admin-ajax.php');
+        error_log("Domain: " . $domain . "; Url: " . $url);
+        // $uid = 
+        $response = wp_remote_post($url . "/broadcast", array(
+            "body" => array(
+                "domain" => $domain,
+                "channel" => "frontpage-" . $frontpage_id,
+                "message" => "frontpage_updated",
+                "uid" => $uid,
+            ),
+        ));
+        if (is_wp_error($response)) {
+            throw new Exception($response->get_error_message());
+        }
+        error_log(wp_remote_retrieve_body($response));
     }
 }

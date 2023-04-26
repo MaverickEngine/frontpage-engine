@@ -5,31 +5,37 @@
     import AddPostTable from "./components/AddPostTable.svelte";
     import Modal from "./components/Modal.svelte";
     import { FrontPageEngineSocketServer } from './websocket.js';
-    import { featuredPosts, unorderedPosts, totalHits, analytics } from './stores.js';
+    import { featuredPosts, unorderedPosts, totalHits, analytics, unique_id } from './stores.js';
     import { apiGet, apiPost } from "./lib/ajax.ts";
     import { map_posts } from "./lib/posts.js";
-    import { v4 as uuidv4 } from 'uuid';
     import Message from "./components/Message.svelte";
     import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
 
     export let frontpage_id;
+    export let frontpageengine_wssb_address;
     export let url;
+    export let uid;
     let show_modal = false;
     let show_unordered_modal = false;
     let updating = false;
     let show_group_actions = false;
-    const uuid = uuidv4();
     let messages = [];
 
     let socket = null;
     onMount(async () => {
-        socket = new FrontPageEngineSocketServer(url);
-        socket.subscribe(`frontpage-${frontpage_id}`);
-        socket.on("frontpage_updated", async message => {
-            if (uuid === message.uuid) return;
-            await getPosts();
-        });
+        try {
+            $unique_id = uid;
+            socket = new FrontPageEngineSocketServer(frontpageengine_wssb_address, url, `frontpage-${frontpage_id}`, uid);
+            socket.on("frontpage_updated", async message => {
+                console.log("Got message", uid, message.sender);
+                if (uid === message.sender) return;
+                await getPosts();
+            });
+        } catch (e) {
+            console.error("Error connecting to websocket server");
+            console.error(e);
+        }
         await getPosts();
         await getAnalytics();
         setInterval(getPosts, 600000); // Check posts every 10 minutes
@@ -37,7 +43,12 @@
     });
 
     onDestroy(() => {
-        socket.close();
+        try {
+            socket.close();
+        } catch (e) {
+            console.error("Error closing websocket connection");
+            console.error(e);
+        }
     });
 
     const getPosts = async () => {
@@ -57,7 +68,7 @@
     }
 
     const updated = async () => {
-        socket.sendMessage({ name: "frontpage_updated", message: "Updated front page", uuid });
+        // socket.sendMessage({ name: "frontpage_updated", message: "Updated front page", uuid });
         await getAnalytics();
     }
 
@@ -84,6 +95,7 @@
 
     const autoSort = async () => {
         try {
+            updating = true;
             const wp_posts = await apiGet(`frontpageengine/v1/autosort/${frontpage_id}?${(mode === "development") ? "simulate_analytics=1" : ""}`);
             $featuredPosts = wp_posts.posts.map(map_posts);
         } catch (error) {
@@ -91,6 +103,8 @@
             messages.push({ type: "error", message: error.message || error });
             messages = messages;
             // console.log(messages);
+        } finally {
+            updating = false;
         }
     }
 

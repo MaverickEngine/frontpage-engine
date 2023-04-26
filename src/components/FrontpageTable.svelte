@@ -1,6 +1,6 @@
 <script>
     const mode = process.env.NODE_ENV;
-    import { featuredPosts } from '../stores.js';
+    import { featuredPosts, unique_id } from '../stores.js';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import SvelteTooltip from 'svelte-tooltip';
@@ -45,7 +45,7 @@
                 post_id,
                 from,
                 to,
-            })).posts.map(map_posts);
+            }, $unique_id)).posts.map(map_posts);
             dispatch("updated");
             hovering = null
             updating = false;

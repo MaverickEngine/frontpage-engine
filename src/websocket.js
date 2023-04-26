@@ -1,20 +1,22 @@
 export class FrontPageEngineSocketServer {
-    constructor(domain = "http://localhost", channel = "default") {
+    constructor(url, domain = "http://localhost", channel, uid = null) {
+        this.url = url;
+        if (!this.url) {
+            throw new Error("No Websocket URL provided");
+        }
         this.domain = domain;
         this.channel = channel;
-        this.connect();
         this.callbacks = [];
-        this.me = null;
+        this.uid = uid;
+        this.connect();
     }
 
     connect() {
-        this.socket = new WebSocket('wss://wssb.revengine.dailymaverick.co.za/_ws/');
-        this.socket.onopen = this.onOpen.bind(this);
+        this.socket = new WebSocket(this.url);
+        // this.socket.onopen = this.onOpen.bind(this);
         this.socket.onclose = this.onClose.bind(this);
         this.socket.onmessage = this.onMessage.bind(this);
-        if (this.channel) {
-            this.subscribe();
-        }
+        this.socket.onopen = this.onConnect.bind(this);
     }
 
     close() {
@@ -28,10 +30,10 @@ export class FrontPageEngineSocketServer {
             this.channel = channel;
         }
         if (this.socket.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify({ event: "subscribe", channel: this.channel, domain: this.domain }));
+            this.socket.send(JSON.stringify({ event: "subscribe", channel: this.channel, domain: this.domain, uid: this.uid }));
         } else {
             this.socket.onopen = () => {
-                this.socket.send(JSON.stringify({ event: "subscribe", channel: this.channel, domain: this.domain }));
+                this.socket.send(JSON.stringify({ event: "subscribe", channel: this.channel, domain: this.domain, uid: this.uid }));
             }
         }
     }
@@ -40,17 +42,23 @@ export class FrontPageEngineSocketServer {
         this.callbacks.push({ name, callback });
     }
 
-    onOpen(event) {
-        console.log(event);
+    // onOpen(event) {
+    //     console.log(event);
+    // }
+
+    onConnect() {
+        this.subscribe();
     }
 
-    onMessage(message) {
+    onMessage(encodedMessage) {
         // console.log({ data: message.data });
-        const data = JSON.parse(message.data);
+        const message = JSON.parse(encodedMessage.data);
+        console.log("Received message", message);
         Promise.all(this.callbacks.map(callback => {
-            if (callback.name === data.name) {
-                // console.log("Calling callback", callback.name);
-                return callback.callback(data);
+            console.log("Checking callback", callback.name, message.data);
+            if (callback.name === message.data) {
+                console.log("Calling callback", callback.name);
+                return callback.callback(message);
             }
         }));
     }
@@ -71,7 +79,7 @@ export class FrontPageEngineSocketServer {
             throw new Error('Invalid message');
         }
         if (!message.event) {
-            message.event = "message";
+            message.event = "broadcast";
         }
         message.channel = this.channel;
         message.domain = this.domain;
