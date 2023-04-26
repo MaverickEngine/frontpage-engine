@@ -17,44 +17,6 @@
     export let total_hits = 0;
     export let analytics = [];
 
-    const dragStart = (e, i) => {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.dropEffect = 'move';
-        const start = i;
-        e.dataTransfer.setData('text/plain', start);
-    }
-
-    const dragDrop = async (e, target) => {
-        try {
-            updating = true;
-            e.dataTransfer.dropEffect = 'move'; 
-            const start = parseInt(e.dataTransfer.getData("text/plain"));
-            const post_id = $featuredPosts[start].id;
-            const from = $featuredPosts[start].slot.id;
-            const slot_id = $featuredPosts[target].slot.id;
-            if (!from || !slot_id) {
-                throw "From or slot_id is missing";
-            }
-            if (from === slot_id) {
-                throw "From and slot_id are the same";
-            }
-            if (!post_id) {
-                throw "Post id is missing";
-            }
-            $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$frontpageId}?${mode == "development" ? "simulate_analytics=1" : ""}`, {
-                post_id,
-                slot_id,
-            }, $unique_id)).posts.map(map_posts);
-            dispatch("updated");
-            hovering = null
-            updating = false;
-        } catch (e) {
-            console.error(e);
-            hovering = null
-            updating = false;
-        }
-    }
-
     const doMove = async (post_id, slot_id) => {
         updating = true;
         try {
