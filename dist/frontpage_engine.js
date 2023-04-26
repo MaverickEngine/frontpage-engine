@@ -2300,7 +2300,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (192:16) {#if (!post.locked && !!post.slot.post_id)}
+    // (191:16) {#if (!post.locked && !!post.slot.post_id)}
     function create_if_block_3$1(ctx) {
     	let label;
     	let t1;
@@ -2351,7 +2351,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (205:16) {#if (!!post.slot.post_id)}
+    // (204:16) {#if (!!post.slot.post_id)}
     function create_if_block$2(ctx) {
     	let current_block_type_index;
     	let if_block;
@@ -2421,7 +2421,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (214:20) {:else}
+    // (213:20) {:else}
     function create_else_block(ctx) {
     	let sveltetooltip0;
     	let t0;
@@ -2546,7 +2546,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (206:20) {#if (post.locked)}
+    // (205:20) {#if (post.locked)}
     function create_if_block_1$1(ctx) {
     	let sveltetooltip0;
     	let t;
@@ -2620,7 +2620,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (215:24) <SvelteTooltip tip="Click to lock this post in this slot." left color="#FFB74D">
+    // (214:24) <SvelteTooltip tip="Click to lock this post in this slot." left color="#FFB74D">
     function create_default_slot_5(ctx) {
     	let span;
     	let mounted;
@@ -2653,7 +2653,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (219:24) <SvelteTooltip tip="Remove this post from this slot." left color="#FFB74D">
+    // (218:24) <SvelteTooltip tip="Remove this post from this slot." left color="#FFB74D">
     function create_default_slot_4(ctx) {
     	let span;
     	let mounted;
@@ -2686,7 +2686,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (228:24) {:else}
+    // (227:24) {:else}
     function create_else_block_1(ctx) {
     	let sveltetooltip;
     	let current;
@@ -2733,7 +2733,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (223:24) {#if (post.manual)}
+    // (222:24) {#if (post.manual)}
     function create_if_block_2$1(ctx) {
     	let sveltetooltip;
     	let current;
@@ -2780,7 +2780,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (229:28) <SvelteTooltip tip="This slot is automatically ordered." left color="#FFB74D">
+    // (228:28) <SvelteTooltip tip="This slot is automatically ordered." left color="#FFB74D">
     function create_default_slot_3(ctx) {
     	let span;
     	let mounted;
@@ -2813,7 +2813,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (224:28) <SvelteTooltip tip="This slot is manually ordered." left color="#FFB74D">
+    // (223:28) <SvelteTooltip tip="This slot is manually ordered." left color="#FFB74D">
     function create_default_slot_2$1(ctx) {
     	let span;
     	let mounted;
@@ -2846,7 +2846,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (207:24) <SvelteTooltip tip="This post is locked to this slot." left color="#FFB74D">
+    // (206:24) <SvelteTooltip tip="This post is locked to this slot." left color="#FFB74D">
     function create_default_slot_1$1(ctx) {
     	let span;
     	let mounted;
@@ -2879,7 +2879,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (211:24) <SvelteTooltip tip="Click to edit unlock time." left color="#FFB74D">
+    // (210:24) <SvelteTooltip tip="Click to edit unlock time." left color="#FFB74D">
     function create_default_slot$1(ctx) {
     	let span;
     	let t_value = /*formatTime*/ ctx[13](/*post*/ ctx[22].slot.lock_until) + "";
@@ -2983,7 +2983,7 @@ var frontpage_engine = (function () {
     			attr(tr, "data-post_id", tr_data_post_id_value = /*post*/ ctx[22].id);
     			attr(tr, "data-index", tr_data_index_value = /*index*/ ctx[24]);
     			attr(tr, "data-slot_id", tr_data_slot_id_value = /*post*/ ctx[22].slot.id);
-    			attr(tr, "class", "draggable svelte-16uhaqm");
+    			attr(tr, "class", "svelte-16uhaqm");
     			toggle_class(tr, "is-active", hovering === /*index*/ ctx[24]);
     			toggle_class(tr, "is-locked", /*post*/ ctx[22].locked);
     			this.first = tr;
@@ -3429,7 +3429,7 @@ var frontpage_engine = (function () {
     		console.log("onMount");
 
     		jQuery("table.featuredposts tbody").sortable({
-    			items: "tr",
+    			items: "tr:not(.is-locked)",
     			cursor: "move",
     			opacity: 0.6,
     			containment: "parent",

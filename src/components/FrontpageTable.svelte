@@ -129,7 +129,7 @@
     onMount(() => {
         console.log("onMount");
         jQuery("table.featuredposts tbody").sortable({
-            items: "tr",
+            items: "tr:not(.is-locked)",
             cursor: "move",
             opacity: 0.6,
             containment: "parent",
@@ -186,7 +186,6 @@
             class:is-locked={post.locked}
             on:mouseover={() => rowHovering = index}
             on:focus={() => rowHovering = index}
-            class="draggable"
         >
             <th scope="row" class="check-column">
                 {#if (!post.locked && !!post.slot.post_id)}
