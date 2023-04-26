@@ -184,8 +184,8 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
         try {
             $frontpage_id = intval($request->get_param('frontpage_id'));
             $post_id = intval($request->get_param('post_id'));
-            $to = intval($request->get_param('to'));
-            $this->_insert_post($frontpage_id, $post_id, $to);
+            $slot_id = intval($request->get_param('slot_id'));
+            $this->_insert_post($frontpage_id, $post_id, $slot_id);
             $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {

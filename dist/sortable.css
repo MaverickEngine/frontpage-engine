@@ -1,0 +1,5 @@
+.ui-sortable-placeholder {
+    border: 2px dashed #cecece !important;
+    height: 80px !important;
+    width: 100% !important;
+}

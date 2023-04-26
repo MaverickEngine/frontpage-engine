@@ -1,6 +1,6 @@
 <script>
     const mode = process.env.NODE_ENV;
-    import { featuredPosts, unique_id } from '../stores.js';
+    import { featuredPosts, unique_id, frontpageId } from '../stores.js';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import SvelteTooltip from 'svelte-tooltip';
@@ -31,20 +31,19 @@
             const start = parseInt(e.dataTransfer.getData("text/plain"));
             const post_id = $featuredPosts[start].id;
             const from = $featuredPosts[start].slot.id;
-            const to = $featuredPosts[target].slot.id;
-            if (!from || !to) {
-                throw "From or to is missing";
+            const slot_id = $featuredPosts[target].slot.id;
+            if (!from || !slot_id) {
+                throw "From or slot_id is missing";
             }
-            if (from === to) {
-                throw "From and to are the same";
+            if (from === slot_id) {
+                throw "From and slot_id are the same";
             }
             if (!post_id) {
                 throw "Post id is missing";
             }
-            $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$featuredPosts[start].slot.frontpage_id}?${mode == "development" ? "simulate_analytics=1" : ""}`, {
+            $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$frontpageId}?${mode == "development" ? "simulate_analytics=1" : ""}`, {
                 post_id,
-                from,
-                to,
+                slot_id,
             }, $unique_id)).posts.map(map_posts);
             dispatch("updated");
             hovering = null
@@ -56,13 +55,28 @@
         }
     }
 
+    const doMove = async (post_id, slot_id) => {
+        updating = true;
+        try {
+            $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$frontpageId}?${mode == "development" ? "simulate_analytics=1" : ""}`, {
+                post_id,
+                slot_id,
+            }, $unique_id)).posts.map(map_posts);
+            dispatch("updated");
+        } catch (e) {
+            console.error(e);
+        } finally {
+            updating = false;
+        }
+    }
+
     const doLock = async (post, date) => {
         updating = true;
         let lock_until = new Date().getTime() + 1000 * 60 * 60 * 24;
         if (date) {
             lock_until = new Date(date).getTime();
         }
-        $featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${post.slot.frontpage_id}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
+        $featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
             lock_until: formatTimeSql(new Date(lock_until)),
             post_id: post.slot.post_id,
         })).posts.map(map_posts);
@@ -72,14 +86,14 @@
 
     const doManual = async(slot) => {
         updating = true;
-        $featuredPosts = (await apiGet(`frontpageengine/v1/slot/manual/${slot.frontpage_id}/${slot.id}`)).posts.map(map_posts);
+        $featuredPosts = (await apiGet(`frontpageengine/v1/slot/manual/${$frontpageId}/${slot.id}`)).posts.map(map_posts);
         dispatch("updated");
         updating = false;
     }
 
     const doAuto = async(slot) => {
         updating = true;
-        $featuredPosts = (await apiGet(`frontpageengine/v1/slot/auto/${slot.frontpage_id}/${slot.id}`)).posts.map(map_posts);
+        $featuredPosts = (await apiGet(`frontpageengine/v1/slot/auto/${$frontpageId}/${slot.id}`)).posts.map(map_posts);
         dispatch("updated");
         updating = false;
     }
@@ -103,7 +117,7 @@
 
     const doUnlock = async (post) => {
         updating = true;
-        $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${post.slot.frontpage_id}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
+        $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
             post_id: post.slot.post_id,
         })).posts.map(map_posts);
         updating = false;
@@ -114,7 +128,7 @@
         if (confirm("Are you sure you want to remove this post from the frontpage?")) {
             updating = true;
             try {
-                $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${post.slot.frontpage_id}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
+                $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
                     post_id: post.id,
                 })).posts.map(map_posts);
                 dispatch("updated");
@@ -152,6 +166,29 @@
 
     onMount(() => {
         console.log("onMount");
+        jQuery("table.featuredposts tbody").sortable({
+            items: "tr",
+            cursor: "move",
+            opacity: 0.6,
+            containment: "parent",
+            axis: "y",
+            start: (e, ui) => {
+                // Disable item while moving
+                ui.item.prop("disabled", true);
+            },
+            update: (e, ui) => {
+                console.log("update");
+                console.log(ui);
+                const post_id = ui.item.data("post_id");
+                const target_index = ui.item.index();
+                const start_index = ui.item.data("index");
+                const slot_id = $featuredPosts[target_index].slot.id;
+                if (start_index !== target_index) {
+                    console.log({post_id, slot_id});
+                    doMove(post_id, slot_id);
+                }
+            },
+        })
     });
 </script>
 
@@ -179,16 +216,15 @@
         {#each $featuredPosts as post, index (post.id)}
         <tr 
             id="post-{post.id}"
+            data-post_id={post.id}
+            data-index={index}
+            data-slot_id={post.slot.id}
             animate:flip={{ duration: 600 }}
-            draggable={((!post.locked) && (!!post.slot.post_id))}
-            on:dragstart={e => dragStart(e, index)}
-            on:drop|preventDefault={e => dragDrop(e, index)}
-            on:dragenter={() => hovering = (!post.locked && !!post.slot.post_id) && index}
-            ondragover="return false"
             class:is-active={hovering === index}
             class:is-locked={post.locked}
             on:mouseover={() => rowHovering = index}
             on:focus={() => rowHovering = index}
+            class="draggable"
         >
             <th scope="row" class="check-column">
                 {#if (!post.locked && !!post.slot.post_id)}
@@ -272,5 +308,4 @@
         text-decoration: underline dotted;
         cursor: pointer;
     }
-    
 </style>

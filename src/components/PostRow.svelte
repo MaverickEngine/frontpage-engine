@@ -11,7 +11,7 @@
 
 <td class="column-image">
     {#if post.image}
-    <img class="image column-image" width="50" height="50" src={post.image} alt={post.title} />
+    <img class="image" width="50" height="50" src={post.image} alt={post.title} />
     {/if}
 </td>
 {#if (mode=="development")}
@@ -55,5 +55,9 @@
         width: 50px;
         height: 40px;
         object-fit: cover;
+    }
+
+    .column-title {
+        width: 500px;
     }
 </style>

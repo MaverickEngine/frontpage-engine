@@ -5,7 +5,7 @@
     import AddPostTable from "./components/AddPostTable.svelte";
     import Modal from "./components/Modal.svelte";
     import { FrontPageEngineSocketServer } from './websocket.js';
-    import { featuredPosts, unorderedPosts, totalHits, analytics, unique_id } from './stores.js';
+    import { frontpageId, featuredPosts, unorderedPosts, totalHits, analytics, unique_id } from './stores.js';
     import { apiGet, apiPost } from "./lib/ajax.ts";
     import { map_posts } from "./lib/posts.js";
     import Message from "./components/Message.svelte";
@@ -26,6 +26,7 @@
     onMount(async () => {
         try {
             $unique_id = uid;
+            $frontpageId = frontpage_id;
             socket = new FrontPageEngineSocketServer(frontpageengine_wssb_address, url, `frontpage-${frontpage_id}`, uid);
             socket.on("frontpage_updated", async message => {
                 console.log("Got message", uid, message.sender);
@@ -170,7 +171,7 @@
         <AddPostTable frontpage_id={frontpage_id} on:updated={updated} total_hits={$totalHits} />
     </Modal>
     {/if}
-    <FrontpageTable frontpage_id={frontpage_id} total_hits={$totalHits} on:updated={updated} updating={updating} on:moved={onMove} analytics={$analytics} />
+    <FrontpageTable frontpage_id={frontpage_id} total_hits={$totalHits} on:updated={updated} updating={updating} analytics={$analytics} />
 </main>
 
 <style>
