@@ -18,7 +18,7 @@
     let analytics = [];
     let search = "";
     let page = 1;
-    let per_page = 10;
+    let per_page = 100;
     let rowHovering = -1;
     export let updating = false;
 

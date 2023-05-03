@@ -3962,7 +3962,7 @@ var frontpage_engine = (function () {
     }
 
     let page = 1;
-    let per_page = 10;
+    let per_page = 100;
 
     function instance$3($$self, $$props, $$invalidate) {
     	let $unfeaturedPosts;
