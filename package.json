@@ -31,6 +31,7 @@
     "@rollup/plugin-strip": "^2.1.0",
     "@rollup/plugin-typescript": "^8.3.3",
     "@types/jquery": "^3.5.14",
+    "date-picker-svelte": "^2.4.2",
     "query-string": "^7.1.1",
     "rollup": "^2.76.0",
     "rollup-plugin-css-only": "^3.1.0",

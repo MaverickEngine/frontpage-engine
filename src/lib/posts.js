@@ -16,9 +16,11 @@ export const map_posts = (post) => {
         order: post.menu_order,
         slot: post.slot,
         locked: !!(post.slot?.lock_until),
+        locked_until: (post.slot?.lock_until) ? new Date(post.slot?.lock_until) : null,
         manual: !!(Number(post.slot?.manual_order)),
         analytics: post.analytics || {},
         is_blank: !(post.id),
         sections: post.post_sections || [],
+        edit_lock_until: false,
     }
 };

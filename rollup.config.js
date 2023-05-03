@@ -5,7 +5,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 import scss from 'rollup-plugin-scss'
 import css from 'rollup-plugin-css-only';
-// import preprocess from 'svelte-preprocess';
+import preprocess from 'svelte-preprocess';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import json from '@rollup/plugin-json';
 import strip from '@rollup/plugin-strip';
@@ -64,8 +64,9 @@ if (test) {
 			plugins: [
 				svelte({
 					emitCss: false,
+					preprocess: preprocess(),
 				}),
-				scss(),
+				scss({ fileName: 'bundle.css' }),
 				css({ output: "frontpage_engine.css" }),
 				nodeResolve({
 					browser: true,
@@ -93,8 +94,9 @@ if (test) {
 			plugins: [
 				svelte({
 					emitCss: false,
+					preprocess: preprocess(),
 				}),
-				scss(),
+				scss({ fileName: 'bundle.css', outputStyle: 'compressed' }),
 				css({ output: "frontpage_engine.css" }),
 				nodeResolve({
 					browser: true,

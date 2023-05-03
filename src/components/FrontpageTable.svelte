@@ -1,7 +1,8 @@
 <script>
     const mode = process.env.NODE_ENV;
+    import { DateInput } from 'date-picker-svelte'
     import { featuredPosts, unique_id, frontpageId } from '../stores.js';
-    import { onMount } from 'svelte';
+    import { onMount, afterUpdate } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import SvelteTooltip from 'svelte-tooltip';
     import { flip } from 'svelte/animate';
@@ -61,19 +62,26 @@
     }
 
     const chooseTime = (post) => {
-        const date = prompt("Enter a date and time to lock the post until (YYYY-MM-DD HH:MM)", formatTime(new Date(post.slot.lock_until)));
-        if (date) {
-            // Check date is valid
-            if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(date)) {
-                alert("Invalid date format");
-                return;
-            }
-            // Check date is in the future
-            if (new Date(date).getTime() < new Date().getTime()) {
-                alert("Date must be in the future");
-                return;
-            }
-            doLock(post, date);
+        // post.edit_lock_until = true;
+        // const date = prompt("Enter a date and time to lock the post until (YYYY-MM-DD HH:MM)", formatTime(new Date(post.slot.lock_until)));
+        // if (date) {
+        //     // Check date is valid
+        //     if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(date)) {
+        //         alert("Invalid date format");
+        //         return;
+        //     }
+        //     // Check date is in the future
+        //     if (new Date(date).getTime() < new Date().getTime()) {
+        //         alert("Date must be in the future");
+        //         return;
+        //     }
+            // doLock(post, date);
+        // }
+    }
+
+    const updateTime = (post) => {
+        if (post.locked_until) {
+            post.slot.lock_until = post.locked_until;
         }
     }
 
@@ -86,21 +94,21 @@
         dispatch("updated");
     }
 
-    const doRemove = async (post) => {
-        if (confirm("Are you sure you want to remove this post from the frontpage?")) {
-            updating = true;
-            try {
-                $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
-                    post_id: post.id,
-                })).posts.map(map_posts);
-                dispatch("updated");
-            } catch (e) {
-                console.error(e);
-                alert("Error removing post: " + e.message);
-            }
-            updating = false;
-        }
-    }
+    // const doRemove = async (post) => {
+    //     if (confirm("Are you sure you want to remove this post from the frontpage?")) {
+    //         updating = true;
+    //         try {
+    //             $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
+    //                 post_id: post.id,
+    //             })).posts.map(map_posts);
+    //             dispatch("updated");
+    //         } catch (e) {
+    //             console.error(e);
+    //             alert("Error removing post: " + e.message);
+    //         }
+    //         updating = false;
+    //     }
+    // }
 
     const checkAll = (e) => {
         if (e.target.checked) {
@@ -126,9 +134,12 @@
         return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     }
 
-    onMount(() => {
-        console.log("onMount");
-        jQuery("table.featuredposts tbody").sortable({
+    const setupSortable = () => {
+        console.log("setup sortable");
+        if (jQuery("table.featuredposts").hasClass("ui-sortable")) {
+            jQuery("table.featuredposts").sortable("destroy");
+        }
+        jQuery("table.featuredposts").sortable({
             items: "tr:not(.is-locked)",
             cursor: "move",
             opacity: 0.6,
@@ -139,8 +150,10 @@
                 ui.item.prop("disabled", true);
             },
             update: (e, ui) => {
-                console.log("update");
-                console.log(ui);
+                if (ui.item.hasClass("is-locked")) {
+                    jQuery("table.featuredposts").sortable("cancel");
+                    return;
+                }
                 const post_id = ui.item.data("post_id");
                 const target_index = ui.item.index();
                 const start_index = ui.item.data("index");
@@ -151,7 +164,32 @@
                 }
             },
         })
+    }
+
+    onMount(() => {
+        console.log("onMount");
+        setupSortable();
     });
+
+    afterUpdate( () => {
+        // setupSortable();
+        // jQuery("table.featuredposts").sortable("refresh");
+    });
+    
+    $: {
+        $featuredPosts.forEach(post => {
+            if (post.locked_until) {
+                post.slot.lock_until = formatTime(post.locked_until);
+            }
+        });
+        // console.log("featuredPosts changed");
+        // jQuery("table.featuredposts").sortable("destroy");
+        // jQuery("table.featuredposts").sortable("refreshPositions");
+        // setupSortable();
+    }
+
+
+    
 </script>
 
 <table class="wp-list-table widefat fixed striped table-view-list featuredposts {updating  ? "is-updating" : ""}">
@@ -172,7 +210,7 @@
             <th scope="col" class="manage-column">Author</th>
             <th scope="col" class="manage-column">Published</th>
             <th scope="col" class="manage-column">Hits</th>
-            <th scope="col" class="manage-column"></th>
+            <th scope="col" class="manage-column width-150"></th>
         </tr>
     </thead>
     <tbody>
@@ -204,13 +242,13 @@
             <th scope="row" class="lock-column">
                 {#if (!!post.slot.post_id)}
                     {#if (post.locked)}
-                        <SvelteTooltip tip="This post is locked to this slot." left color="#FFB74D">
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <span class="dashicons dashicons-lock" on:click={doUnlock(post)}></span>
-                        </SvelteTooltip>
-                        <SvelteTooltip tip="Click to edit unlock time." left color="#FFB74D">
-                            <span class="dot-underline" on:click={chooseTime(post)} on:keypress={chooseTime(post)}>{formatTime(post.slot.lock_until)}</span>
-                        </SvelteTooltip>
+                        <div class="locked-slot">
+                            <SvelteTooltip tip="This post is locked to this slot." left color="#FFB74D">
+                                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                <span class="dashicons dashicons-lock" on:click={doUnlock(post)}></span>
+                            </SvelteTooltip>
+                            <DateInput bind:value={post.locked_until} on:update={doLock(post, post.locked_until)} closeOnSelection={true} />
+                        </div>
                     {:else}
                         <SvelteTooltip tip="Click to lock this post in this slot." left color="#FFB74D">
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -265,5 +303,9 @@
     .dot-underline {
         text-decoration: underline dotted;
         cursor: pointer;
+    }
+
+    .width-150 {
+        width: 150px;
     }
 </style>

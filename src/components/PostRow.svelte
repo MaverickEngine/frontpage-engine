@@ -19,7 +19,7 @@
 <td>{post.id}</td>
 <td>{post.slot?.display_order}</td>
 {/if}
-<td class="column-section">
+<td class="column-section hide-overflow-x">
     {#each post.sections as section}
     <span class="section badge">{section}</span>
     {/each}
@@ -78,5 +78,9 @@
         white-space: nowrap;
         vertical-align: baseline;
         border-radius: 0.25rem;
+    }
+
+    .hide-overflow-x {
+        overflow-x: hidden;
     }
 </style>

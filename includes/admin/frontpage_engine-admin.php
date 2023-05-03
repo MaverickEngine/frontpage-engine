@@ -51,12 +51,12 @@ class FrontpageEngineAdmin {
             'frontpageengine_wssb_address' => get_option("frontpageengine_wssb_ws_address"),
             'uid' => uniqid("frontpageengine-"),
         ));
-        // .ui-sortable-placeholder {
-        //     background-color: #b6b6b6 !important;
-        //     border: 1px dashed #ddd;
-        //     height: 100px !important;
-        //     width: 100%;
-        // }
+        // Load CSS
+        if ($development_mode) {
+            wp_enqueue_style( 'frontpageengine-admin', plugin_dir_url( dirname( __FILE__ ) ) . '../dist/frontpage_engine.dev.css', array(), FRONTPAGEENGINE_VERSION . "-dev" );
+        } else {
+            wp_enqueue_style( 'frontpageengine-admin', plugin_dir_url( dirname( __FILE__ ) ) . '../dist/frontpage_engine.css', array(), FRONTPAGEENGINE_VERSION . "-prod" );
+        }
         wp_enqueue_style( 'frontpageengine-admin', plugin_dir_url( dirname( __FILE__ ) ) . '../dist/sortable.css', array(), FRONTPAGEENGINE_VERSION );
         require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/order_frontpage.php';
     }
