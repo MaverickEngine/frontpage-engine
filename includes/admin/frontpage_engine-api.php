@@ -161,6 +161,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                     $post_class->post_date = null;
                     $post_class->post_type = null;
                     $post_class->post_status = null;
+                    $post_class->sections = [];
                     $post = new WP_Post($post_class);
                 } else {
                     $post = get_post($slot->post_id);

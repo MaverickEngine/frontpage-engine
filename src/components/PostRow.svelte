@@ -19,6 +19,11 @@
 <td>{post.id}</td>
 <td>{post.slot?.display_order}</td>
 {/if}
+<td class="column-section">
+    {#each post.sections as section}
+    <span class="section badge">{section}</span>
+    {/each}
+</td>
 <td class="column-title">
     <strong>
         {#if !post.is_blank}
@@ -59,5 +64,19 @@
 
     .column-title {
         width: 500px;
+    }
+
+    .badge {
+        background-color: #0071a1;
+        color: #fff;
+        display: inline-block;
+        padding: 0.25em 0.4em;
+        font-size: 75%;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
     }
 </style>

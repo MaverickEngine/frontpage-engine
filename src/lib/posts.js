@@ -18,6 +18,7 @@ export const map_posts = (post) => {
         locked: !!(post.slot?.lock_until),
         manual: !!(Number(post.slot?.manual_order)),
         analytics: post.analytics || {},
-        is_blank: !(post.id)
+        is_blank: !(post.id),
+        sections: post.post_sections || [],
     }
 };

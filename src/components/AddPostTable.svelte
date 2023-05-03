@@ -83,6 +83,7 @@
                 <th scope="col" class="manage-column">Post ID</th>
                 <th scope="col" class="manage-column">Display Order</th>
                 {/if}
+                <th scope="col" class="column-section">Section</th>
                 <th scope="col" class="column-header-title">Title</th>
                 <th scope="col" class="manage-column">Author</th>
                 <th scope="col" class="manage-column">Published</th>

@@ -167,10 +167,11 @@
             <th scope="col" class="manage-column">Post ID</th>
             <th scope="col" class="manage-column">Display Order</th>
             {/if}
+            <th scope="col" class="manage-column">Section</th>
             <th scope="col" class="column-header-title">Title</th>
             <th scope="col" class="manage-column">Author</th>
             <th scope="col" class="manage-column">Published</th>
-            <th scope="col" class="manage-column"></th>
+            <th scope="col" class="manage-column">Hits</th>
             <th scope="col" class="manage-column"></th>
         </tr>
     </thead>
@@ -214,10 +215,6 @@
                         <SvelteTooltip tip="Click to lock this post in this slot." left color="#FFB74D">
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                             <span class="dashicons dashicons-unlock" on:click={doLock(post)}></span>
-                        </SvelteTooltip>
-                        <SvelteTooltip tip="Remove this post from this slot." left color="#FFB74D">
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <span class="dashicons dashicons-trash" on:click={doRemove(post)}></span>
                         </SvelteTooltip>
                         {#if (post.manual)}
                             <SvelteTooltip tip="This slot is manually ordered." left color="#FFB74D">

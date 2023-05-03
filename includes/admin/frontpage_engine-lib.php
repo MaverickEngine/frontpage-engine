@@ -21,6 +21,12 @@ class FrontPageEngineLib {
         $data['menu_order'] = $post->menu_order;
         $data['post_type'] = $post_type->labels->singular_name;
         $data['post_status'] = $post->post_status;
+        $sections = wp_get_post_terms($post->ID, 'section');
+        $custom_section_label = get_post_meta($post->ID, "dm_custom_section_label", true);
+        if (!empty($custom_section_label)) {
+            $sections[] = (object) array("name" => $custom_section_label);
+        }
+        $data['post_sections'] = array_map(function($section) { return $section->name; }, $sections);
         return $data;
     }
 
@@ -197,6 +203,14 @@ class FrontPageEngineLib {
         $new_post->post_author = get_the_author_meta( 'display_name', $post->post_author );
         $new_post->post_date = get_the_time( 'Y/m/d H:i:s', $post->ID );
         $new_post->post_status = $post->post_status;
+        $new_post->post_type = $post->post_type;
+        $new_post->post_excerpt = $post->post_excerpt;
+        $sections = wp_get_post_terms($post->ID, 'section');
+        $custom_section_label = get_post_meta($post->ID, "dm_custom_section_label", true);
+        if (!empty($custom_section_label)) {
+            $sections[] = (object) array("name" => $custom_section_label);
+        }
+        $new_post->post_sections = array_map(function($section) { return $section->name; }, $sections);
         return $new_post;
     }
 
