@@ -35,6 +35,8 @@ class FrontPageEngineDB {
             display_order tinyint(3) NOT NULL,
             post_id mediumint(9) DEFAULT NULL,
             lock_until datetime,
+            locked_by varchar(100),
+            locked_at datetime,
             manual_order boolean NOT NULL DEFAULT 0,
             PRIMARY KEY  (id),
             INDEX frontpage_id (frontpage_id),

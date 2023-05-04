@@ -206,10 +206,15 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             $frontpage_id = intval($request->get_param('frontpage_id'));
             $post_id = intval($request->get_param('post_id'));
             $lock_until = $request->get_param('lock_until');
+            $user = wp_get_current_user();
+            $locked_by = $user->user_login;
+            $locked_at = gmdate("Y-m-d H:i:s");
             $wpdb->update(
                 "{$wpdb->prefix}frontpage_engine_frontpage_slots",
                 array(
                     'lock_until' => $lock_until,
+                    'locked_by' => $locked_by,
+                    'locked_at' => $locked_at,
                 ),
                 array(
                     'frontpage_id' => $frontpage_id,
