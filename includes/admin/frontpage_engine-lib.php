@@ -110,6 +110,7 @@ class FrontPageEngineLib {
             $cases[] = "WHEN post_id = {$post->post_id} THEN '{$post->display_order}'";
         }
         $sql = "UPDATE {$wpdb->postmeta} SET meta_value = (CASE " . implode(' ', $cases) . " END) WHERE meta_key = '{$frontpage->ordering_code}'";
+        error_log($sql);
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $wpdb->query($sql);
         if ($wpdb->last_error) {
@@ -158,6 +159,8 @@ class FrontPageEngineLib {
         foreach ($current_state as $post) {
             if (in_array($post->post_id, $post_ids_to_delete)) {
                 $posts_to_delete[] = $post;
+            } else if (in_array($post->post_id, $post_ids_to_update)) {
+                $posts_to_update[] = $post;
             }
         }
         return (object) array(
