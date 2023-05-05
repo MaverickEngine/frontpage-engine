@@ -65,48 +65,126 @@ class FrontPageEngineLib {
         $sql = "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ('".implode("','",$del)."')";
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $wpdb->query($sql);
+        if ($wpdb->last_error) {
+            throw new Exception($wpdb->last_error);
+        }
         foreach ( $posts as $post ) {
             wp_remove_object_terms( $post->ID, $frontpage->featured_code, 'flag' );
         }
         update_postmeta_cache( wp_list_pluck( $posts, 'ID' ) );
     }
 
+    protected function _delete_featured_posts(int $frontpage_id, array $posts) {
+        if (empty($posts)) {
+            return;
+        }
+        $frontpage = $this->_get_frontpage($frontpage_id);
+        $post_ids = array_map(function($post) { return $post->post_id; }, $posts);
+        global $wpdb;
+        $del = array($frontpage->ordering_code, $frontpage->featured_code);
+        $del_pairs = array();
+        foreach ($del as $del_key) {
+            foreach ($post_ids as $post_id) {
+                $del_pairs[] = '(' . $post_id . ',"' . $del_key . '")';
+            }
+        }
+        $sql = "DELETE FROM {$wpdb->postmeta} WHERE (post_id, meta_key) IN (".implode(',',$del_pairs).")";
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query($sql);
+        if ($wpdb->last_error) {
+            throw new Exception($wpdb->last_error);
+        }
+        foreach ( $post_ids as $post_id ) {
+            wp_remove_object_terms( $post_id, $frontpage->featured_code, 'flag' );
+        }
+    }
+
+    protected function _update_featured_posts(int $frontpage_id, array $posts) {
+        if (empty($posts)) {
+            return;
+        }
+        $frontpage = $this->_get_frontpage($frontpage_id);
+        global $wpdb;
+        $cases = array();
+        foreach ($posts as $post) {
+            $cases[] = "WHEN post_id = {$post->post_id} THEN '{$post->display_order}'";
+        }
+        $sql = "UPDATE {$wpdb->postmeta} SET meta_value = (CASE " . implode(' ', $cases) . " END) WHERE meta_key = '{$frontpage->ordering_code}'";
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query($sql);
+        if ($wpdb->last_error) {
+            throw new Exception($wpdb->last_error);
+        }
+    }
+
+    protected function _insert_featured_posts(int $frontpage_id, array $posts) {
+        if (empty($posts)) {
+            return;
+        }
+        $frontpage = $this->_get_frontpage($frontpage_id);
+        $post_ids = array_map(function($post) { return $post->post_id; }, $posts);
+        global $wpdb;
+        $ins = array();
+        foreach ($posts as $post) {
+            $ins[] = "({$post->post_id}, '{$frontpage->ordering_code}', '{$post->display_order}'),({$post->post_id}, '{$frontpage->featured_code}', '1')";
+        }
+        $sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES " . implode(',',$ins);
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query($sql);
+        if ($wpdb->last_error) {
+            throw new Exception($wpdb->last_error);
+        }
+        foreach ( $post_ids as $post_id ) {
+            wp_set_object_terms( $post_id, $frontpage->featured_code, 'flag' );
+        }
+    }
+
+    protected function _resolve_featured_posts(array $current_state, array $desired_state) {
+        $posts_to_insert = array();
+        $posts_to_update = array();
+        $posts_to_delete = array();
+        $desired_ids = array_map(function($post) { return $post->post_id; }, $desired_state);
+        $current_ids = array_map(function($post) { return $post->post_id; }, $current_state);
+        $post_ids_to_insert = array_diff($desired_ids, $current_ids);
+        $post_ids_to_update = array_intersect($desired_ids, $current_ids);
+        $post_ids_to_delete = array_diff($current_ids, $desired_ids);
+        foreach ($desired_state as $post) {
+            if (in_array($post->post_id, $post_ids_to_insert)) {
+                $posts_to_insert[] = $post;
+            } else if (in_array($post->post_id, $post_ids_to_update)) {
+                $posts_to_update[] = $post;
+            }
+        }
+        foreach ($current_state as $post) {
+            if (in_array($post->post_id, $post_ids_to_delete)) {
+                $posts_to_delete[] = $post;
+            }
+        }
+        return (object) array(
+            'insert' => $posts_to_insert,
+            'update' => $posts_to_update,
+            'delete' => $posts_to_delete
+        );
+    }
+
     protected function _set_featured_posts(int $frontpage_id) {
         $frontpage = $this->_get_frontpage($frontpage_id);
         $slots = $this->_get_slots($frontpage_id);
-        $this->_clear_featured_posts($frontpage_id);
         global $wpdb;
-        $sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES ";
-        foreach($slots as $slot) {
-            if (!empty($slot->post_id)) {
-                $sql .= "({$slot->post_id}, '{$frontpage->featured_code}', 1),";
+        $current_posts = $wpdb->get_results($wpdb->prepare("SELECT post_id, meta_value AS display_order FROM {$wpdb->postmeta} WHERE meta_key = %s", $frontpage->ordering_code));
+        $desired_posts = array_filter(
+            array_map(
+                function($slot) { return (object) [ "post_id" => $slot->post_id, "display_order" => $slot->display_order ]; }, 
+                $slots
+            ), 
+            function($slot) { 
+                return (!empty($slot->post_id)); 
             }
-        }
-        $sql = rtrim($sql, ',');
-        $sql .= " ON DUPLICATE KEY UPDATE meta_value = 1";
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        $wpdb->query($sql);
-        if ($wpdb->last_error) {
-            throw new Exception($wpdb->last_error);
-        }
-        $sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES ";
-        foreach($slots as $slot) {
-            if (!empty($slot->post_id)) {
-                $sql .= "({$slot->post_id}, '{$frontpage->ordering_code}', {$slot->display_order}),";
-            }
-        }
-        $sql = rtrim($sql, ',');
-        $sql .= " ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)";
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        $wpdb->query($sql);
-        if ($wpdb->last_error) {
-            throw new Exception($wpdb->last_error);
-        }
-        foreach ( $slots as $slot ) {
-            if ( $slot->post_id ) {
-                wp_set_object_terms( $slot->post_id, [$frontpage->featured_code], 'flag', true );
-            }
-        }
+        );
+        $tasks = $this->_resolve_featured_posts($current_posts, $desired_posts);
+        $this->_update_featured_posts($frontpage_id, $tasks->update);
+        $this->_insert_featured_posts($frontpage_id, $tasks->insert);
+        $this->_delete_featured_posts($frontpage_id, $tasks->delete);
         update_postmeta_cache( wp_list_pluck( $slots, 'post_id' ) );
     }
 
@@ -477,6 +555,15 @@ class FrontPageEngineLib {
         ));
         if (is_wp_error($response)) {
             throw new Exception($response->get_error_message());
+        }
+    }
+
+    public function _full_refresh($frontpage_id) {
+        $current_slots = $this->_get_slots($frontpage_id);
+        foreach($current_slots as $slot) {
+            $this->_update_slot($slot->id, array(
+                "post_id" => null,
+            ));
         }
     }
 }
