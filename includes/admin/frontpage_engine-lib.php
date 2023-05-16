@@ -175,6 +175,7 @@ class FrontPageEngineLib {
         foreach($posts as $post) {
             add_post_meta($post->post_id, $frontpage->ordering_code, $post->display_order);
             add_post_meta($post->post_id, $frontpage->featured_code, '1');
+            wp_set_object_terms( $post->post_id, $frontpage->featured_code, 'flag' );
         }
     }
 
