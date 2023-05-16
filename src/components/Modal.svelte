@@ -42,13 +42,15 @@
 
 <div class="modal-background" on:click={close} on:keypress={handle_keydown} bind:this={modal_background}></div>
 
-<div class="modal" role="dialog" aria-modal="true" bind:this={modal}>
-	<slot name="header"></slot>
-	<slot></slot>
-	<div class="modal-footer">
-		<slot name="buttons"></slot>
-		<!-- svelte-ignore a11y-autofocus -->
-		<button autofocus on:click={close}>Close</button>
+<div class="modal" role="dialog" aria-modal="true" bind:this={modal} on:close={close}>
+	<div class="frontpageengine-modal-title">
+		<h3><slot name="title"></slot></h3>
+	</div>
+	<div class="frontpageengine-modal-content">
+		<slot></slot>
+	</div>
+	<div class="frontpageengine-modal-footer">
+		<slot name="footer"></slot>
 	</div>
 </div>
 
@@ -72,7 +74,7 @@
 		max-height: calc(100vh - 6em);
 		overflow: auto;
 		transform: translate(-50%,-50%);
-		padding: 1em;
+		/* padding: 1em; */
 		border-radius: 0.2em;
 		background: white;
         z-index: 10001;
@@ -82,7 +84,11 @@
 		display: block;
 	}
 
-	.modal-footer {
+	.frontpageengine-modal-title {
+		padding: 1em;
+	}
+
+	.frontpageengine-modal-footer {
 		margin-top: 1em;		
 	}
 </style>

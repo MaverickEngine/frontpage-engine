@@ -1,6 +1,6 @@
 <script lang="ts">
     const mode = process.env.NODE_ENV;
-    import { featuredPosts, unfeaturedPosts, unorderedPosts } from '../stores.js';
+    import { featuredPosts, unfeaturedPosts, show_modal } from '../stores.js';
     import Search from "./Search.svelte";
     import { fly, fade } from 'svelte/transition';
     import { onMount } from 'svelte';
@@ -21,6 +21,10 @@
     let per_page = 100;
     let rowHovering = -1;
     export let updating = false;
+
+    const close = () => {
+        $show_modal = false;
+    };
 
     const featurePost = async (post, position) => {
         updating = true;
@@ -67,8 +71,13 @@
 </script>
 
 <div class="frontpageengine-addpost-container">
-    <div class="frontpageengine-addpost-search">
-        <Search bind:value={search} on:search={getPosts} />
+    <div class="frontpageengine-addpost-topbar">
+        <div class="frontpageengine-addpost-search">
+            <Search bind:value={search} on:search={getPosts} />
+        </div>
+        <div class="close-button">
+            <button on:click={close} on:keypress={close}>Close</button>
+        </div>
     </div>
     <table class="wp-list-table widefat fixed striped table-view-list featuredposts {updating  ? "is-updating" : ""}">
         <thead>
@@ -138,6 +147,19 @@
 </div>
 
 <style>
+    .frontpageengine-addpost-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0px;
+        left: 0px;
+        padding: 10px;
+        background-color: white;
+        z-index: 100;
+        box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    }
+
     table.is-updating {
         opacity: 0.5;
         pointer-events: none;
@@ -152,7 +174,7 @@
     }
 
     .frontpageengine-addpost-search {
-        margin-bottom: 20px;
+        /* margin-bottom: 20px; */
     }
 
     .button {

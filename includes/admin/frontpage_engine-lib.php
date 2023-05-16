@@ -110,7 +110,6 @@ class FrontPageEngineLib {
             $cases[] = "WHEN post_id = {$post->post_id} THEN '{$post->display_order}'";
         }
         $sql = "UPDATE {$wpdb->postmeta} SET meta_value = (CASE " . implode(' ', $cases) . " END) WHERE meta_key = '{$frontpage->ordering_code}'";
-        error_log($sql);
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $wpdb->query($sql);
         if ($wpdb->last_error) {
@@ -149,19 +148,14 @@ class FrontPageEngineLib {
         $post_ids_to_insert = array_diff($desired_ids, $current_ids);
         $post_ids_to_update = array_intersect($desired_ids, $current_ids);
         $post_ids_to_delete = array_diff($current_ids, $desired_ids);
-        foreach ($desired_state as $post) {
-            if (in_array($post->post_id, $post_ids_to_insert)) {
-                $posts_to_insert[] = $post;
-            } else if (in_array($post->post_id, $post_ids_to_update)) {
-                $posts_to_update[] = $post;
-            }
+        foreach($post_ids_to_insert as $post_id) {
+            $posts_to_insert[] = $desired_state[array_search($post_id, $desired_ids)];
         }
-        foreach ($current_state as $post) {
-            if (in_array($post->post_id, $post_ids_to_delete)) {
-                $posts_to_delete[] = $post;
-            } else if (in_array($post->post_id, $post_ids_to_update)) {
-                $posts_to_update[] = $post;
-            }
+        foreach($post_ids_to_update as $post_id) {
+            $posts_to_update[] = $desired_state[array_search($post_id, $desired_ids)];
+        }
+        foreach($post_ids_to_delete as $post_id) {
+            $posts_to_delete[] = (object) array('post_id' => $post_id);
         }
         return (object) array(
             'insert' => $posts_to_insert,

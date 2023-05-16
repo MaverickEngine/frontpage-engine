@@ -18,10 +18,12 @@ class FrontPageEngineDB {
             post_types varchar(255) NOT NULL,
             display_order tinyint(3) NOT NULL,
             number_of_slots smallint NOT NULL,
+            slug varchar(100) NOT NULL,
             PRIMARY KEY  (id),
             UNIQUE KEY ordering_code (ordering_code),
             UNIQUE KEY featured_code (featured_code),
             UNIQUE KEY name (name),
+            UNIQUE KEY slug (slug),
             INDEX display_order (display_order)
         ) $charset_collate;";
         dbDelta( $sql );

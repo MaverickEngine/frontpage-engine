@@ -119,6 +119,14 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                 return current_user_can( 'edit_others_posts' );
             }
         ));
+
+        register_rest_route('frontpageengine/v1', '/full_refresh/(?P<frontpage_id>\d+)', array(
+            'methods' => 'GET',
+            'callback' => array( $this, 'full_refresh' ),
+            'permission_callback' => function () {
+                return current_user_can( 'edit_others_posts' );
+            }
+        ));
     }
 
     /**
@@ -427,6 +435,17 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             $frontpage_id = intval($request->get_param('frontpage_id'));
             $slot_id = intval($request->get_param('slot_id'));
             $this->_update_slot($slot_id, array("manual_order" => false));
+            $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
+            return $this->get_posts($request);
+        } catch (Exception $e) {
+            return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+        }
+    }
+
+    public function full_refresh(WP_REST_Request $request) {
+        try {
+            $frontpage_id = intval($request->get_param('frontpage_id'));
+            $this->_full_refresh($frontpage_id);
             $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
         } catch (Exception $e) {

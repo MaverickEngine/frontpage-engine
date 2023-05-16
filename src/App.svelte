@@ -5,7 +5,7 @@
     import AddPostTable from "./components/AddPostTable.svelte";
     import Modal from "./components/Modal.svelte";
     import { FrontPageEngineSocketServer } from './websocket.js';
-    import { frontpageId, featuredPosts, unorderedPosts, totalHits, analytics, unique_id } from './stores.js';
+    import { frontpageId, featuredPosts, totalHits, analytics, unique_id, show_modal } from './stores.js';
     import { apiGet, apiPost } from "./lib/ajax.ts";
     import { map_posts } from "./lib/posts.js";
     import Message from "./components/Message.svelte";
@@ -16,8 +16,6 @@
     export let frontpageengine_wssb_address;
     export let url;
     export let uid;
-    let show_modal = false;
-    let show_unordered_modal = false;
     let updating = false;
     let show_group_actions = false;
     let messages = [];
@@ -73,27 +71,6 @@
         await getAnalytics();
     }
 
-    async function onMove(e) {
-        try {
-            const from = e.detail.from;
-            const to = e.detail.to;
-            const post_id = e.detail.post_id;
-            // console.log("moved", from, to, post_id);
-            const wp_posts = await apiPost(`frontpageengine/v1/move_post/${frontpage_id}`, {
-                post_id,
-                from,
-                to,
-            }, "onMove");
-            // console.log(wp_posts);
-            $featuredPosts = wp_posts.posts.map(map_posts);
-        } catch (error) {
-            console.error(error);
-            messages.push({ type: "error", message: error.message || error });
-            messages = messages;
-            // console.log(messages);
-        }
-    }
-
     const autoSort = async () => {
         try {
             updating = true;
@@ -145,11 +122,7 @@
         <Message type={message.type}>{message.message}</Message>
     {/each}
     <div class="action-bar">
-        {#if $unorderedPosts.length > 0}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div class="unordered-posts-alert" alt="Posts awaiting placement" on:click={() => show_unordered_modal = true }>{$unorderedPosts.length}</div>
-        {/if}
-        <a href="#show-modal" class="button button-primary" on:click={() => show_modal = true}>Add posts</a>
+        <a href="#show-modal" class="button button-primary" on:click={() => $show_modal = true}>Add posts</a>
         <a href="#auto-sort" class="button" on:click={() => autoSort()}>Auto sort</a>
         {#if show_group_actions}
             <select class="group-action" bind:value={group_action} on:change={onGroupAction}>
@@ -159,16 +132,10 @@
         {/if}
     </div>
     <hr>
-    {#if show_unordered_modal}
-    <Modal on:close="{() => show_unordered_modal = false}">
-        <h2>Posts awaiting placement</h2>
-        <AddPostTable frontpage_id={frontpage_id} type="unordered" on:updated={updated} total_hits={$totalHits} />
-    </Modal>
-    {/if}
-    {#if show_modal}
-    <Modal on:close="{() => show_modal = false}">
-        <h2 slot="header">Add Posts</h2>
-        <AddPostTable frontpage_id={frontpage_id} on:updated={updated} total_hits={$totalHits} />
+    {#if $show_modal}
+    <Modal on:close="{() => $show_modal = false}">
+        <h2 slot="title">Add Posts</h2>
+        <AddPostTable frontpage_id={frontpage_id} on:updated={updated} total_hits={$totalHits} on:close={console.log("Close!")} />
     </Modal>
     {/if}
     <FrontpageTable frontpage_id={frontpage_id} total_hits={$totalHits} on:updated={updated} updating={updating} analytics={$analytics} />
