@@ -15,7 +15,7 @@
     export let total_hits = 0;
 
     let posts = [];
-    let analytics = [];
+    let analytics: any = [];
     let search = "";
     let page = 1;
     let per_page = 100;
