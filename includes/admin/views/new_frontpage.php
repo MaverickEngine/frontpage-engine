@@ -1,6 +1,6 @@
 <div class="wrap">
     <form method="post">
-        <?php wp_nonce_field( 'new', 'frontpageengine_frontpage' ); ?>
+        <?php wp_nonce_field( 'add_edit', 'frontpageengine_frontpage' ); ?>
         <h1>
             <?php _e( 'Add Front Page', 'frontpageengine' ); ?>
         </h1>
@@ -13,6 +13,15 @@
                     </th>
                     <td>
                         <input type="text" name="frontpageengine_frontpage_name" id="frontpageengine_frontpage_name" value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="frontpageengine_frontpage_slug"><?php _e( 'Slug', 'frontpageengine' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="text" name="frontpageengine_frontpage_slug" id="frontpageengine_frontpage_slug" value="" />
+                        <p class="description"><?php _e( 'A unique identifier, eg. "main"', 'business-maverick' ); ?></p>
                     </td>
                 </tr>
                 <tr>
@@ -79,5 +88,8 @@
             </tbody>
         </table>
         <?php submit_button(); ?>
+        <a href="?page=<?php print esc_attr($_GET["page"]) ?>&tab=pages" class="button">
+            <?php _e( 'Back to Front Pages', 'frontpageengine' ); ?>
+        </a>
     </form>
 </div>

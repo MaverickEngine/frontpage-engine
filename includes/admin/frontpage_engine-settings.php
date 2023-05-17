@@ -13,7 +13,6 @@ class FrontpageEngineAdminSettings {
     public function __construct() {
         add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_menu', [$this, 'menu']);
-        // add_action('admin_menu', [ $this, 'manage_page' ]);
     }
 
     public function register_settings() {
@@ -36,17 +35,6 @@ class FrontpageEngineAdminSettings {
         }
     }
 
-    // public function manage_page() {
-    //     add_submenu_page(
-    //         'frontpage-engine-menu',
-	// 		'FrontpageEngine Manage',
-	// 		'Manage Front Pages',
-	// 		'manage_options',
-	// 		'frontpageengine_manage',
-	// 		[ $this, 'frontpageengine_manage' ]
-	// 	);
-    // }
-
     public function check_actions() {
         if (!current_user_can('manage_options')) {
             wp_die('You do not have sufficient permissions to access this page.');
@@ -56,7 +44,7 @@ class FrontpageEngineAdminSettings {
         }
         switch ($_GET['action']) {
             case 'edit':
-                $this->edit_frontpage();
+                $this->add_edit_frontpage();
                 break;
             case 'delete':
                 $this->delete_frontpage();
@@ -65,7 +53,7 @@ class FrontpageEngineAdminSettings {
                 $this->delete_confirm();
                 break;
             case 'new':
-                $this->new_frontpage();
+                $this->add_edit_frontpage();
                 break;
             case 'slots':
                 $this->manage_slots();
@@ -76,26 +64,16 @@ class FrontpageEngineAdminSettings {
         return true;
     }
 
-    public function new_frontpage() {
-        if (isset($_POST['frontpageengine_frontpage'])) {
-            if (wp_verify_nonce( $_POST['frontpageengine_frontpage'], 'new' )) {
-                $id = $this->save_frontpage(true);
-                $this->display_edit($id, 'Front Page Created');
-            } else {
-                wp_die('You do not have sufficient permissions to access this page.');
-            }
-        } else {
-            require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/new_frontpage.php';
-        }
-    }
-
-    public function save_frontpage(bool $new) {
+    public function save_frontpage(int $frontpage_id = null): int {
         global $wpdb;
-        if (! isset($_POST['frontpageengine_frontpage']) || ! wp_verify_nonce($_POST['frontpageengine_frontpage'], $new ? 'new' : 'edit' )) {
+        if (! isset($_POST['frontpageengine_frontpage']) || ! wp_verify_nonce($_POST['frontpageengine_frontpage'], 'add_edit' )) {
             wp_die('You do not have sufficient permissions to access this page.');
         }
         if (!isset($_POST['frontpageengine_frontpage_name'])) {
             wp_die('Name required');
+        }
+        if (!isset($_POST['frontpageengine_frontpage_slug'])) {
+            wp_die('Slug required');
         }
         if (!isset($_POST['frontpageengine_frontpage_ordering_code'])) {
             wp_die('Ordering Code required');
@@ -109,40 +87,39 @@ class FrontpageEngineAdminSettings {
         if (!isset($_POST['frontpageengine_frontpage_number_of_slots'])) {
             wp_die('Number of slots required');
         }
+        $new = false;
         $table_name = $wpdb->prefix . 'frontpage_engine_frontpages';
+        $post_types = isset($_POST['frontpageengine_frontpage_post_types']) ? $_POST['frontpageengine_frontpage_post_types'] : [];
         $data = [
             'name' => sanitize_text_field($_POST['frontpageengine_frontpage_name']),
+            'slug' => sanitize_text_field($_POST['frontpageengine_frontpage_slug']),
             'ordering_code' => sanitize_text_field($_POST['frontpageengine_frontpage_ordering_code']),
             'featured_code' => sanitize_text_field($_POST['frontpageengine_frontpage_featured_code']),
-            'post_types' => sanitize_text_field(join(",", $_POST['frontpageengine_frontpage_post_types'])),
+            'post_types' => sanitize_text_field(join(",", $post_types)),
             'number_of_slots' => intval($_POST['frontpageengine_frontpage_number_of_slots'])
         ];
-        if ($new) {
-            $wpdb->insert($table_name, $data, ['%s', '%s', '%s', '%s', '%d']);
+        if ($frontpage_id === null) {
+            $wpdb->insert($table_name, $data, ['%s', '%s', '%s', '%s', '%s', '%d']);
             if ($wpdb->last_error) {
                 wp_die(esc_attr($wpdb->last_error));
             }
-            $id = $wpdb->insert_id;
+            $new = true;
+            $frontpage_id = $wpdb->insert_id;
         } else {
-            if (!isset($_GET['frontpage_id'])) {
-                wp_die('ID required');
-            }
-            $id = intval($_GET['frontpage_id']);
-            $wpdb->update($table_name, $data, ['id' => $id]);
+            $wpdb->update($table_name, $data, ['id' => $frontpage_id]);
             if ($wpdb->last_error) {
                 wp_die(esc_attr($wpdb->last_error));
             }
         }
         if (isset($_POST['frontpageengine_frontpage_number_of_slots'])) {
             $table_name = $wpdb->prefix . 'frontpage_engine_frontpage_slots';
-            $post_types = isset($_POST['frontpageengine_frontpage_post_types']) ? $_POST['frontpageengine_frontpage_post_types'] : [];
             $number_of_slots = intval($_POST['frontpageengine_frontpage_number_of_slots']);
             $start_count = 0;
-            if (isset($_GET['frontpage_id']) && !$new) {
+            if (!$new) {
                 // Ensure we don't have too many (or too few) number of slots
-                $slots = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE frontpage_id = %d ORDER BY display_order DESC", intval($_GET["frontpage_id"])));
+                $slots = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE frontpage_id = %d ORDER BY display_order DESC", $frontpage_id));
                 if (count($slots) > $number_of_slots) {
-                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE frontpage_id = %d ORDER BY display_order DESC LIMIT %d", intval($_GET["frontpage_id"]), count($slots) - $number_of_slots));
+                    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE frontpage_id = %d ORDER BY display_order DESC LIMIT %d", $frontpage_id, count($slots) - $number_of_slots));
                     $start_count = $number_of_slots;
                 } else {
                     $start_count = count($slots);
@@ -151,7 +128,7 @@ class FrontpageEngineAdminSettings {
             $nf = new NumberFormatter("EN_US", NumberFormatter::ORDINAL);
             for ($i = $start_count; $i < $number_of_slots; $i++) {
                 $wpdb->insert($table_name, [
-                    'frontpage_id' => $id,
+                    'frontpage_id' => $frontpage_id,
                     'automate' => isset($_POST['frontpageengine_frontpage_automate']) ? 1 : 0,
                     'post_types' => implode(',', $post_types),
                     'display_order' => $i,
@@ -164,9 +141,9 @@ class FrontpageEngineAdminSettings {
             }
         }
         if (isset($_POST['frontpageengine_frontpage_import_legacy'])) {
-            $this->import_legacy($id);
+            $this->import_legacy($frontpage_id);
         }
-        return $id;
+        return $frontpage_id;
     }
 
     public function import_legacy(int $frontpage_id) {
@@ -175,6 +152,9 @@ class FrontpageEngineAdminSettings {
         $slots = $frontpagelib->_get_slots($frontpage_id);
         $i = 0;
         foreach ($slots as $slot) {
+            if (empty($posts[$i])) {
+                continue;
+            }
             $frontpagelib->_set_slot_post($slot->id, $posts[$i++]->ID);
         }
     }
@@ -254,36 +234,34 @@ class FrontpageEngineAdminSettings {
         require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/manage_slots.php';
     }
 
-    protected function display_edit($id, $message = null) {
+    protected function display_edit($frontpage_id, $message = null) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'frontpage_engine_frontpages';
-        $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE id = %d", intval($id)));
+        $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE id = %d", intval($frontpage_id)));
         if (!empty($message)) {
             echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($message) . '</p></div>';
         }
         require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/edit_frontpage.php';
     }
 
-    public function edit_frontpage() {
-        if (!check_admin_referer( 'edit' )) {
-            wp_die('You do not have sufficient permissions to access this page man.');
+    public function add_edit_frontpage($frontpage_id = null) {
+        if (isset($_GET['frontpage_id'])) {
+            $frontpage_id = intval($_GET['frontpage_id']);
         }
-        if (!isset($_GET['frontpage_id'])) {
-            wp_die('ID required');
+        if (isset($_POST['frontpage_id'])) {
+            $frontpage_id = intval($_POST['frontpage_id']);
         }
         if (isset($_POST['frontpageengine_frontpage'])) {
-            if (wp_verify_nonce( $_POST['frontpageengine_frontpage'], 'edit' )) {
-                $id = $this->save_frontpage(false);
-                $this->display_edit($id, 'Front Page Saved');
-            } else {
-                wp_die('You do not have sufficient permissions to access this page bro.');
+            if (wp_verify_nonce( $_POST['frontpageengine_frontpage'], 'add_edit' )) {
+                $frontpage_id = $this->save_frontpage($frontpage_id);
             }
-        } else {
-            $frontpage_id = intval($_GET['frontpage_id']);
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'frontpage_engine_frontpages';
-            $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE id = %d", intval($_GET['frontpage_id'])));
+        }
+        if ($frontpage_id !== null) {
+            $frontpagelib = new FrontPageEngineLib();
+            $frontpage = $frontpagelib->_get_frontpage($frontpage_id);
             require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/edit_frontpage.php';
+        } else {
+            require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/new_frontpage.php';
         }
     }
 }
