@@ -67,6 +67,7 @@
 
 	.modal {
 		position: fixed;
+		display: block;
         left: 50%;
 		top: 50%;
 		width: calc(100vw - 4em);

@@ -95,10 +95,6 @@ var frontpage_engine = (function () {
         store.set(value);
         return ret;
     }
-    function split_css_unit(value) {
-        const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
-        return split ? [parseFloat(split[1]), split[2] || 'px'] : [value, 'px'];
-    }
 
     const is_client = typeof window !== 'undefined';
     let now = is_client
@@ -168,9 +164,7 @@ var frontpage_engine = (function () {
         target.insertBefore(node, anchor || null);
     }
     function detach(node) {
-        if (node.parentNode) {
-            node.parentNode.removeChild(node);
-        }
+        node.parentNode.removeChild(node);
     }
     function destroy_each(iterations, detaching) {
         for (let i = 0; i < iterations.length; i += 1) {
@@ -211,9 +205,8 @@ var frontpage_engine = (function () {
     }
     function set_data(text, data) {
         data = '' + data;
-        if (text.data === data)
-            return;
-        text.data = data;
+        if (text.wholeText !== data)
+            text.data = data;
     }
     function set_input_value(input, value) {
         input.value = value == null ? '' : value;
@@ -226,7 +219,7 @@ var frontpage_engine = (function () {
             node.style.setProperty(key, value, important ? 'important' : '');
         }
     }
-    function select_option(select, value, mounting) {
+    function select_option(select, value) {
         for (let i = 0; i < select.options.length; i += 1) {
             const option = select.options[i];
             if (option.__value === value) {
@@ -234,12 +227,10 @@ var frontpage_engine = (function () {
                 return;
             }
         }
-        if (!mounting || value !== undefined) {
-            select.selectedIndex = -1; // no option should be selected
-        }
+        select.selectedIndex = -1; // no option should be selected
     }
     function select_value(select) {
-        const selected_option = select.querySelector(':checked');
+        const selected_option = select.querySelector(':checked') || select.options[0];
         return selected_option && selected_option.__value;
     }
     function toggle_class(element, name, toggle) {
@@ -466,9 +457,9 @@ var frontpage_engine = (function () {
 
     const dirty_components = [];
     const binding_callbacks = [];
-    let render_callbacks = [];
+    const render_callbacks = [];
     const flush_callbacks = [];
-    const resolved_promise = /* @__PURE__ */ Promise.resolve();
+    const resolved_promise = Promise.resolve();
     let update_scheduled = false;
     function schedule_update() {
         if (!update_scheduled) {
@@ -503,29 +494,15 @@ var frontpage_engine = (function () {
     const seen_callbacks = new Set();
     let flushidx = 0; // Do *not* move this inside the flush() function
     function flush() {
-        // Do not reenter flush while dirty components are updated, as this can
-        // result in an infinite loop. Instead, let the inner flush handle it.
-        // Reentrancy is ok afterwards for bindings etc.
-        if (flushidx !== 0) {
-            return;
-        }
         const saved_component = current_component;
         do {
             // first, call beforeUpdate functions
             // and update components
-            try {
-                while (flushidx < dirty_components.length) {
-                    const component = dirty_components[flushidx];
-                    flushidx++;
-                    set_current_component(component);
-                    update(component.$$);
-                }
-            }
-            catch (e) {
-                // reset dirty state to not end up in a deadlocked state and then rethrow
-                dirty_components.length = 0;
-                flushidx = 0;
-                throw e;
+            while (flushidx < dirty_components.length) {
+                const component = dirty_components[flushidx];
+                flushidx++;
+                set_current_component(component);
+                update(component.$$);
             }
             set_current_component(null);
             dirty_components.length = 0;
@@ -561,16 +538,6 @@ var frontpage_engine = (function () {
             $$.fragment && $$.fragment.p($$.ctx, dirty);
             $$.after_update.forEach(add_render_callback);
         }
-    }
-    /**
-     * Useful for example to execute remaining `afterUpdate` callbacks before executing `destroy`.
-     */
-    function flush_render_callbacks(fns) {
-        const filtered = [];
-        const targets = [];
-        render_callbacks.forEach((c) => fns.indexOf(c) === -1 ? filtered.push(c) : targets.push(c));
-        targets.forEach((c) => c());
-        render_callbacks = filtered;
     }
 
     let promise;
@@ -628,8 +595,7 @@ var frontpage_engine = (function () {
     }
     const null_transition = { duration: 0 };
     function create_in_transition(node, fn, params) {
-        const options = { direction: 'in' };
-        let config = fn(node, params, options);
+        let config = fn(node, params);
         let running = false;
         let animation_name;
         let task;
@@ -673,7 +639,7 @@ var frontpage_engine = (function () {
                 started = true;
                 delete_rule(node);
                 if (is_function(config)) {
-                    config = config(options);
+                    config = config();
                     wait().then(go);
                 }
                 else {
@@ -692,8 +658,7 @@ var frontpage_engine = (function () {
         };
     }
     function create_out_transition(node, fn, params) {
-        const options = { direction: 'out' };
-        let config = fn(node, params, options);
+        let config = fn(node, params);
         let running = true;
         let animation_name;
         const group = outros;
@@ -728,7 +693,7 @@ var frontpage_engine = (function () {
         if (is_function(config)) {
             wait().then(() => {
                 // @ts-ignore
-                config = config(options);
+                config = config();
                 go();
             });
         }
@@ -749,8 +714,7 @@ var frontpage_engine = (function () {
         };
     }
     function create_bidirectional_transition(node, fn, params, intro) {
-        const options = { direction: 'both' };
-        let config = fn(node, params, options);
+        let config = fn(node, params);
         let t = intro ? 0 : 1;
         let running_program = null;
         let pending_program = null;
@@ -840,7 +804,7 @@ var frontpage_engine = (function () {
                 if (is_function(config)) {
                     wait().then(() => {
                         // @ts-ignore
-                        config = config(options);
+                        config = config();
                         go(b);
                     });
                 }
@@ -873,7 +837,6 @@ var frontpage_engine = (function () {
         const new_blocks = [];
         const new_lookup = new Map();
         const deltas = new Map();
-        const updates = [];
         i = n;
         while (i--) {
             const child_ctx = get_context(ctx, list, i);
@@ -884,8 +847,7 @@ var frontpage_engine = (function () {
                 block.c();
             }
             else if (dynamic) {
-                // defer updates until all the DOM shuffling is done
-                updates.push(() => block.p(child_ctx, dirty));
+                block.p(child_ctx, dirty);
             }
             new_lookup.set(key, new_blocks[i] = block);
             if (key in old_indexes)
@@ -938,7 +900,6 @@ var frontpage_engine = (function () {
         }
         while (n)
             insert(new_blocks[n - 1]);
-        run_all(updates);
         return new_blocks;
     }
 
@@ -978,7 +939,6 @@ var frontpage_engine = (function () {
     function destroy_component(component, detaching) {
         const $$ = component.$$;
         if ($$.fragment !== null) {
-            flush_render_callbacks($$.after_update);
             run_all($$.on_destroy);
             $$.fragment && $$.fragment.d(detaching);
             // TODO null out other refs, including component.$$ (but need to
@@ -1181,7 +1141,7 @@ var frontpage_engine = (function () {
         return innerLocale;
     }
 
-    /* src/components/date-picker-svelte/DatePicker.svelte generated by Svelte v3.58.0 */
+    /* src/components/date-picker-svelte/DatePicker.svelte generated by Svelte v3.52.0 */
 
     function add_css$8(target) {
     	append_styles(target, "svelte-w239uu", ".date-time-picker.svelte-w239uu.svelte-w239uu{display:inline-block;color:var(--date-picker-foreground, #000000);background:var(--date-picker-background, #ffffff);user-select:none;-webkit-user-select:none;padding:0.5rem;cursor:default;font-size:0.75rem;border:1px solid rgba(103, 113, 137, 0.3);border-radius:3px;box-shadow:0px 2px 6px rgba(0, 0, 0, 0.08), 0px 2px 6px rgba(0, 0, 0, 0.11);outline:none;transition:all 80ms cubic-bezier(0.4, 0, 0.2, 1)}.date-time-picker.svelte-w239uu.svelte-w239uu:focus{border-color:var(--date-picker-highlight-border, #0269f7);box-shadow:0px 0px 0px 2px var(--date-picker-highlight-shadow, rgba(2, 105, 247, 0.4))}.tab-container.svelte-w239uu.svelte-w239uu{outline:none}.top.svelte-w239uu.svelte-w239uu{display:flex;justify-content:center;align-items:center;padding-bottom:0.5rem}.dropdown.svelte-w239uu.svelte-w239uu{margin-left:0.25rem;margin-right:0.25rem;position:relative;display:flex}.dropdown.svelte-w239uu svg.svelte-w239uu{position:absolute;right:0px;top:0px;height:100%;width:8px;padding:0rem 0.5rem;pointer-events:none;box-sizing:content-box}.month.svelte-w239uu.svelte-w239uu{flex-grow:1}.year.svelte-w239uu.svelte-w239uu{flex-grow:1}svg.svelte-w239uu.svelte-w239uu{display:block;fill:var(--date-picker-foreground, #000000);opacity:0.75;outline:none}.page-button.svelte-w239uu.svelte-w239uu{background-color:transparent;width:1.5rem;height:1.5rem;flex-shrink:0;border-radius:5px;box-sizing:border-box;border:1px solid transparent;display:flex;align-items:center;justify-content:center}.page-button.svelte-w239uu.svelte-w239uu:hover{background-color:rgba(128, 128, 128, 0.08);border:1px solid rgba(128, 128, 128, 0.08)}.page-button.svelte-w239uu svg.svelte-w239uu{width:0.68rem;height:0.68rem}select.dummy-select.svelte-w239uu.svelte-w239uu{position:absolute;width:100%;pointer-events:none;outline:none;color:var(--date-picker-foreground, #000000);background-color:var(--date-picker-background, #ffffff);border-radius:3px}select.svelte-w239uu:focus+select.dummy-select.svelte-w239uu{border-color:var(--date-picker-highlight-border, #0269f7);box-shadow:0px 0px 0px 2px var(--date-picker-highlight-shadow, rgba(2, 105, 247, 0.4))}select.svelte-w239uu.svelte-w239uu:not(.dummy-select){opacity:0}select.svelte-w239uu.svelte-w239uu{font-size:inherit;font-family:inherit;-webkit-appearance:none;-moz-appearance:none;appearance:none;flex-grow:1;padding:0rem 0.35rem;height:1.5rem;padding-right:1.3rem;margin:0px;border:1px solid rgba(108, 120, 147, 0.3);outline:none;transition:all 80ms cubic-bezier(0.4, 0, 0.2, 1);background-image:none}.header.svelte-w239uu.svelte-w239uu{display:flex;font-weight:600;padding-bottom:2px}.header-cell.svelte-w239uu.svelte-w239uu{width:1.875rem;text-align:center;flex-grow:1}.week.svelte-w239uu.svelte-w239uu{display:flex}.cell.svelte-w239uu.svelte-w239uu{display:flex;align-items:center;justify-content:center;width:2rem;height:1.94rem;flex-grow:1;border-radius:5px;box-sizing:border-box;border:2px solid transparent}.cell.svelte-w239uu.svelte-w239uu:hover{border:1px solid rgba(128, 128, 128, 0.08)}.cell.today.svelte-w239uu.svelte-w239uu{font-weight:600;border:2px solid var(--date-picker-today-border, rgba(128, 128, 128, 0.3))}.cell.svelte-w239uu.svelte-w239uu:hover{background-color:rgba(128, 128, 128, 0.08)}.cell.disabled.svelte-w239uu.svelte-w239uu{visibility:hidden}.cell.disabled.svelte-w239uu.svelte-w239uu:hover{border:none;background-color:transparent}.cell.other-month.svelte-w239uu span.svelte-w239uu{opacity:0.4}.cell.selected.svelte-w239uu.svelte-w239uu{color:var(--date-picker-selected-color, inherit);background:var(--date-picker-selected-background, rgba(2, 105, 247, 0.2));border:2px solid var(--date-picker-highlight-border, #0269f7)}");
@@ -1547,9 +1507,7 @@ var frontpage_engine = (function () {
     			insert(target, div, anchor);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				if (each_blocks[i]) {
-    					each_blocks[i].m(div, null);
-    				}
+    				each_blocks[i].m(div, null);
     			}
 
     			append(div, t);
@@ -1759,9 +1717,7 @@ var frontpage_engine = (function () {
     			append(div0, select0);
 
     			for (let i = 0; i < each_blocks_5.length; i += 1) {
-    				if (each_blocks_5[i]) {
-    					each_blocks_5[i].m(select0, null);
-    				}
+    				each_blocks_5[i].m(select0, null);
     			}
 
     			select_option(select0, /*browseMonth*/ ctx[7]);
@@ -1769,9 +1725,7 @@ var frontpage_engine = (function () {
     			append(div0, select1);
 
     			for (let i = 0; i < each_blocks_4.length; i += 1) {
-    				if (each_blocks_4[i]) {
-    					each_blocks_4[i].m(select1, null);
-    				}
+    				each_blocks_4[i].m(select1, null);
     			}
 
     			append(div0, t2);
@@ -1782,9 +1736,7 @@ var frontpage_engine = (function () {
     			append(div1, select2);
 
     			for (let i = 0; i < each_blocks_3.length; i += 1) {
-    				if (each_blocks_3[i]) {
-    					each_blocks_3[i].m(select2, null);
-    				}
+    				each_blocks_3[i].m(select2, null);
     			}
 
     			select_option(select2, /*browseYear*/ ctx[8]);
@@ -1792,9 +1744,7 @@ var frontpage_engine = (function () {
     			append(div1, select3);
 
     			for (let i = 0; i < each_blocks_2.length; i += 1) {
-    				if (each_blocks_2[i]) {
-    					each_blocks_2[i].m(select3, null);
-    				}
+    				each_blocks_2[i].m(select3, null);
     			}
 
     			append(div1, t5);
@@ -1806,17 +1756,13 @@ var frontpage_engine = (function () {
     			append(div4, div3);
 
     			for (let i = 0; i < each_blocks_1.length; i += 1) {
-    				if (each_blocks_1[i]) {
-    					each_blocks_1[i].m(div3, null);
-    				}
+    				each_blocks_1[i].m(div3, null);
     			}
 
     			append(div4, t8);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				if (each_blocks[i]) {
-    					each_blocks[i].m(div4, null);
-    				}
+    				each_blocks[i].m(div4, null);
     			}
 
     			if (!mounted) {
@@ -2326,14 +2272,12 @@ var frontpage_engine = (function () {
         const target_opacity = +style.opacity;
         const transform = style.transform === 'none' ? '' : style.transform;
         const od = target_opacity * (1 - opacity);
-        const [xValue, xUnit] = split_css_unit(x);
-        const [yValue, yUnit] = split_css_unit(y);
         return {
             delay,
             duration,
             easing,
             css: (t, u) => `
-			transform: ${transform} translate(${(1 - t) * xValue}${xUnit}, ${(1 - t) * yValue}${yUnit});
+			transform: ${transform} translate(${(1 - t) * x}px, ${(1 - t) * y}px);
 			opacity: ${target_opacity - (od * u)}`
         };
     }
@@ -2528,7 +2472,7 @@ var frontpage_engine = (function () {
             run(value);
             return () => {
                 subscribers.delete(subscriber);
-                if (subscribers.size === 0 && stop) {
+                if (subscribers.size === 0) {
                     stop();
                     stop = null;
                 }
@@ -2537,7 +2481,7 @@ var frontpage_engine = (function () {
         return { set, update, subscribe };
     }
 
-    /* src/components/date-picker-svelte/DateInput.svelte generated by Svelte v3.58.0 */
+    /* src/components/date-picker-svelte/DateInput.svelte generated by Svelte v3.52.0 */
 
     function add_css$7(target) {
     	append_styles(target, "svelte-oyazrd", ".date-time-field.svelte-oyazrd{position:relative}input.svelte-oyazrd{color:var(--date-picker-foreground, #000000);background:var(--date-picker-background, #ffffff);min-width:0px;box-sizing:border-box;padding:4px 6px;margin:0px;border:1px solid rgba(103, 113, 137, 0.3);border-radius:3px;width:var(--date-input-width, 150px);outline:none;transition:all 80ms cubic-bezier(0.4, 0, 0.2, 1)}input.svelte-oyazrd:focus{border-color:var(--date-picker-highlight-border, #0269f7);box-shadow:0px 0px 0px 2px var(--date-picker-highlight-shadow, rgba(2, 105, 247, 0.4))}input.svelte-oyazrd:disabled{opacity:0.5}.invalid.svelte-oyazrd{border:1px solid rgba(249, 47, 114, 0.5);background-color:rgba(249, 47, 114, 0.1)}.invalid.svelte-oyazrd:focus{border-color:#f92f72;box-shadow:0px 0px 0px 2px rgba(249, 47, 114, 0.5)}.picker.svelte-oyazrd{display:none;position:absolute;margin-top:1px;margin-left:-80px;z-index:10}.picker.visible.svelte-oyazrd{display:block}");
@@ -2608,7 +2552,6 @@ var frontpage_engine = (function () {
     			transition_in(datetimepicker.$$.fragment, local);
 
     			add_render_callback(() => {
-    				if (!current) return;
     				if (!div_transition) div_transition = create_bidirectional_transition(div, fly, { duration: 80, easing: cubicInOut, y: -5 }, true);
     				div_transition.run(1);
     			});
@@ -2979,7 +2922,7 @@ var frontpage_engine = (function () {
     const unique_id = writable(0);
     const show_modal = writable(false);
 
-    /* src/components/Pie.svelte generated by Svelte v3.58.0 */
+    /* src/components/Pie.svelte generated by Svelte v3.52.0 */
 
     function create_fragment$9(ctx) {
     	let svg;
@@ -3143,7 +3086,7 @@ var frontpage_engine = (function () {
     	}
     }
 
-    /* src/components/AnalyticsGraph.svelte generated by Svelte v3.58.0 */
+    /* src/components/AnalyticsGraph.svelte generated by Svelte v3.52.0 */
 
     function add_css$6(target) {
     	append_styles(target, "svelte-j0cm0n", ".analytics-graph.svelte-j0cm0n{display:flex;flex-direction:column;justify-content:flex-start;align-items:center}");
@@ -3279,7 +3222,7 @@ var frontpage_engine = (function () {
     	}
     }
 
-    /* src/components/PostRow.svelte generated by Svelte v3.58.0 */
+    /* src/components/PostRow.svelte generated by Svelte v3.52.0 */
 
     function add_css$5(target) {
     	append_styles(target, "svelte-1p0azr4", ".column-image.svelte-1p0azr4.svelte-1p0azr4{width:50px}.column-image.svelte-1p0azr4 img.svelte-1p0azr4{width:50px;height:40px;object-fit:cover}.column-title.svelte-1p0azr4.svelte-1p0azr4{width:500px}.badge.svelte-1p0azr4.svelte-1p0azr4{background-color:#0071a1;color:#fff;display:inline-block;padding:0.25em 0.4em;font-size:75%;font-weight:700;line-height:1;text-align:center;white-space:nowrap;vertical-align:baseline;border-radius:0.25rem}.hide-overflow-x.svelte-1p0azr4.svelte-1p0azr4{overflow-x:hidden}");
@@ -3502,7 +3445,6 @@ var frontpage_engine = (function () {
     			if (current) return;
 
     			add_render_callback(() => {
-    				if (!current) return;
     				if (p_outro) p_outro.end(1);
     				p_intro = create_in_transition(p, fade, {});
     				p_intro.start();
@@ -3667,9 +3609,7 @@ var frontpage_engine = (function () {
     			insert(target, td1, anchor);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				if (each_blocks[i]) {
-    					each_blocks[i].m(td1, null);
-    				}
+    				each_blocks[i].m(td1, null);
     			}
 
     			insert(target, t2, anchor);
@@ -3881,7 +3821,7 @@ var frontpage_engine = (function () {
     	}
     }
 
-    /* node_modules/svelte-tooltip/src/SvelteTooltip.svelte generated by Svelte v3.58.0 */
+    /* node_modules/svelte-tooltip/src/SvelteTooltip.svelte generated by Svelte v3.52.0 */
 
     function add_css$4(target) {
     	append_styles(target, "svelte-16glvw6", ".tooltip-wrapper.svelte-16glvw6.svelte-16glvw6{position:relative;display:inline-block}.tooltip.svelte-16glvw6.svelte-16glvw6{position:absolute;font-family:inherit;display:inline-block;white-space:nowrap;color:inherit;opacity:0;visibility:hidden;transition:opacity 150ms, visibility 150ms}.default-tip.svelte-16glvw6.svelte-16glvw6{display:inline-block;padding:8px 16px;border-radius:6px;color:inherit}.tooltip.top.svelte-16glvw6.svelte-16glvw6{left:50%;transform:translate(-50%, -100%);margin-top:-8px}.tooltip.bottom.svelte-16glvw6.svelte-16glvw6{left:50%;bottom:0;transform:translate(-50%, 100%);margin-bottom:-8px}.tooltip.left.svelte-16glvw6.svelte-16glvw6{left:0;transform:translateX(-100%);margin-left:-8px}.tooltip.right.svelte-16glvw6.svelte-16glvw6{right:0;transform:translateX(100%);margin-right:-8px}.tooltip.active.svelte-16glvw6.svelte-16glvw6{opacity:1;visibility:initial}.tooltip-slot.svelte-16glvw6:hover+.tooltip.svelte-16glvw6{opacity:1;visibility:initial}");
@@ -4198,7 +4138,7 @@ var frontpage_engine = (function () {
         function verb(n) { return function (v) { return step([n, v]); }; }
         function step(op) {
             if (f) throw new TypeError("Generator is already executing.");
-            while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            while (_) try {
                 if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
                 if (y = 0, t) op = [op[0] & 2, t.value];
                 switch (op[0]) {
@@ -4225,7 +4165,6 @@ var frontpage_engine = (function () {
         var _this = this;
         if (uid === void 0) { uid = null; }
         return new Promise(function (resolve, reject) {
-            console.log({ uid: uid });
             wp.apiRequest({
                 path: path,
                 data: data,
@@ -4306,7 +4245,7 @@ var frontpage_engine = (function () {
         }
     };
 
-    /* src/components/FrontpageTable.svelte generated by Svelte v3.58.0 */
+    /* src/components/FrontpageTable.svelte generated by Svelte v3.52.0 */
 
     function add_css$3(target) {
     	append_styles(target, "svelte-r4dvth", "table.svelte-r4dvth{border-collapse:collapse}table.is-updating.svelte-r4dvth{opacity:0.5;pointer-events:none}tr.is-active.svelte-r4dvth{background-color:rgb(204, 204, 204) !important}tr.is-locked.svelte-r4dvth{background-color:rgb(250, 232, 238) !important}.column-header-image.svelte-r4dvth{width:50px}.column-header-title.svelte-r4dvth{width:30%}.cursor-pointer.svelte-r4dvth{cursor:pointer}");
@@ -5217,9 +5156,7 @@ var frontpage_engine = (function () {
     			append(table, tbody);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				if (each_blocks[i]) {
-    					each_blocks[i].m(tbody, null);
-    				}
+    				each_blocks[i].m(tbody, null);
     			}
 
     			current = true;
@@ -5296,7 +5233,6 @@ var frontpage_engine = (function () {
     			set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/move_post/${$frontpageId}?${mode == "development" ? "simulate_analytics=1" : ""}`, { post_id, slot_id }, $unique_id)).posts.map(map_posts), $featuredPosts);
     			dispatch("updated");
     		} catch(e) {
-    			console.error(e);
     		} finally {
     			$$invalidate(0, updating = false);
     		}
@@ -5392,7 +5328,6 @@ var frontpage_engine = (function () {
     	};
 
     	const setupSortable = () => {
-    		console.log("setup sortable");
 
     		if (jQuery("table.featuredposts").hasClass("ui-sortable")) {
     			jQuery("table.featuredposts").sortable("destroy");
@@ -5420,7 +5355,6 @@ var frontpage_engine = (function () {
     				const slot_id = $featuredPosts[target_index].slot.id;
 
     				if (start_index !== target_index) {
-    					console.log({ post_id, slot_id });
     					doMove(post_id, slot_id);
     				}
     			}
@@ -5428,7 +5362,6 @@ var frontpage_engine = (function () {
     	};
 
     	onMount(() => {
-    		console.log("onMount");
     		setupSortable();
     	});
 
@@ -5497,7 +5430,7 @@ var frontpage_engine = (function () {
     	}
     }
 
-    /* src/components/Search.svelte generated by Svelte v3.58.0 */
+    /* src/components/Search.svelte generated by Svelte v3.52.0 */
 
     function create_fragment$4(ctx) {
     	let input;
@@ -5609,7 +5542,7 @@ var frontpage_engine = (function () {
     	}
     }
 
-    /* src/components/AddPostTable.svelte generated by Svelte v3.58.0 */
+    /* src/components/AddPostTable.svelte generated by Svelte v3.52.0 */
 
     function add_css$2(target) {
     	append_styles(target, "svelte-ue8gsb", ".frontpageengine-addpost-topbar.svelte-ue8gsb{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0px;left:0px;padding:10px;background-color:white;z-index:100;box-shadow:0px 0px 10px rgba(0,0,0,0.1)}table.is-updating.svelte-ue8gsb{opacity:0.5;pointer-events:none}.column-header-image.svelte-ue8gsb{width:50px}.column-header-title.svelte-ue8gsb{width:500px}.button.svelte-ue8gsb{margin-bottom:5px}.insert-cell.svelte-ue8gsb{display:flex;flex-direction:column;align-items:center;justify-content:center}.input-position.svelte-ue8gsb{width:50px;margin:5px 0px;text-align:center}");
@@ -5988,9 +5921,7 @@ var frontpage_engine = (function () {
     			append(table, tbody);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				if (each_blocks[i]) {
-    					each_blocks[i].m(tbody, null);
-    				}
+    				each_blocks[i].m(tbody, null);
     			}
 
     			current = true;
@@ -6129,7 +6060,6 @@ var frontpage_engine = (function () {
     			$$invalidate(2, posts = posts.filter(p => p.id !== post.id));
     			dispatch("updated");
     		} catch(e) {
-    			console.error(e);
     		} finally {
     			$$invalidate(0, updating = false);
     		}
@@ -6144,7 +6074,6 @@ var frontpage_engine = (function () {
     			$$invalidate(2, posts = $unfeaturedPosts);
     			getAnalytics();
     		} catch(e) {
-    			console.error(e);
     		} finally {
     			$$invalidate(0, updating = false);
     		}
@@ -6224,10 +6153,10 @@ var frontpage_engine = (function () {
     	}
     }
 
-    /* src/components/Modal.svelte generated by Svelte v3.58.0 */
+    /* src/components/Modal.svelte generated by Svelte v3.52.0 */
 
     function add_css$1(target) {
-    	append_styles(target, "svelte-1lhgeur", ".modal-background.svelte-1lhgeur{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:10000}.modal.svelte-1lhgeur{position:fixed;left:50%;top:50%;width:calc(100vw - 4em);max-width:90%;max-height:calc(100vh - 6em);overflow:auto;transform:translate(-50%,-50%);border-radius:0.2em;background:white;z-index:10001}.frontpageengine-modal-title.svelte-1lhgeur{padding:1em}.frontpageengine-modal-footer.svelte-1lhgeur{margin-top:1em}");
+    	append_styles(target, "svelte-1tyvbx", ".modal-background.svelte-1tyvbx{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:10000}.modal.svelte-1tyvbx{position:fixed;display:block;left:50%;top:50%;width:calc(100vw - 4em);max-width:90%;max-height:calc(100vh - 6em);overflow:auto;transform:translate(-50%,-50%);border-radius:0.2em;background:white;z-index:10001}.frontpageengine-modal-title.svelte-1tyvbx{padding:1em}.frontpageengine-modal-footer.svelte-1tyvbx{margin-top:1em}");
     }
 
     const get_footer_slot_changes = dirty => ({});
@@ -6269,11 +6198,11 @@ var frontpage_engine = (function () {
     			t2 = space();
     			div3 = element("div");
     			if (footer_slot) footer_slot.c();
-    			attr(div0, "class", "modal-background svelte-1lhgeur");
-    			attr(div1, "class", "frontpageengine-modal-title svelte-1lhgeur");
+    			attr(div0, "class", "modal-background svelte-1tyvbx");
+    			attr(div1, "class", "frontpageengine-modal-title svelte-1tyvbx");
     			attr(div2, "class", "frontpageengine-modal-content");
-    			attr(div3, "class", "frontpageengine-modal-footer svelte-1lhgeur");
-    			attr(div4, "class", "modal svelte-1lhgeur");
+    			attr(div3, "class", "frontpageengine-modal-footer svelte-1tyvbx");
+    			attr(div4, "class", "modal svelte-1tyvbx");
     			attr(div4, "role", "dialog");
     			attr(div4, "aria-modal", "true");
     		},
@@ -6518,11 +6447,8 @@ var frontpage_engine = (function () {
         onMessage(encodedMessage) {
             // console.log({ data: message.data });
             const message = JSON.parse(encodedMessage.data);
-            console.log("Received message", message);
             Promise.all(this.callbacks.map(callback => {
-                console.log("Checking callback", callback.name, message.data);
                 if (callback.name === message.data) {
-                    console.log("Calling callback", callback.name);
                     return callback.callback(message);
                 }
             }));
@@ -6530,9 +6456,7 @@ var frontpage_engine = (function () {
 
         onClose(event) {
             // Reconnect
-            console.log("Reconnecting...");
             this.connect();
-            console.log(event);
         }
 
         sendMessage(message) {
@@ -6558,7 +6482,7 @@ var frontpage_engine = (function () {
         }
     }
 
-    /* src/components/Message.svelte generated by Svelte v3.58.0 */
+    /* src/components/Message.svelte generated by Svelte v3.52.0 */
 
     function create_fragment$1(ctx) {
     	let div;
@@ -6640,7 +6564,7 @@ var frontpage_engine = (function () {
     	}
     }
 
-    /* src/App.svelte generated by Svelte v3.58.0 */
+    /* src/App.svelte generated by Svelte v3.52.0 */
 
     function add_css(target) {
     	append_styles(target, "svelte-4dra5q", ".action-bar.svelte-4dra5q{display:flex;justify-content:left;flex-direction:row}.button.svelte-4dra5q{margin-right:10px}");
@@ -6745,7 +6669,7 @@ var frontpage_engine = (function () {
     			insert(target, select, anchor);
     			append(select, option0);
     			append(select, option1);
-    			select_option(select, /*group_action*/ ctx[4], true);
+    			select_option(select, /*group_action*/ ctx[4]);
 
     			if (!mounted) {
     				dispose = [
@@ -6831,7 +6755,7 @@ var frontpage_engine = (function () {
     		});
 
     	addposttable.$on("updated", /*updated*/ ctx[8]);
-    	addposttable.$on("close", console.log("Close!"));
+    	addposttable.$on("close", (void 0));
 
     	return {
     		c() {
@@ -6956,9 +6880,7 @@ var frontpage_engine = (function () {
     			insert(target, main, anchor);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
-    				if (each_blocks[i]) {
-    					each_blocks[i].m(main, null);
-    				}
+    				each_blocks[i].m(main, null);
     			}
 
     			append(main, t0);
@@ -7121,13 +7043,10 @@ var frontpage_engine = (function () {
     			socket = new FrontPageEngineSocketServer(frontpageengine_wssb_address, url, `frontpage-${frontpage_id}`, uid);
 
     			socket.on("frontpage_updated", async message => {
-    				console.log("Got message", uid, message.sender);
     				if (uid === message.sender) return;
     				await getPosts();
     			});
     		} catch(e) {
-    			console.error("Error connecting to websocket server");
-    			console.error(e);
     		}
 
     		await getPosts();
@@ -7140,15 +7059,12 @@ var frontpage_engine = (function () {
     		try {
     			socket.close();
     		} catch(e) {
-    			console.error("Error closing websocket connection");
-    			console.error(e);
     		}
     	});
 
     	const getPosts = async () => {
     		const wp_posts = await apiGet(`frontpageengine/v1/get_posts/${frontpage_id}?${""}`);
     		set_store_value(featuredPosts, $featuredPosts = wp_posts.posts.map(map_posts), $featuredPosts);
-    		console.log("featuredPosts", $featuredPosts);
     	};
 
     	const getAnalytics = async () => {
@@ -7157,7 +7073,6 @@ var frontpage_engine = (function () {
     		}
 
     		set_store_value(totalHits, $totalHits = $analytics.reduce((a, b) => a + b.hits_last_hour, 0), $totalHits);
-    		console.log("totalHits", $totalHits);
     	};
 
     	const updated = async () => {
@@ -7171,7 +7086,6 @@ var frontpage_engine = (function () {
     			const wp_posts = await apiGet(`frontpageengine/v1/autosort/${frontpage_id}?${mode === "development" ? "simulate_analytics=1" : ""}`);
     			set_store_value(featuredPosts, $featuredPosts = wp_posts.posts.map(map_posts), $featuredPosts);
     		} catch(error) {
-    			console.error(error);
 
     			messages.push({
     				type: "error",
@@ -7187,7 +7101,6 @@ var frontpage_engine = (function () {
     	let group_action;
 
     	const onGroupAction = async () => {
-    		console.log(group_action);
 
     		if (group_action === "remove") {
     			if (confirm("Are you sure you want to remove these posts?")) {
@@ -7195,11 +7108,8 @@ var frontpage_engine = (function () {
 
     				for (let post of posts) {
     					try {
-    						console.log(post);
     						set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${post.slot.frontpage_id}`, { post_id: post.id })).posts.map(map_posts), $featuredPosts);
     					} catch(e) {
-    						console.error(e);
-    						alert("Error removing post: " + e.message);
     					}
     				}
 
@@ -7233,8 +7143,6 @@ var frontpage_engine = (function () {
     				// $featuredPosts = applySlots($featuredPosts, $slots);
     				// $featuredPosts = applyAnalytics($featuredPosts, $analytics);
     				$$invalidate(3, show_group_actions = $featuredPosts.filter(post => post.checked).length > 0);
-
-    				console.log(messages);
     			}
     		}
     	};

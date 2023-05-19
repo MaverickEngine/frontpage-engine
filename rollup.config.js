@@ -105,11 +105,16 @@ if (test) {
 					'process.env.NODE_ENV': JSON.stringify('production'),
 					'process.env.VERSION': JSON.stringify(pkg.version),
 				}),
+				strip({
+					include: '**/*.(svelte|js|cjs|ts|mjs)',
+					debugger: true,
+					functions: ['console.*', 'assert.*', 'debug', 'alert'],
+				}),
 				typescript(),
 				commonjs(),
 				json(),
 				!production && serve(),
-				production && terser() && strip()
+				production && terser()
 			]
 		},
 	];
