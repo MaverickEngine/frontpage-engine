@@ -3,14 +3,19 @@
 	const dispatch = createEventDispatcher();
 
     export let value = "";
-    export let debounce = 500;
-    let timer;
+    let previous_value = "";
 
     const doSearch = () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            dispatch("search", value);
-        }, debounce);
+        if (value === previous_value) return;
+        dispatch("search", value);
+        previous_value = value;
+    }
+
+    const doClear = () => {
+        value = "";
+        if (previous_value == "") return;
+        previous_value = "";
+        dispatch("search", value);
     }
 </script>
 
@@ -18,5 +23,7 @@
     type="text" 
     placeholder="Search"
     bind:value={value}
-    on:keyup={doSearch}
+    on:keydown={e => e.key == "Enter" && doSearch()}
 />
+<button on:click={doSearch} on:keypress={e => e.key === "Enter" && doSearch}>Search</button>
+<button on:click={doClear} on:keypress={e => e.key === "Enter" && doClear}>Clear</button>

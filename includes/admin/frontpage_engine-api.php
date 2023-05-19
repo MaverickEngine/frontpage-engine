@@ -292,6 +292,9 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             $position = $request->get_param('position');
             $slots = $this->_get_slots($frontpage_id);
             $slot = null;
+            if (is_numeric($position)) {
+                $slot = $slots[$position - 1];
+            }
             if ($position === "top") {
                 $slot = $slots[0];
             }

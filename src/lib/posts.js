@@ -22,5 +22,6 @@ export const map_posts = (post) => {
         is_blank: !(post.id),
         sections: post.post_sections || [],
         edit_lock_until: false,
+        proposed_order: 1,
     }
 };

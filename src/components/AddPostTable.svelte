@@ -2,7 +2,7 @@
     const mode = process.env.NODE_ENV;
     import { featuredPosts, unfeaturedPosts, show_modal } from '../stores.js';
     import Search from "./Search.svelte";
-    import { fly, fade } from 'svelte/transition';
+    import { fly } from 'svelte/transition';
     import { onMount } from 'svelte';
     import PostRow from "./PostRow.svelte";
     import { apiGet, apiPost } from "../lib/ajax";
@@ -119,24 +119,16 @@
                     {analytics}
                     hovering={rowHovering === index}
                 />
-                <th>
+                <th class="insert-cell">
+                    <!-- Label -->
+                    <label for="insert-position">Position</label>
+                    <input class="input-position" name="insert-position" type="number" min="1" max="{ $featuredPosts.length }" bind:value="{post.proposed_order}" on:keypress={e => e.key === "Enter" && featurePost(post, post.proposed_order)} />
                     <button 
                         class="button"
-                        on:click="{featurePost(post, "top")}"
+                        on:click="{featurePost(post, post.proposed_order)}"
+                        on:keypress={e => e.key === "Enter" && featurePost(post, post.proposed_order)}
                     >
-                        Top
-                    </button>
-                    <button 
-                        class="button"
-                        on:click="{featurePost(post, "bottom")}"
-                    >
-                        Bottom
-                    </button>
-                    <button 
-                        class="button"
-                        on:click="{featurePost(post, "auto")}"
-                    >
-                        Auto
+                        Insert
                     </button>
                 </th>
             </tr>
@@ -179,5 +171,18 @@
 
     .button {
         margin-bottom: 5px;
+    }
+
+    .insert-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .input-position {
+        width: 50px;
+        margin: 5px 0px;
+        text-align: center;
     }
 </style>
