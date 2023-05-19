@@ -210,7 +210,7 @@
             <th scope="col" class="manage-column">Author</th>
             <th scope="col" class="manage-column">Published</th>
             <th scope="col" class="manage-column">Hits</th>
-            <th scope="col" class="manage-column width-150"></th>
+            <th scope="col" class="manage-column"></th>
         </tr>
     </thead>
     <tbody>
@@ -297,7 +297,7 @@
     }
 
     .column-header-title {
-        width: 500px;
+        width: 30%;
     }
 
     .dot-underline {
