@@ -355,13 +355,10 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             $params['s'] = $search;
             $params['orderby'] = 'publish_date';
             $params['order'] = 'DESC';
-            $params['tax_query'] = array(
-                'relation' => 'AND',
+            $params['meta_query'] = array(
                 array(
-                    'taxonomy' => 'flag',
-                    'field'    => 'slug',
-                    'terms'    => $frontpage->featured_code,
-                    'operator' => 'NOT IN',
+                 'key' => $frontpage->ordering_code,
+                 'compare' => 'NOT EXISTS'
                 ),
             );
             $posts = get_posts( $params );
