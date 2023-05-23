@@ -1,6 +1,18 @@
 <?php
 
 class FrontPageEngineLib {
+    public function getFrontPages() {
+        global $wpdb;
+        $frontpages = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages ORDER BY display_order ASC");
+        return $frontpages;
+    }
+
+    public function getPostSlots($post_id) {
+        global $wpdb;
+        $slots = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE post_id = %d", $post_id));
+        return $slots;
+    }
+
     public function _get_frontpage(int $frontpage_id) {
         global $wpdb;
         $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE id = %d", $frontpage_id));

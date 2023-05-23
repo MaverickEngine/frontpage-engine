@@ -8,6 +8,7 @@ class FrontpageEngineAdminSettings {
         "frontpageengine_revengine_address",
         "frontpageengine_wssb_ws_address",
         "frontpageengine_wssb_web_address",
+        "frontpageengine_roles",
     ];
 
     public function __construct() {

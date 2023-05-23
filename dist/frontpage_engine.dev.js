@@ -5555,9 +5555,9 @@ var frontpage_engine = (function () {
 
     function get_each_context$1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[23] = list[i];
-    	child_ctx[24] = list;
-    	child_ctx[25] = i;
+    	child_ctx[24] = list[i];
+    	child_ctx[25] = list;
+    	child_ctx[26] = i;
     	return child_ctx;
     }
 
@@ -5626,32 +5626,36 @@ var frontpage_engine = (function () {
 
     	postrow = new PostRow({
     			props: {
-    				post: /*post*/ ctx[23],
-    				index: /*index*/ ctx[25],
+    				post: /*post*/ ctx[24],
+    				index: /*index*/ ctx[26],
     				total_hits: /*total_hits*/ ctx[1],
     				analytics: /*analytics*/ ctx[3],
-    				hovering: /*rowHovering*/ ctx[5] === /*index*/ ctx[25]
+    				hovering: /*rowHovering*/ ctx[5] === /*index*/ ctx[26]
     			}
     		});
 
     	function input1_input_handler() {
-    		/*input1_input_handler*/ ctx[13].call(input1, /*each_value*/ ctx[24], /*index*/ ctx[25]);
+    		/*input1_input_handler*/ ctx[13].call(input1, /*each_value*/ ctx[25], /*index*/ ctx[26]);
     	}
 
     	function keypress_handler(...args) {
-    		return /*keypress_handler*/ ctx[14](/*post*/ ctx[23], ...args);
+    		return /*keypress_handler*/ ctx[14](/*post*/ ctx[24], ...args);
+    	}
+
+    	function click_handler() {
+    		return /*click_handler*/ ctx[15](/*post*/ ctx[24]);
     	}
 
     	function keypress_handler_1(...args) {
-    		return /*keypress_handler_1*/ ctx[15](/*post*/ ctx[23], ...args);
+    		return /*keypress_handler_1*/ ctx[16](/*post*/ ctx[24], ...args);
     	}
 
     	function mouseover_handler() {
-    		return /*mouseover_handler*/ ctx[16](/*index*/ ctx[25]);
+    		return /*mouseover_handler*/ ctx[17](/*index*/ ctx[26]);
     	}
 
     	function focus_handler() {
-    		return /*focus_handler*/ ctx[17](/*index*/ ctx[25]);
+    		return /*focus_handler*/ ctx[18](/*index*/ ctx[26]);
     	}
 
     	return {
@@ -5686,7 +5690,7 @@ var frontpage_engine = (function () {
     			attr(input1, "max", input1_max_value = /*$featuredPosts*/ ctx[6].length);
     			attr(button, "class", "button svelte-ue8gsb");
     			attr(th1, "class", "insert-cell svelte-ue8gsb");
-    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[23].id);
+    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[24].id);
     			this.first = tr;
     		},
     		m(target, anchor) {
@@ -5699,7 +5703,7 @@ var frontpage_engine = (function () {
     			append(th1, label1);
     			append(th1, t5);
     			append(th1, input1);
-    			set_input_value(input1, /*post*/ ctx[23].proposed_order);
+    			set_input_value(input1, /*post*/ ctx[24].proposed_order);
     			append(th1, t6);
     			append(th1, button);
     			append(tr, t8);
@@ -5709,9 +5713,7 @@ var frontpage_engine = (function () {
     				dispose = [
     					listen(input1, "input", input1_input_handler),
     					listen(input1, "keypress", keypress_handler),
-    					listen(button, "click", function () {
-    						if (is_function(/*featurePost*/ ctx[9](/*post*/ ctx[23], /*post*/ ctx[23].proposed_order))) /*featurePost*/ ctx[9](/*post*/ ctx[23], /*post*/ ctx[23].proposed_order).apply(this, arguments);
-    					}),
+    					listen(button, "click", click_handler),
     					listen(button, "keypress", keypress_handler_1),
     					listen(tr, "mouseover", mouseover_handler),
     					listen(tr, "focus", focus_handler)
@@ -5723,22 +5725,22 @@ var frontpage_engine = (function () {
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
     			const postrow_changes = {};
-    			if (dirty & /*posts*/ 4) postrow_changes.post = /*post*/ ctx[23];
-    			if (dirty & /*posts*/ 4) postrow_changes.index = /*index*/ ctx[25];
+    			if (dirty & /*posts*/ 4) postrow_changes.post = /*post*/ ctx[24];
+    			if (dirty & /*posts*/ 4) postrow_changes.index = /*index*/ ctx[26];
     			if (dirty & /*total_hits*/ 2) postrow_changes.total_hits = /*total_hits*/ ctx[1];
     			if (dirty & /*analytics*/ 8) postrow_changes.analytics = /*analytics*/ ctx[3];
-    			if (dirty & /*rowHovering, posts*/ 36) postrow_changes.hovering = /*rowHovering*/ ctx[5] === /*index*/ ctx[25];
+    			if (dirty & /*rowHovering, posts*/ 36) postrow_changes.hovering = /*rowHovering*/ ctx[5] === /*index*/ ctx[26];
     			postrow.$set(postrow_changes);
 
     			if (!current || dirty & /*$featuredPosts*/ 64 && input1_max_value !== (input1_max_value = /*$featuredPosts*/ ctx[6].length)) {
     				attr(input1, "max", input1_max_value);
     			}
 
-    			if (dirty & /*posts*/ 4 && to_number(input1.value) !== /*post*/ ctx[23].proposed_order) {
-    				set_input_value(input1, /*post*/ ctx[23].proposed_order);
+    			if (dirty & /*posts*/ 4 && to_number(input1.value) !== /*post*/ ctx[24].proposed_order) {
+    				set_input_value(input1, /*post*/ ctx[24].proposed_order);
     			}
 
-    			if (!current || dirty & /*posts*/ 4 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[23].id)) {
+    			if (!current || dirty & /*posts*/ 4 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[24].id)) {
     				attr(tr, "id", tr_id_value);
     			}
     		},
@@ -5820,7 +5822,7 @@ var frontpage_engine = (function () {
     	search_1.$on("search", /*getPosts*/ ctx[10]);
     	let if_block = /*mode*/ ctx[7] === "development" && create_if_block$1();
     	let each_value = /*posts*/ ctx[2];
-    	const get_key = ctx => /*post*/ ctx[23].id;
+    	const get_key = ctx => /*post*/ ctx[24].id;
 
     	for (let i = 0; i < each_value.length; i += 1) {
     		let child_ctx = get_each_context$1(ctx, each_value, i);
@@ -6003,9 +6005,9 @@ var frontpage_engine = (function () {
     	let $unfeaturedPosts;
     	let $featuredPosts;
     	let $show_modal;
-    	component_subscribe($$self, unfeaturedPosts, $$value => $$invalidate(18, $unfeaturedPosts = $$value));
+    	component_subscribe($$self, unfeaturedPosts, $$value => $$invalidate(19, $unfeaturedPosts = $$value));
     	component_subscribe($$self, featuredPosts, $$value => $$invalidate(6, $featuredPosts = $$value));
-    	component_subscribe($$self, show_modal, $$value => $$invalidate(19, $show_modal = $$value));
+    	component_subscribe($$self, show_modal, $$value => $$invalidate(20, $show_modal = $$value));
 
     	var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
     		function adopt(value) {
@@ -6108,6 +6110,7 @@ var frontpage_engine = (function () {
     	}
 
     	const keypress_handler = (post, e) => e.key === "Enter" && featurePost(post, post.proposed_order);
+    	const click_handler = post => featurePost(post, post.proposed_order);
     	const keypress_handler_1 = (post, e) => e.key === "Enter" && featurePost(post, post.proposed_order);
     	const mouseover_handler = index => $$invalidate(5, rowHovering = index);
     	const focus_handler = index => $$invalidate(5, rowHovering = index);
@@ -6134,6 +6137,7 @@ var frontpage_engine = (function () {
     		search_1_value_binding,
     		input1_input_handler,
     		keypress_handler,
+    		click_handler,
     		keypress_handler_1,
     		mouseover_handler,
     		focus_handler

@@ -290,6 +290,7 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             $frontpage = $this->_get_frontpage($frontpage_id);
             $post_id = intval($request->get_param('post_id'));
             $position = $request->get_param('position');
+            // print_r("Position: " . $position . "Post ID: " . $post_id . "Frontpage ID: " . $frontpage_id . "\n");
             $slots = $this->_get_slots($frontpage_id);
             $slot = null;
             if (is_numeric($position)) {

@@ -27,6 +27,28 @@
                 <p class="description"><?php _e( 'Enable development mode to use mock analytics and show debugging info.', 'frontpageengine' ); ?></p>
             </td>
         </tr>
+        <tr valign="top">
+        <th scope="row"><?php _e( 'Roles with front page access', 'frontpageengine' ); ?></th>
+            <td>
+                <?php
+                $roles = get_editable_roles();
+                foreach($roles as $the_role => $details) {
+                    $checked = "";
+                    $approved_roles = get_option('frontpageengine_roles', []);
+                    if (!is_array($approved_roles)) {
+                        $approved_roles = [];
+                    }
+                    if (in_array($the_role, $approved_roles)) {
+                        $checked = "checked";
+                    }
+                    ?>
+                    <input type="checkbox" name="frontpageengine_roles[]" value="<?php esc_attr_e($the_role); ?>" <?php esc_attr_e($checked); ?> /> <?php esc_html_e($details['name']); ?><br>
+                    <?php
+                }
+                ?>
+                <p class="description"><?php _e( 'Select the roles that should have access to the front page.', 'frontpageengine' ); ?></p>
+            </td>
+        </tr>
         <tr>
             <th scope="row"></th>
             <td>

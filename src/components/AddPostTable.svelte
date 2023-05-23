@@ -125,7 +125,7 @@
                     <input class="input-position" name="insert-position" type="number" min="1" max="{ $featuredPosts.length }" bind:value="{post.proposed_order}" on:keypress={e => e.key === "Enter" && featurePost(post, post.proposed_order)} />
                     <button 
                         class="button"
-                        on:click="{featurePost(post, post.proposed_order)}"
+                        on:click="{() => featurePost(post, post.proposed_order)}"
                         on:keypress={e => e.key === "Enter" && featurePost(post, post.proposed_order)}
                     >
                         Insert
