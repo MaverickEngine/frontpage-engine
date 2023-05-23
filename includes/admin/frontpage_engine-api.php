@@ -352,7 +352,6 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             );
             $params['numberposts'] = $per_page;
             $params['offset'] = ($page - 1) * $per_page;
-            $params['s'] = $search;
             $params['orderby'] = 'publish_date';
             $params['order'] = 'DESC';
             $params['meta_query'] = array(
@@ -361,6 +360,12 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
                  'compare' => 'NOT EXISTS'
                 ),
             );
+            $params['date_query'] = array(
+                'after' => gmdate('Y-m-d', strtotime('-1 year')) 
+            );
+            if ($search) {
+                $params['s'] = $search;
+            }
             $posts = get_posts( $params );
             return array("posts" => array_map([$this, "_map_wp_post"], $posts));
         } catch (Exception $e) {
