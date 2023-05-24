@@ -325,7 +325,7 @@ class FrontpageEngineAdmin {
             $frontpages = $this->_getFrontPageWithPos($post->ID);
             foreach($frontpages as $frontpage) {
                 $pos = get_post_meta($post->ID, "frontpage_engine_queued_position_{$frontpage->id}", true);
-                if ($pos === "" || $pos === -1) {
+                if ($pos === "" || $pos + 0 === -1) {
                     continue;
                 }
                 $data = [ 

@@ -305,6 +305,9 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
             if ($position === "auto") {
                 $slot = $this->_auto_slot($frontpage_id, $post_id, ($request->get_param("simulate_analytics") !== null));
             }
+            if (!$slot) {
+                throw new Exception("Invalid position");
+            }
             $this->_insert_post($frontpage_id, $post_id, $slot->id);
             $this->_ws_callback($frontpage_id, $request->get_header("x-wssb-uid"));
             return $this->get_posts($request);
