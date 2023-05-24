@@ -7,6 +7,7 @@ class FrontpageEngineAdmin {
 
     public function __construct() {
         add_action('admin_head', [$this, 'hideLegacyMenu']);
+        add_action( 'transition_post_status', [$this, 'positionOnPublish'], 10, 3 );
         if (!$this->_check_permissions()) {
             return;
         }
@@ -172,10 +173,7 @@ class FrontpageEngineAdmin {
 
     public function renderMetaBox($post) {
         // Check if the post is published
-        if ($post->post_status !== "publish") {
-            print "Post must be published to be added to a front page";
-            return;
-        }
+        $is_published = $post->post_status === "publish";
         $frontpages = $this->_getFrontPageWithPos($post->ID);
 		wp_nonce_field( 'frontpage-engine-metabox', 'frontpage-engine-metabox_nonce' );
         require(plugin_dir_path( dirname( __FILE__ ) ).'admin/views/metabox.php');
@@ -198,7 +196,7 @@ class FrontpageEngineAdmin {
             // Check if the post is published
             $post = get_post($post_id);
             if ($post->post_status !== "publish") {
-                return $post_id;
+                return $this->_queueFrontPagesOnPublish($post_id);
             }
             $frontpages = $this->_getFrontPageWithPos($post_id);
             $to_change = [];
@@ -259,10 +257,39 @@ class FrontpageEngineAdmin {
         }
 	}
 
+    private function _queueFrontPagesOnPublish($post_id) {
+        if ( ! isset( $_POST['frontpage-engine-metabox_nonce'] ) ) {
+            return $post_id;
+        }
+        if ( ! wp_verify_nonce( $_POST['frontpage-engine-metabox_nonce'], 'frontpage-engine-metabox' ) ) {
+            return $post_id;
+        }
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return $post_id;
+        }
+        if ( !current_user_can( 'edit_others_posts' )) {
+            return $post_id;
+        }
+        $frontpages = $this->_getFrontPageWithPos($post_id);
+        // print_r($frontpages);
+        // die();
+        foreach($frontpages as $frontpage) {
+            if (!isset($_POST["frontpage_engine_position_{$frontpage->id}"])) {
+                continue;
+            }
+            $pos = intval($_POST["frontpage_engine_position_{$frontpage->id}"]);
+            if ($pos !== $frontpage->position) {
+                update_post_meta($post_id, "frontpage_engine_queued_position_{$frontpage->id}", $pos);
+            }
+        }
+        $frontpagelib = new FrontPageEngineLib();
+    }
+
     private function _getFrontPageWithPos($post_id) {
         $frontpagelib = new FrontPageEngineLib();
         $frontpages = $frontpagelib->getFrontPages();
         $post_type = get_post_type($post_id);
+        $is_published = get_post_status($post_id) === "publish";
         foreach ($frontpages as $key => $frontpage) {
             $post_types = explode(",", $frontpage->post_types);
             if (!in_array($post_type, $post_types)) {
@@ -272,14 +299,49 @@ class FrontpageEngineAdmin {
         $slots = $frontpagelib->getPostSlots($post_id);
         // Add the position to the front pages
         foreach($frontpages as $frontpage) {
-            $slot = array_search($frontpage->id, array_column($slots, 'frontpage_id'));
-            if ($slot === false) {
-                $pos = -1;
+            if (!$is_published) {
+                $pos = get_post_meta($post_id, "frontpage_engine_queued_position_{$frontpage->id}", true);
+                if ($pos === "") {
+                    $pos = -1;
+                }
             } else {
-                $pos = $slots[$slot]->display_order;
+                $slot = array_search($frontpage->id, array_column($slots, 'frontpage_id'));
+                if ($slot === false) {
+                    $pos = -1;
+                } else {
+                    $pos = $slots[$slot]->display_order;
+                }
             }
             $frontpage->position = $pos + 0;
         }
         return $frontpages;
+    }
+
+    public function positionOnPublish($new_status, $old_status, $post) {
+        if ($new_status !== 'publish' || $old_status === 'publish') {
+            return;
+        }
+        try {
+            $frontpages = $this->_getFrontPageWithPos($post->ID);
+            foreach($frontpages as $frontpage) {
+                $pos = get_post_meta($post->ID, "frontpage_engine_queued_position_{$frontpage->id}", true);
+                if ($pos === "" || $pos === -1) {
+                    continue;
+                }
+                $data = [ 
+                    'post_id' => $post->ID + 0,
+                    'position' => $pos + 1,
+                ];
+                $request = new WP_REST_Request( 'POST', "/frontpageengine/v1/add_post/{$frontpage->id}" );
+                $request->set_body_params( $data );
+                rest_do_request( $request );
+                // Unset old meta
+                delete_post_meta($post->ID, "frontpage_engine_queued_position_{$frontpage->id}");
+            }
+        } catch (Exception $e) {
+            // Log the error but keep going
+            // phpcs:ignore
+            error_log("Error saving meta box: ".$e->getMessage());
+        }
     }
 }

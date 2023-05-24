@@ -11,7 +11,7 @@ foreach($frontpages as $frontpage) {
     <td>
         <select name="frontpage_engine_position_<?php esc_attr_e($frontpage->id) ?>">
             <?php
-            if ($frontpage->position === -1) {
+            if ($frontpage->position === -1 || !$is_published) {
             ?>
             <option value="-1" selected="selected">None</option>
             <?php
