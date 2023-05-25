@@ -1,8 +1,31 @@
+<?php
+if (!$is_published) {
+?>
+
+    <p>Please publish to enable Frontpage Engine. We will allow for front page selection for scheduled posts in a future release.</p>
+    
+<?php
+return;
+}
+?>
 <table>
     <tr>
         <th>Frontpage</th>
         <th>Position</th>
     </tr>
+<?php
+if (!$is_published) {
+?>
+<tr>
+    <td>
+        Please publish this page to enable the Frontpage Engine. We will allow for scheduling in a future release.
+    </td>
+</tr>
+</table>
+<?php
+return;
+}
+?>
 <?php
 foreach($frontpages as $frontpage) {
 ?>
