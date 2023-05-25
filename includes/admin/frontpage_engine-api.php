@@ -288,7 +288,13 @@ class FrontPageEngineAPI extends FrontPageEngineLib {
         try {
             $frontpage_id = intval($request->get_param('frontpage_id'));
             $frontpage = $this->_get_frontpage($frontpage_id);
+            if (!$frontpage) {
+                throw new Exception("Frontpage not found");
+            }
             $post_id = intval($request->get_param('post_id'));
+            if (!$post_id) {
+                throw new Exception("Post ID not found");
+            }
             $position = $request->get_param('position');
             // print_r("Position: " . $position . "Post ID: " . $post_id . "Frontpage ID: " . $frontpage_id . "\n");
             $slots = $this->_get_slots($frontpage_id);

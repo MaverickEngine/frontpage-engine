@@ -153,6 +153,7 @@ class FrontPageEngineLib {
         foreach($posts as $post) {
             update_post_meta($post->post_id, $frontpage->ordering_code, $post->display_order);
             update_post_meta($post->post_id, $frontpage->featured_code, '1');
+            $this->_set_featured_flag($post->post_id, $frontpage->featured_code);
         }
     }
 
@@ -174,7 +175,7 @@ class FrontPageEngineLib {
             throw new Exception($wpdb->last_error);
         }
         foreach ( $post_ids as $post_id ) {
-            wp_set_object_terms( $post_id, $frontpage->featured_code, 'flag' );
+            $this->_set_featured_flag( $post_id, $frontpage->featured_code);
         }
         update_postmeta_cache( $post_ids );
     }
@@ -185,10 +186,16 @@ class FrontPageEngineLib {
         }
         $frontpage = $this->_get_frontpage($frontpage_id);
         foreach($posts as $post) {
-            add_post_meta($post->post_id, $frontpage->ordering_code, $post->display_order);
-            add_post_meta($post->post_id, $frontpage->featured_code, '1');
-            wp_set_object_terms( $post->post_id, $frontpage->featured_code, 'flag' );
+            update_post_meta($post->post_id, $frontpage->ordering_code, $post->display_order);
+            update_post_meta($post->post_id, $frontpage->featured_code, '1');
+            $this->_set_featured_flag($post->post_id, $frontpage->featured_code);
         }
+    }
+
+    protected function _set_featured_flag($post_id, $featured_code) {
+        $current_flags = wp_get_object_terms( $post_id, 'flag', array('fields' => 'slugs') );
+        $current_flags[] = $featured_code;
+        wp_set_object_terms( $post_id, $current_flags, 'flag' );
     }
 
     protected function _resolve_featured_posts(array $current_state, array $desired_state) {
