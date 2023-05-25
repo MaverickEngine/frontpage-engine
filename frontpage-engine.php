@@ -5,7 +5,7 @@
  * Description: A Maverick Engine plugin that brings order to your Wordpress front page.
  * Author: Daily Maverick, Jason Norwood-Young, Realm Digital
  * Author URI: https://dailymaverick.co.za
- * Version: 0.0.48
+ * Version: 0.0.51
  * License: GPLv3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  * WC requires at least: 5.8.0
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const FRONTPAGEENGINE_VERSION = '0.0.48';
+const FRONTPAGEENGINE_VERSION = '0.0.51';
 $frontpageengine_menu_slug = "frontpage-engine-menu";
 
 require_once(plugin_dir_path( __FILE__ ).'includes/admin/tables/frontpage_engine-frontpages_table.php');
@@ -32,6 +32,12 @@ function frontpage_engine_admin_init() {
     new FrontpageEngineAdmin([]);
 }
 add_action( 'init', 'frontpage_engine_admin_init' );
+
+function frontpage_engine_async_init() {
+    require_once(plugin_dir_path( __FILE__ ) . 'includes/admin/frontpage_engine-async.php' );
+    new FrontpageEngineAsync();
+}
+add_action( 'init', 'frontpage_engine_async_init' );
 
 // Settings
 function frontpage_engine_settings_init() {

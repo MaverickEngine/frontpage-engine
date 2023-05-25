@@ -81,7 +81,8 @@ class FrontPageEngineLib {
             throw new Exception($wpdb->last_error);
         }
         foreach ( $posts as $post ) {
-            wp_remove_object_terms( $post->ID, $frontpage->featured_code, 'flag' );
+            // wp_remove_object_terms( $post->ID, $frontpage->featured_code, 'flag' );
+            $this->_remove_featured_flag($post->ID, $frontpage->featured_code);
         }
         update_meta_cache( 'article', wp_list_pluck( $posts, 'post_id' ) );
         update_postmeta_cache( wp_list_pluck( $posts, 'ID' ) );
@@ -108,7 +109,8 @@ class FrontPageEngineLib {
             throw new Exception($wpdb->last_error);
         }
         foreach ( $post_ids as $post_id ) {
-            wp_remove_object_terms( $post_id, $frontpage->featured_code, 'flag' );
+            // wp_remove_object_terms( $post_id, $frontpage->featured_code, 'flag' );
+            $this->_remove_featured_flag($post_id, $frontpage->featured_code);
         }
         update_postmeta_cache( $post_ids );
     }
@@ -120,7 +122,8 @@ class FrontPageEngineLib {
         $frontpage = $this->_get_frontpage($frontpage_id);
         $post_ids = array_map(function($post) { return $post->post_id; }, $posts);
         foreach( $post_ids as $post_id ) {
-            wp_remove_object_terms( $post_id, $frontpage->featured_code, 'flag' );
+            // wp_remove_object_terms( $post_id, $frontpage->featured_code, 'flag' );
+            $this->_remove_featured_flag($post_id, $frontpage->featured_code);
             delete_post_meta( $post_id, $frontpage->ordering_code );
             delete_post_meta( $post_id, $frontpage->featured_code );
         }
@@ -195,6 +198,12 @@ class FrontPageEngineLib {
     protected function _set_featured_flag($post_id, $featured_code) {
         $current_flags = wp_get_object_terms( $post_id, 'flag', array('fields' => 'slugs') );
         $current_flags[] = $featured_code;
+        wp_set_object_terms( $post_id, $current_flags, 'flag' );
+    }
+
+    protected function _remove_featured_flag($post_id, $featured_code) {
+        $current_flags = wp_get_object_terms( $post_id, 'flag', array('fields' => 'slugs') );
+        $current_flags = array_diff($current_flags, array($featured_code));
         wp_set_object_terms( $post_id, $current_flags, 'flag' );
     }
 
