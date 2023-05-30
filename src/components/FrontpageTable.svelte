@@ -35,80 +35,64 @@
 
     const doLock = async (post, date) => {
         updating = true;
-        let lock_until = new Date().getTime() + 1000 * 60 * 60 * 24;
-        if (date) {
-            lock_until = new Date(date).getTime();
+        try {
+            let lock_until = new Date().getTime() + 1000 * 60 * 60 * 24;
+            if (date) {
+                lock_until = new Date(date).getTime();
+            }
+            $featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
+                lock_until: formatTimeSql(new Date(lock_until)),
+                post_id: post.slot.post_id,
+            })).posts.map(map_posts);
+            dispatch("updated");
+        } catch (e) {
+            console.error(e);
+            alert("Error locking post: " + e.message);
+        } finally {
+            updating = false;
         }
-        $featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
-            lock_until: formatTimeSql(new Date(lock_until)),
-            post_id: post.slot.post_id,
-        })).posts.map(map_posts);
-        dispatch("updated");
-        updating = false;
     }
 
     const doManual = async(slot) => {
         updating = true;
-        $featuredPosts = (await apiGet(`frontpageengine/v1/slot/manual/${$frontpageId}/${slot.id}`)).posts.map(map_posts);
-        dispatch("updated");
-        updating = false;
+        try {
+            $featuredPosts = (await apiGet(`frontpageengine/v1/slot/manual/${$frontpageId}/${slot.id}`)).posts.map(map_posts);
+            dispatch("updated");
+        } catch (e) {
+            console.error(e);
+            alert("Error updating slot: " + e.message);
+        } finally {
+            updating = false;
+        }
     }
 
     const doAuto = async(slot) => {
         updating = true;
-        $featuredPosts = (await apiGet(`frontpageengine/v1/slot/auto/${$frontpageId}/${slot.id}`)).posts.map(map_posts);
-        dispatch("updated");
-        updating = false;
-    }
-
-    const chooseTime = (post) => {
-        // post.edit_lock_until = true;
-        // const date = prompt("Enter a date and time to lock the post until (YYYY-MM-DD HH:MM)", formatTime(new Date(post.slot.lock_until)));
-        // if (date) {
-        //     // Check date is valid
-        //     if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(date)) {
-        //         alert("Invalid date format");
-        //         return;
-        //     }
-        //     // Check date is in the future
-        //     if (new Date(date).getTime() < new Date().getTime()) {
-        //         alert("Date must be in the future");
-        //         return;
-        //     }
-            // doLock(post, date);
-        // }
-    }
-
-    const updateTime = (post) => {
-        if (post.locked_until) {
-            post.slot.lock_until = post.locked_until;
+        try {
+            $featuredPosts = (await apiGet(`frontpageengine/v1/slot/auto/${$frontpageId}/${slot.id}`)).posts.map(map_posts);
+            dispatch("updated");
+        } catch (e) {
+            console.error(e);
+            alert("Error updating slot: " + e.message);
+        } finally {
+            updating = false;
         }
     }
 
     const doUnlock = async (post) => {
         updating = true;
-        $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
-            post_id: post.slot.post_id,
-        })).posts.map(map_posts);
-        updating = false;
-        dispatch("updated");
+        try {
+            $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
+                post_id: post.slot.post_id,
+            })).posts.map(map_posts);
+            dispatch("updated");
+        } catch (e) {
+            console.error(e);
+            alert("Error unlocking post: " + e.message);
+        } finally {
+            updating = false;
+        }
     }
-
-    // const doRemove = async (post) => {
-    //     if (confirm("Are you sure you want to remove this post from the frontpage?")) {
-    //         updating = true;
-    //         try {
-    //             $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
-    //                 post_id: post.id,
-    //             })).posts.map(map_posts);
-    //             dispatch("updated");
-    //         } catch (e) {
-    //             console.error(e);
-    //             alert("Error removing post: " + e.message);
-    //         }
-    //         updating = false;
-    //     }
-    // }
 
     const checkAll = (e) => {
         if (e.target.checked) {

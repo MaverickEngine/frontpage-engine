@@ -1,19 +1,19 @@
 <?php
 
 class FrontPageEngineLib {
-    public function getFrontPages() {
+    public function get_front_pages() {
         global $wpdb;
         $frontpages = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages ORDER BY display_order ASC");
         return $frontpages;
     }
 
-    public function getPostSlots($post_id) {
+    public function get_post_slots($post_id) {
         global $wpdb;
         $slots = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE post_id = %d", $post_id));
         return $slots;
     }
 
-    public function _get_frontpage(int $frontpage_id) {
+    public function get_frontpage(int $frontpage_id) {
         global $wpdb;
         $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE id = %d", $frontpage_id));
         return $frontpage;
@@ -70,7 +70,7 @@ class FrontPageEngineLib {
     }
 
     protected function _clear_featured_posts(int $frontpage_id) {
-        $frontpage = $this->_get_frontpage($frontpage_id);
+        $frontpage = $this->get_frontpage($frontpage_id);
         $posts = $this->_get_featured_posts($frontpage_id);
         global $wpdb;
         $del = array($frontpage->ordering_code, $frontpage->featured_code);  
@@ -81,7 +81,6 @@ class FrontPageEngineLib {
             throw new Exception($wpdb->last_error);
         }
         foreach ( $posts as $post ) {
-            // wp_remove_object_terms( $post->ID, $frontpage->featured_code, 'flag' );
             $this->_remove_featured_flag($post->ID, $frontpage->featured_code);
         }
         update_meta_cache( 'article', wp_list_pluck( $posts, 'post_id' ) );
@@ -92,7 +91,7 @@ class FrontPageEngineLib {
         if (empty($posts)) {
             return;
         }
-        $frontpage = $this->_get_frontpage($frontpage_id);
+        $frontpage = $this->get_frontpage($frontpage_id);
         $post_ids = array_map(function($post) { return $post->post_id; }, $posts);
         global $wpdb;
         $del = array($frontpage->ordering_code, $frontpage->featured_code);
@@ -109,7 +108,6 @@ class FrontPageEngineLib {
             throw new Exception($wpdb->last_error);
         }
         foreach ( $post_ids as $post_id ) {
-            // wp_remove_object_terms( $post_id, $frontpage->featured_code, 'flag' );
             $this->_remove_featured_flag($post_id, $frontpage->featured_code);
         }
         update_postmeta_cache( $post_ids );
@@ -119,10 +117,9 @@ class FrontPageEngineLib {
         if (empty($posts)) {
             return;
         }
-        $frontpage = $this->_get_frontpage($frontpage_id);
+        $frontpage = $this->get_frontpage($frontpage_id);
         $post_ids = array_map(function($post) { return $post->post_id; }, $posts);
         foreach( $post_ids as $post_id ) {
-            // wp_remove_object_terms( $post_id, $frontpage->featured_code, 'flag' );
             $this->_remove_featured_flag($post_id, $frontpage->featured_code);
             delete_post_meta( $post_id, $frontpage->ordering_code );
             delete_post_meta( $post_id, $frontpage->featured_code );
@@ -133,7 +130,7 @@ class FrontPageEngineLib {
         if (empty($posts)) {
             return;
         }
-        $frontpage = $this->_get_frontpage($frontpage_id);
+        $frontpage = $this->get_frontpage($frontpage_id);
         global $wpdb;
         $cases = array();
         foreach ($posts as $post) {
@@ -152,7 +149,7 @@ class FrontPageEngineLib {
         if (empty($posts)) {
             return;
         }
-        $frontpage = $this->_get_frontpage($frontpage_id);
+        $frontpage = $this->get_frontpage($frontpage_id);
         foreach($posts as $post) {
             update_post_meta($post->post_id, $frontpage->ordering_code, $post->display_order);
             update_post_meta($post->post_id, $frontpage->featured_code, '1');
@@ -164,7 +161,7 @@ class FrontPageEngineLib {
         if (empty($posts)) {
             return;
         }
-        $frontpage = $this->_get_frontpage($frontpage_id);
+        $frontpage = $this->get_frontpage($frontpage_id);
         $post_ids = array_map(function($post) { return $post->post_id; }, $posts);
         global $wpdb;
         $ins = array();
@@ -187,7 +184,7 @@ class FrontPageEngineLib {
         if (empty($posts)) {
             return;
         }
-        $frontpage = $this->_get_frontpage($frontpage_id);
+        $frontpage = $this->get_frontpage($frontpage_id);
         foreach($posts as $post) {
             update_post_meta($post->post_id, $frontpage->ordering_code, $post->display_order);
             update_post_meta($post->post_id, $frontpage->featured_code, '1');
@@ -233,7 +230,7 @@ class FrontPageEngineLib {
     }
 
     protected function _set_featured_posts(int $frontpage_id) {
-        $frontpage = $this->_get_frontpage($frontpage_id);
+        $frontpage = $this->get_frontpage($frontpage_id);
         $slots = $this->_get_slots($frontpage_id);
         global $wpdb;
         $current_posts = $wpdb->get_results($wpdb->prepare("SELECT post_id, meta_value AS display_order FROM {$wpdb->postmeta} WHERE meta_key = %s", $frontpage->ordering_code));
@@ -255,7 +252,7 @@ class FrontPageEngineLib {
 
     public function _get_featured_posts(int $frontpage_id) {
         global $wpdb;
-        $frontpage = $this->_get_frontpage($frontpage_id);
+        $frontpage = $this->get_frontpage($frontpage_id);
         $slot_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}frontpage_engine_frontpage_slots WHERE frontpage_id = %d", $frontpage->id));
         $params = array(
 			'post_type'   => explode(",", $frontpage->post_types),
@@ -276,7 +273,7 @@ class FrontPageEngineLib {
         return get_posts( $params );
     }
 
-    public function _set_slot_post($slot_id, $post_id) {
+    public function set_slot_post($slot_id, $post_id) {
         global $wpdb;
         $wpdb->update(
             $wpdb->prefix . 'frontpage_engine_frontpage_slots',
@@ -367,7 +364,7 @@ class FrontPageEngineLib {
         return "WHEN id = {$slot_id} THEN {$post_id}";
     }
 
-    protected function _insert_post(int $frontpage_id, int $post_id, int $slot_id) {
+    public function insert_post(int $frontpage_id, int $post_id, int $slot_id) {
         // Inserts a post at slot_id, and moves all other posts down, while maintaining the order of locked post slots
         global $wpdb;
         $post_id = intval($post_id);
@@ -420,7 +417,7 @@ class FrontPageEngineLib {
         }
     }
 
-    protected function _remove_post(int $frontpage_id, int $post_id) {
+    public function remove_post(int $frontpage_id, int $post_id) {
         global $wpdb;
         $post_id = intval($post_id);
         $slots = $this->_get_slots($frontpage_id);
@@ -468,7 +465,7 @@ class FrontPageEngineLib {
         return $hash;
     }
 
-    public function _frontpage_analytics($frontpage_id, $simulate = false) {
+    public function frontpage_analytics($frontpage_id, $simulate = false) {
         $slots = $this->_get_slots($frontpage_id);
         $post_ids = array_filter(array_map(function($slot) {
             return $slot->post_id;
@@ -476,12 +473,12 @@ class FrontPageEngineLib {
             return $post_id;
         });
         if ($simulate) {
-            return $this->_simulate_analytics($post_ids);
+            return $this->simulate_analytics($post_ids);
         }
-        return $this->_analytics($post_ids);
+        return $this->analytics($post_ids);
     }
 
-    public function _analytics(Array $post_ids) {
+    public function analytics(Array $post_ids) {
         if (!get_option("revengine_content_promoter_api_url")) {
             foreach ($post_ids as $post_id) {
                 $analytics[intval($post_id)] = array(
@@ -509,7 +506,7 @@ class FrontPageEngineLib {
         return $analytics;
     }
 
-    public function _simulate_analytics(Array $post_ids) {
+    public function simulate_analytics(Array $post_ids) {
         $analytics = array();
         foreach ($post_ids as $post_id) {
             $analytics[intval($post_id)] = array(
@@ -524,9 +521,9 @@ class FrontPageEngineLib {
         global $wpdb;
         $current_slots = $this->_get_slots($frontpage_id);
         if ($simulate) {
-            $analytics = $this->_frontpage_analytics($frontpage_id, true);
+            $analytics = $this->frontpage_analytics($frontpage_id, true);
         } else {
-            $analytics = $this->_frontpage_analytics($frontpage_id);
+            $analytics = $this->frontpage_analytics($frontpage_id);
         }
         $slots = array();
         $posts = array();
@@ -563,19 +560,19 @@ class FrontPageEngineLib {
         if ($wpdb->last_error) {
             throw new Exception($wpdb->last_error);
         }
-        $this->_ws_callback($frontpage_id);
+        $this->ws_callback($frontpage_id);
     }
 
-    public function _auto_slot($frontpage_id, $post_id, $simulate = false) {
+    public function auto_slot($frontpage_id, $post_id, $simulate = false) {
         // Get all the slots
         $slots = $this->_get_slots($frontpage_id);
         // Get analytics for all posts on the frontpage
-        $analytics = $this->_frontpage_analytics($frontpage_id, $simulate);
+        $analytics = $this->frontpage_analytics($frontpage_id, $simulate);
         // Get analytics for post_id
         if ($simulate) {
-            $post_analytics = $this->_simulate_analytics(array($post_id));
+            $post_analytics = $this->simulate_analytics(array($post_id));
         } else {
-            $post_analytics = $this->_analytics(array($post_id));
+            $post_analytics = $this->analytics(array($post_id));
         }
         if (empty($post_analytics[$post_id])) {
             return $slots[count($slots) - 1];
@@ -600,7 +597,7 @@ class FrontPageEngineLib {
         }
     }
 
-    public function _ws_callback($frontpage_id, $uid = null) {
+    public function ws_callback($frontpage_id, $uid = null) {
         $url = get_option("frontpageengine_wssb_web_address");
         if (!$url) {
             return;
@@ -623,7 +620,7 @@ class FrontPageEngineLib {
         }
     }
 
-    public function _full_refresh($frontpage_id) {
+    public function full_refresh($frontpage_id) {
         $current_slots = $this->_get_slots($frontpage_id);
         foreach($current_slots as $slot) {
             $this->_update_slot($slot->id, array(

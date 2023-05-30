@@ -6,14 +6,14 @@ class FrontpageEngineAdmin {
     
 
     public function __construct() {
-        add_action('admin_head', [$this, 'hideLegacyMenu']);
+        add_action('admin_head', [$this, 'hide_legacy_menu']);
         if (!$this->_check_permissions()) {
             return;
         }
-        add_action('admin_init', [$this, 'inlinePage'], 1);
+        add_action('admin_init', [$this, 'display_inline_page'], 1);
         add_action('admin_menu', [$this, 'menu']);
-        add_action('add_meta_boxes', [$this, 'addMetaBox']);
-        add_action('save_post', [$this, 'saveMetaBox']);
+        add_action('add_meta_boxes', [$this, 'add_meta_box']);
+        add_action('save_post', [$this, 'save_meta_box']);
     }
 
     protected function _check_permissions() {
@@ -41,16 +41,16 @@ class FrontpageEngineAdmin {
         $frontpages = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages ORDER BY display_order ASC");
         if (count($frontpages) !== 0) {
             $frontpage = array_shift($frontpages);
-            add_submenu_page($frontpageengine_menu_slug, $frontpage->name, $frontpage->name, 'manage_categories', 'frontpage-engine-menu', [$this, 'orderFrontPage']);
+            add_submenu_page($frontpageengine_menu_slug, $frontpage->name, $frontpage->name, 'manage_categories', 'frontpage-engine-menu', [$this, 'order_front_page']);
         } else {
-            add_submenu_page($frontpageengine_menu_slug, "Add Front Page", "Add Front Page", 'manage_categories', 'frontpage-engine-menu', [$this, 'noFrontPages']);
+            add_submenu_page($frontpageengine_menu_slug, "Add Front Page", "Add Front Page", 'manage_categories', 'frontpage-engine-menu', [$this, 'display_no_front_pages']);
         }
         foreach($frontpages as $frontpage) {
-            add_submenu_page($frontpageengine_menu_slug, $frontpage->name, $frontpage->name, 'manage_categories', 'frontpage-engine-menu-'.$frontpage->id, [$this, 'orderFrontPage'] );
+            add_submenu_page($frontpageengine_menu_slug, $frontpage->name, $frontpage->name, 'manage_categories', 'frontpage-engine-menu-'.$frontpage->id, [$this, 'order_front_page'] );
         }
     }
 
-    public function orderFrontPage() {
+    public function order_front_page() {
         $frontpage = $this->get_frontpage();
         if (empty($frontpage)) {
             wp_die("Front Page not found");
@@ -86,7 +86,7 @@ class FrontpageEngineAdmin {
         require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/order_frontpage.php';
     }
 
-    public function inlinePage() {
+    public function display_inline_page() {
         if (isset($_GET["frontpageengine_select_article"]) && $_GET["frontpageengine_select_article"] == "true") {
             $frontpage = $this->get_frontpage();
             if (empty($frontpage)) {
@@ -100,14 +100,14 @@ class FrontpageEngineAdmin {
                 'nonce' => $nonce,
                 'ordering_code' => $frontpage->ordering_code,
                 'featured_code' => $frontpage->featured_code,
-                // 'action' => 'frontpage_engine_insert_post'
+                // 'action' => 'frontpage_engineinsert_post'
             ));
             require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/select_article_iframe.php';
             exit;
         }
     }
 
-    public function hideLegacyMenu() {
+    public function hide_legacy_menu() {
         ?>
         <style>
             #toplevel_page_featured-flagged-post {
@@ -134,14 +134,14 @@ class FrontpageEngineAdmin {
         return $frontpage;
     }
 
-    public function noFrontPages() {
+    public function display_no_front_pages() {
         require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/no_frontpages.php';
     }
 
-    public function addMetaBox($post_type) {
+    public function add_meta_box($post_type) {
         try {
             $frontpagelib = new FrontPageEngineLib();
-            $frontpages = $frontpagelib->getFrontPages();
+            $frontpages = $frontpagelib->get_front_pages();
             // Check that $post_type is included in one of our front pages
             $post_type_included = false;
             foreach ($frontpages as $frontpage) {
@@ -157,7 +157,7 @@ class FrontpageEngineAdmin {
             add_meta_box(
                 'frontpage_engine_meta_box',
                 __( 'Frontpage Engine', 'frontpage-engine' ),
-                [ $this, 'renderMetaBox' ],
+                [ $this, 'render_meta_box' ],
                 $post_type,
                 'side',
                 'core'
@@ -170,15 +170,15 @@ class FrontpageEngineAdmin {
         }
     }
 
-    public function renderMetaBox($post) {
+    public function render_meta_box($post) {
         // Check if the post is published
         $is_published = $post->post_status === "publish";
-        $frontpages = $this->_getFrontPageWithPos($post->ID);
+        $frontpages = $this->get_front_page_with_pos($post->ID);
 		wp_nonce_field( 'frontpage-engine-metabox', 'frontpage-engine-metabox_nonce' );
         require(plugin_dir_path( dirname( __FILE__ ) ).'admin/views/metabox.php');
     }
 
-    public function saveMetaBox( $post_id ) {
+    public function save_meta_box( $post_id ) {
         try {
             if ( ! isset( $_POST['frontpage-engine-metabox_nonce'] ) ) {
                 return $post_id;
@@ -195,9 +195,9 @@ class FrontpageEngineAdmin {
             // Check if the post is published
             $post = get_post($post_id);
             if ($post->post_status !== "publish") {
-                return $this->_queueFrontPagesOnPublish($post_id);
+                return $this->_queue_front_pages_on_publish($post_id);
             }
-            $frontpages = $this->_getFrontPageWithPos($post_id);
+            $frontpages = $this->get_front_page_with_pos($post_id);
             $to_change = [];
             $to_add = [];
             $to_remove = [];
@@ -230,7 +230,7 @@ class FrontpageEngineAdmin {
                 ];
                 $request = new WP_REST_Request( 'POST', "/frontpageengine/v1/add_post/{$change['frontpage_id']}" );
                 $request->set_body_params( $data );
-                $response = rest_do_request( $request );
+                rest_do_request( $request );
             }
             foreach($to_change as $change) {
                 $slots = $frontpagelib->_get_slots($change["frontpage_id"]);
@@ -256,7 +256,7 @@ class FrontpageEngineAdmin {
         }
 	}
 
-    private function _queueFrontPagesOnPublish($post_id) {
+    private function _queue_front_pages_on_publish($post_id) {
         if ( ! isset( $_POST['frontpage-engine-metabox_nonce'] ) ) {
             return $post_id;
         }
@@ -269,7 +269,7 @@ class FrontpageEngineAdmin {
         if ( !current_user_can( 'edit_others_posts' )) {
             return $post_id;
         }
-        $frontpages = $this->_getFrontPageWithPos($post_id);
+        $frontpages = $this->get_front_page_with_pos($post_id);
         // print_r($frontpages);
         // die();
         foreach($frontpages as $frontpage) {
@@ -283,9 +283,9 @@ class FrontpageEngineAdmin {
         }
     }
 
-    public function _getFrontPageWithPos($post_id) {
+    public function get_front_page_with_pos($post_id) {
         $frontpagelib = new FrontPageEngineLib();
-        $frontpages = $frontpagelib->getFrontPages();
+        $frontpages = $frontpagelib->get_front_pages();
         $post_type = get_post_type($post_id);
         $is_published = get_post_status($post_id) === "publish";
         foreach ($frontpages as $key => $frontpage) {
@@ -294,7 +294,7 @@ class FrontpageEngineAdmin {
                 unset($frontpages[$key]);
             }
         }
-        $slots = $frontpagelib->getPostSlots($post_id);
+        $slots = $frontpagelib->get_post_slots($post_id);
         // Add the position to the front pages
         foreach($frontpages as $frontpage) {
             if (!$is_published) {

@@ -156,7 +156,7 @@ class FrontpageEngineAdminSettings {
             if (empty($posts[$i])) {
                 continue;
             }
-            $frontpagelib->_set_slot_post($slot->id, $posts[$i++]->ID);
+            $frontpagelib->set_slot_post($slot->id, $posts[$i++]->ID);
         }
     }
 
@@ -177,7 +177,7 @@ class FrontpageEngineAdminSettings {
         }
         $id = intval($_GET['frontpage_id']);
         $frontpagelib = new FrontPageEngineLib();
-        $frontpage = $frontpagelib->_get_frontpage($id);
+        $frontpage = $frontpagelib->get_frontpage($id);
         if (!$frontpage) {
             wp_die('Frontpage not found');
         }
@@ -207,7 +207,7 @@ class FrontpageEngineAdminSettings {
         }
         $frontpage_id = intval($_GET['frontpage_id']);
         $frontpagelib = new FrontPageEngineLib();
-        $frontpage = $frontpagelib->_get_frontpage($frontpage_id);
+        $frontpage = $frontpagelib->get_frontpage($frontpage_id);
         require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/delete_confirm.php';
     }
 
@@ -259,7 +259,7 @@ class FrontpageEngineAdminSettings {
         }
         if ($frontpage_id !== null) {
             $frontpagelib = new FrontPageEngineLib();
-            $frontpage = $frontpagelib->_get_frontpage($frontpage_id);
+            $frontpage = $frontpagelib->get_frontpage($frontpage_id);
             require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/edit_frontpage.php';
         } else {
             require_once plugin_dir_path( dirname( __FILE__ ) ).'admin/views/new_frontpage.php';

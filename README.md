@@ -1,3 +1,3 @@
 # Frontpage Engine
 
-A Maverick Engine product to bring order to your Wordpress frontpage.
+A Maverick Engine product designed to bring order to your news website front pages.

@@ -4254,13 +4254,13 @@ var frontpage_engine = (function () {
 
     function get_each_context$2(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[24] = list[i];
-    	child_ctx[25] = list;
-    	child_ctx[26] = i;
+    	child_ctx[22] = list[i];
+    	child_ctx[23] = list;
+    	child_ctx[24] = i;
     	return child_ctx;
     }
 
-    // (203:12) {#if (mode === "development")}
+    // (187:12) {#if (mode === "development")}
     function create_if_block_4(ctx) {
     	let th0;
     	let t1;
@@ -4302,7 +4302,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (230:16) {#if (!post.locked && !!post.slot.post_id)}
+    // (214:16) {#if (!post.locked && !!post.slot.post_id)}
     function create_if_block_3(ctx) {
     	let label;
     	let t1;
@@ -4311,7 +4311,7 @@ var frontpage_engine = (function () {
     	let dispose;
 
     	function input_change_handler() {
-    		/*input_change_handler*/ ctx[11].call(input, /*each_value*/ ctx[25], /*index*/ ctx[26]);
+    		/*input_change_handler*/ ctx[11].call(input, /*each_value*/ ctx[23], /*index*/ ctx[24]);
     	}
 
     	return {
@@ -4329,7 +4329,7 @@ var frontpage_engine = (function () {
     			insert(target, label, anchor);
     			insert(target, t1, anchor);
     			insert(target, input, anchor);
-    			input.checked = /*post*/ ctx[24].checked;
+    			input.checked = /*post*/ ctx[22].checked;
 
     			if (!mounted) {
     				dispose = listen(input, "change", input_change_handler);
@@ -4340,7 +4340,7 @@ var frontpage_engine = (function () {
     			ctx = new_ctx;
 
     			if (dirty & /*$featuredPosts*/ 8) {
-    				input.checked = /*post*/ ctx[24].checked;
+    				input.checked = /*post*/ ctx[22].checked;
     			}
     		},
     		d(detaching) {
@@ -4353,7 +4353,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (243:16) {#if (!!post.slot.post_id)}
+    // (227:16) {#if (!!post.slot.post_id)}
     function create_if_block$2(ctx) {
     	let current_block_type_index;
     	let if_block;
@@ -4363,7 +4363,7 @@ var frontpage_engine = (function () {
     	const if_blocks = [];
 
     	function select_block_type(ctx, dirty) {
-    		if (/*post*/ ctx[24].locked) return 0;
+    		if (/*post*/ ctx[22].locked) return 0;
     		return 1;
     	}
 
@@ -4423,7 +4423,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (252:20) {:else}
+    // (236:20) {:else}
     function create_else_block(ctx) {
     	let sveltetooltip;
     	let t;
@@ -4446,7 +4446,7 @@ var frontpage_engine = (function () {
     	const if_blocks = [];
 
     	function select_block_type_1(ctx, dirty) {
-    		if (/*post*/ ctx[24].manual) return 0;
+    		if (/*post*/ ctx[22].manual) return 0;
     		return 1;
     	}
 
@@ -4470,7 +4470,7 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const sveltetooltip_changes = {};
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 134217736) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 33554440) {
     				sveltetooltip_changes.$$scope = { dirty, ctx };
     			}
 
@@ -4521,7 +4521,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (244:20) {#if (post.locked)}
+    // (228:20) {#if (post.locked)}
     function create_if_block_1$1(ctx) {
     	let div;
     	let sveltetooltip;
@@ -4532,7 +4532,7 @@ var frontpage_engine = (function () {
 
     	sveltetooltip = new SvelteTooltip({
     			props: {
-    				tip: "This post is locked to this slot. Locked by " + /*post*/ ctx[24].slot.locked_by + " on " + /*post*/ ctx[24].slot.locked_at + ".",
+    				tip: "This post is locked to this slot. Locked by " + /*post*/ ctx[22].slot.locked_by + " on " + /*post*/ ctx[22].slot.locked_at + ".",
     				left: true,
     				color: "#FFB74D",
     				$$slots: { default: [create_default_slot$1] },
@@ -4541,20 +4541,20 @@ var frontpage_engine = (function () {
     		});
 
     	function dateinput_value_binding(value) {
-    		/*dateinput_value_binding*/ ctx[12](value, /*post*/ ctx[24]);
+    		/*dateinput_value_binding*/ ctx[12](value, /*post*/ ctx[22]);
     	}
 
     	let dateinput_props = { closeOnSelection: true };
 
-    	if (/*post*/ ctx[24].locked_until !== void 0) {
-    		dateinput_props.value = /*post*/ ctx[24].locked_until;
+    	if (/*post*/ ctx[22].locked_until !== void 0) {
+    		dateinput_props.value = /*post*/ ctx[22].locked_until;
     	}
 
     	dateinput = new DateInput({ props: dateinput_props });
     	binding_callbacks.push(() => bind(dateinput, 'value', dateinput_value_binding));
 
     	dateinput.$on("update", function () {
-    		if (is_function(/*doLock*/ ctx[6](/*post*/ ctx[24], /*post*/ ctx[24].locked_until))) /*doLock*/ ctx[6](/*post*/ ctx[24], /*post*/ ctx[24].locked_until).apply(this, arguments);
+    		if (is_function(/*doLock*/ ctx[6](/*post*/ ctx[22], /*post*/ ctx[22].locked_until))) /*doLock*/ ctx[6](/*post*/ ctx[22], /*post*/ ctx[22].locked_until).apply(this, arguments);
     	});
 
     	return {
@@ -4575,9 +4575,9 @@ var frontpage_engine = (function () {
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
     			const sveltetooltip_changes = {};
-    			if (dirty & /*$featuredPosts*/ 8) sveltetooltip_changes.tip = "This post is locked to this slot. Locked by " + /*post*/ ctx[24].slot.locked_by + " on " + /*post*/ ctx[24].slot.locked_at + ".";
+    			if (dirty & /*$featuredPosts*/ 8) sveltetooltip_changes.tip = "This post is locked to this slot. Locked by " + /*post*/ ctx[22].slot.locked_by + " on " + /*post*/ ctx[22].slot.locked_at + ".";
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 134217736) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 33554440) {
     				sveltetooltip_changes.$$scope = { dirty, ctx };
     			}
 
@@ -4586,7 +4586,7 @@ var frontpage_engine = (function () {
 
     			if (!updating_value && dirty & /*$featuredPosts*/ 8) {
     				updating_value = true;
-    				dateinput_changes.value = /*post*/ ctx[24].locked_until;
+    				dateinput_changes.value = /*post*/ ctx[22].locked_until;
     				add_flush_callback(() => updating_value = false);
     			}
 
@@ -4611,7 +4611,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (253:24) <SvelteTooltip tip="Click to lock this post in this slot." left color="#FFB74D">
+    // (237:24) <SvelteTooltip tip="Click to lock this post in this slot." left color="#FFB74D">
     function create_default_slot_3(ctx) {
     	let span;
     	let mounted;
@@ -4627,7 +4627,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doLock*/ ctx[6](/*post*/ ctx[24]))) /*doLock*/ ctx[6](/*post*/ ctx[24]).apply(this, arguments);
+    					if (is_function(/*doLock*/ ctx[6](/*post*/ ctx[22]))) /*doLock*/ ctx[6](/*post*/ ctx[22]).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -4644,7 +4644,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (262:24) {:else}
+    // (246:24) {:else}
     function create_else_block_1(ctx) {
     	let sveltetooltip;
     	let current;
@@ -4670,7 +4670,7 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const sveltetooltip_changes = {};
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 134217736) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 33554440) {
     				sveltetooltip_changes.$$scope = { dirty, ctx };
     			}
 
@@ -4691,7 +4691,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (257:24) {#if (post.manual)}
+    // (241:24) {#if (post.manual)}
     function create_if_block_2(ctx) {
     	let sveltetooltip;
     	let current;
@@ -4717,7 +4717,7 @@ var frontpage_engine = (function () {
     		p(ctx, dirty) {
     			const sveltetooltip_changes = {};
 
-    			if (dirty & /*$$scope, $featuredPosts*/ 134217736) {
+    			if (dirty & /*$$scope, $featuredPosts*/ 33554440) {
     				sveltetooltip_changes.$$scope = { dirty, ctx };
     			}
 
@@ -4738,7 +4738,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (263:28) <SvelteTooltip tip="This slot is automatically ordered." left color="#FFB74D">
+    // (247:28) <SvelteTooltip tip="This slot is automatically ordered." left color="#FFB74D">
     function create_default_slot_2(ctx) {
     	let span;
     	let mounted;
@@ -4754,7 +4754,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doManual*/ ctx[7](/*post*/ ctx[24].slot))) /*doManual*/ ctx[7](/*post*/ ctx[24].slot).apply(this, arguments);
+    					if (is_function(/*doManual*/ ctx[7](/*post*/ ctx[22].slot))) /*doManual*/ ctx[7](/*post*/ ctx[22].slot).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -4771,7 +4771,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (258:28) <SvelteTooltip tip="This slot is manually ordered." left color="#FFB74D">
+    // (242:28) <SvelteTooltip tip="This slot is manually ordered." left color="#FFB74D">
     function create_default_slot_1$1(ctx) {
     	let span;
     	let mounted;
@@ -4787,7 +4787,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doAuto*/ ctx[8](/*post*/ ctx[24].slot))) /*doAuto*/ ctx[8](/*post*/ ctx[24].slot).apply(this, arguments);
+    					if (is_function(/*doAuto*/ ctx[8](/*post*/ ctx[22].slot))) /*doAuto*/ ctx[8](/*post*/ ctx[22].slot).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -4804,7 +4804,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (246:28) <SvelteTooltip tip="This post is locked to this slot. Locked by {post.slot.locked_by} on {post.slot.locked_at}." left color="#FFB74D">
+    // (230:28) <SvelteTooltip tip="This post is locked to this slot. Locked by {post.slot.locked_by} on {post.slot.locked_at}." left color="#FFB74D">
     function create_default_slot$1(ctx) {
     	let span;
     	let mounted;
@@ -4820,7 +4820,7 @@ var frontpage_engine = (function () {
 
     			if (!mounted) {
     				dispose = listen(span, "click", function () {
-    					if (is_function(/*doUnlock*/ ctx[9](/*post*/ ctx[24]))) /*doUnlock*/ ctx[9](/*post*/ ctx[24]).apply(this, arguments);
+    					if (is_function(/*doUnlock*/ ctx[9](/*post*/ ctx[22]))) /*doUnlock*/ ctx[9](/*post*/ ctx[22]).apply(this, arguments);
     				});
 
     				mounted = true;
@@ -4837,7 +4837,7 @@ var frontpage_engine = (function () {
     	};
     }
 
-    // (217:8) {#each $featuredPosts as post, index (post.id)}
+    // (201:8) {#each $featuredPosts as post, index (post.id)}
     function create_each_block$2(key_1, ctx) {
     	let tr;
     	let th0;
@@ -4855,26 +4855,26 @@ var frontpage_engine = (function () {
     	let current;
     	let mounted;
     	let dispose;
-    	let if_block0 = !/*post*/ ctx[24].locked && !!/*post*/ ctx[24].slot.post_id && create_if_block_3(ctx);
+    	let if_block0 = !/*post*/ ctx[22].locked && !!/*post*/ ctx[22].slot.post_id && create_if_block_3(ctx);
 
     	postrow = new PostRow({
     			props: {
-    				post: /*post*/ ctx[24],
-    				index: /*index*/ ctx[26],
-    				hovering: /*rowHovering*/ ctx[4] === /*index*/ ctx[26],
+    				post: /*post*/ ctx[22],
+    				index: /*index*/ ctx[24],
+    				hovering: /*rowHovering*/ ctx[4] === /*index*/ ctx[24],
     				total_hits: /*total_hits*/ ctx[1],
     				analytics: /*analytics*/ ctx[2]
     			}
     		});
 
-    	let if_block1 = !!/*post*/ ctx[24].slot.post_id && create_if_block$2(ctx);
+    	let if_block1 = !!/*post*/ ctx[22].slot.post_id && create_if_block$2(ctx);
 
     	function mouseover_handler() {
-    		return /*mouseover_handler*/ ctx[13](/*index*/ ctx[26]);
+    		return /*mouseover_handler*/ ctx[13](/*index*/ ctx[24]);
     	}
 
     	function focus_handler() {
-    		return /*focus_handler*/ ctx[14](/*index*/ ctx[26]);
+    		return /*focus_handler*/ ctx[14](/*index*/ ctx[24]);
     	}
 
     	return {
@@ -4894,13 +4894,13 @@ var frontpage_engine = (function () {
     			attr(th0, "class", "check-column");
     			attr(th1, "scope", "row");
     			attr(th1, "class", "lock-column");
-    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[24].id);
-    			attr(tr, "data-post_id", tr_data_post_id_value = /*post*/ ctx[24].id);
-    			attr(tr, "data-index", tr_data_index_value = /*index*/ ctx[26]);
-    			attr(tr, "data-slot_id", tr_data_slot_id_value = /*post*/ ctx[24].slot.id);
+    			attr(tr, "id", tr_id_value = "post-" + /*post*/ ctx[22].id);
+    			attr(tr, "data-post_id", tr_data_post_id_value = /*post*/ ctx[22].id);
+    			attr(tr, "data-index", tr_data_index_value = /*index*/ ctx[24]);
+    			attr(tr, "data-slot_id", tr_data_slot_id_value = /*post*/ ctx[22].slot.id);
     			attr(tr, "class", "svelte-r4dvth");
-    			toggle_class(tr, "is-active", hovering === /*index*/ ctx[26]);
-    			toggle_class(tr, "is-locked", /*post*/ ctx[24].locked);
+    			toggle_class(tr, "is-active", hovering === /*index*/ ctx[24]);
+    			toggle_class(tr, "is-locked", /*post*/ ctx[22].locked);
     			this.first = tr;
     		},
     		m(target, anchor) {
@@ -4927,7 +4927,7 @@ var frontpage_engine = (function () {
     		p(new_ctx, dirty) {
     			ctx = new_ctx;
 
-    			if (!/*post*/ ctx[24].locked && !!/*post*/ ctx[24].slot.post_id) {
+    			if (!/*post*/ ctx[22].locked && !!/*post*/ ctx[22].slot.post_id) {
     				if (if_block0) {
     					if_block0.p(ctx, dirty);
     				} else {
@@ -4941,14 +4941,14 @@ var frontpage_engine = (function () {
     			}
 
     			const postrow_changes = {};
-    			if (dirty & /*$featuredPosts*/ 8) postrow_changes.post = /*post*/ ctx[24];
-    			if (dirty & /*$featuredPosts*/ 8) postrow_changes.index = /*index*/ ctx[26];
-    			if (dirty & /*rowHovering, $featuredPosts*/ 24) postrow_changes.hovering = /*rowHovering*/ ctx[4] === /*index*/ ctx[26];
+    			if (dirty & /*$featuredPosts*/ 8) postrow_changes.post = /*post*/ ctx[22];
+    			if (dirty & /*$featuredPosts*/ 8) postrow_changes.index = /*index*/ ctx[24];
+    			if (dirty & /*rowHovering, $featuredPosts*/ 24) postrow_changes.hovering = /*rowHovering*/ ctx[4] === /*index*/ ctx[24];
     			if (dirty & /*total_hits*/ 2) postrow_changes.total_hits = /*total_hits*/ ctx[1];
     			if (dirty & /*analytics*/ 4) postrow_changes.analytics = /*analytics*/ ctx[2];
     			postrow.$set(postrow_changes);
 
-    			if (!!/*post*/ ctx[24].slot.post_id) {
+    			if (!!/*post*/ ctx[22].slot.post_id) {
     				if (if_block1) {
     					if_block1.p(ctx, dirty);
 
@@ -4971,28 +4971,28 @@ var frontpage_engine = (function () {
     				check_outros();
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 8 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[24].id)) {
+    			if (!current || dirty & /*$featuredPosts*/ 8 && tr_id_value !== (tr_id_value = "post-" + /*post*/ ctx[22].id)) {
     				attr(tr, "id", tr_id_value);
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 8 && tr_data_post_id_value !== (tr_data_post_id_value = /*post*/ ctx[24].id)) {
+    			if (!current || dirty & /*$featuredPosts*/ 8 && tr_data_post_id_value !== (tr_data_post_id_value = /*post*/ ctx[22].id)) {
     				attr(tr, "data-post_id", tr_data_post_id_value);
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 8 && tr_data_index_value !== (tr_data_index_value = /*index*/ ctx[26])) {
+    			if (!current || dirty & /*$featuredPosts*/ 8 && tr_data_index_value !== (tr_data_index_value = /*index*/ ctx[24])) {
     				attr(tr, "data-index", tr_data_index_value);
     			}
 
-    			if (!current || dirty & /*$featuredPosts*/ 8 && tr_data_slot_id_value !== (tr_data_slot_id_value = /*post*/ ctx[24].slot.id)) {
+    			if (!current || dirty & /*$featuredPosts*/ 8 && tr_data_slot_id_value !== (tr_data_slot_id_value = /*post*/ ctx[22].slot.id)) {
     				attr(tr, "data-slot_id", tr_data_slot_id_value);
     			}
 
     			if (!current || dirty & /*hovering, $featuredPosts*/ 8) {
-    				toggle_class(tr, "is-active", hovering === /*index*/ ctx[26]);
+    				toggle_class(tr, "is-active", hovering === /*index*/ ctx[24]);
     			}
 
     			if (!current || dirty & /*$featuredPosts*/ 8) {
-    				toggle_class(tr, "is-locked", /*post*/ ctx[24].locked);
+    				toggle_class(tr, "is-locked", /*post*/ ctx[22].locked);
     			}
     		},
     		r() {
@@ -5061,7 +5061,7 @@ var frontpage_engine = (function () {
     	let dispose;
     	let if_block = /*mode*/ ctx[5] === "development" && create_if_block_4();
     	let each_value = /*$featuredPosts*/ ctx[3];
-    	const get_key = ctx => /*post*/ ctx[24].id;
+    	const get_key = ctx => /*post*/ ctx[22].id;
 
     	for (let i = 0; i < each_value.length; i += 1) {
     		let child_ctx = get_each_context$2(ctx, each_value, i);
@@ -5242,61 +5242,74 @@ var frontpage_engine = (function () {
 
     	const doLock = async (post, date) => {
     		$$invalidate(0, updating = true);
-    		let lock_until = new Date().getTime() + 1000 * 60 * 60 * 24;
 
-    		if (date) {
-    			lock_until = new Date(date).getTime();
+    		try {
+    			let lock_until = new Date().getTime() + 1000 * 60 * 60 * 24;
+
+    			if (date) {
+    				lock_until = new Date(date).getTime();
+    			}
+
+    			set_store_value(
+    				featuredPosts,
+    				$featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${$frontpageId}?${mode == "development" ? "simulate_analytics=1" : ""}`, {
+    					lock_until: formatTimeSql(new Date(lock_until)),
+    					post_id: post.slot.post_id
+    				})).posts.map(map_posts),
+    				$featuredPosts
+    			);
+
+    			dispatch("updated");
+    		} catch(e) {
+    			console.error(e);
+    			alert("Error locking post: " + e.message);
+    		} finally {
+    			$$invalidate(0, updating = false);
     		}
-
-    		set_store_value(
-    			featuredPosts,
-    			$featuredPosts = (await apiPost(`frontpageengine/v1/lock_post/${$frontpageId}?${"simulate_analytics=1" }`, {
-    				lock_until: formatTimeSql(new Date(lock_until)),
-    				post_id: post.slot.post_id
-    			})).posts.map(map_posts),
-    			$featuredPosts
-    		);
-
-    		dispatch("updated");
-    		$$invalidate(0, updating = false);
     	};
 
     	const doManual = async slot => {
     		$$invalidate(0, updating = true);
-    		set_store_value(featuredPosts, $featuredPosts = (await apiGet(`frontpageengine/v1/slot/manual/${$frontpageId}/${slot.id}`)).posts.map(map_posts), $featuredPosts);
-    		dispatch("updated");
-    		$$invalidate(0, updating = false);
+
+    		try {
+    			set_store_value(featuredPosts, $featuredPosts = (await apiGet(`frontpageengine/v1/slot/manual/${$frontpageId}/${slot.id}`)).posts.map(map_posts), $featuredPosts);
+    			dispatch("updated");
+    		} catch(e) {
+    			console.error(e);
+    			alert("Error updating slot: " + e.message);
+    		} finally {
+    			$$invalidate(0, updating = false);
+    		}
     	};
 
     	const doAuto = async slot => {
     		$$invalidate(0, updating = true);
-    		set_store_value(featuredPosts, $featuredPosts = (await apiGet(`frontpageengine/v1/slot/auto/${$frontpageId}/${slot.id}`)).posts.map(map_posts), $featuredPosts);
-    		dispatch("updated");
-    		$$invalidate(0, updating = false);
+
+    		try {
+    			set_store_value(featuredPosts, $featuredPosts = (await apiGet(`frontpageengine/v1/slot/auto/${$frontpageId}/${slot.id}`)).posts.map(map_posts), $featuredPosts);
+    			dispatch("updated");
+    		} catch(e) {
+    			console.error(e);
+    			alert("Error updating slot: " + e.message);
+    		} finally {
+    			$$invalidate(0, updating = false);
+    		}
     	};
 
     	const doUnlock = async post => {
     		$$invalidate(0, updating = true);
-    		set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${$frontpageId}?${"simulate_analytics=1" }`, { post_id: post.slot.post_id })).posts.map(map_posts), $featuredPosts);
-    		$$invalidate(0, updating = false);
-    		dispatch("updated");
+
+    		try {
+    			set_store_value(featuredPosts, $featuredPosts = (await apiPost(`frontpageengine/v1/unlock_post/${$frontpageId}?${mode == "development" ? "simulate_analytics=1" : ""}`, { post_id: post.slot.post_id })).posts.map(map_posts), $featuredPosts);
+    			dispatch("updated");
+    		} catch(e) {
+    			console.error(e);
+    			alert("Error unlocking post: " + e.message);
+    		} finally {
+    			$$invalidate(0, updating = false);
+    		}
     	};
 
-    	// const doRemove = async (post) => {
-    	//     if (confirm("Are you sure you want to remove this post from the frontpage?")) {
-    	//         updating = true;
-    	//         try {
-    	//             $featuredPosts = (await apiPost(`frontpageengine/v1/remove_post/${$frontpageId}?${(mode == "development") ? "simulate_analytics=1" : ""}`, {
-    	//                 post_id: post.id,
-    	//             })).posts.map(map_posts);
-    	//             dispatch("updated");
-    	//         } catch (e) {
-    	//             console.error(e);
-    	//             alert("Error removing post: " + e.message);
-    	//         }
-    	//         updating = false;
-    	//     }
-    	// }
     	const checkAll = e => {
     		if (e.target.checked) {
     			set_store_value(
