@@ -66,6 +66,44 @@
                         ?>
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="frontpageengine_frontpage_primary_section"><?php _e( 'Primary Section', 'frontpageengine' ); ?></label>
+                    </th>
+                    <td>
+                        <select name="frontpageengine_frontpage_primary_section" id="frontpageengine_frontpage_primary_section">
+                            <option value=""><?php _e( 'None', 'frontpageengine' ); ?></option>
+                            <?php
+                                $sections = get_terms([
+                                    'taxonomy' => 'section',
+                                    'hide_empty' => false,
+                                ]);
+                                foreach($sections as $section) {
+                                    $selected = $frontpage->primary_section == $section->term_id ? 'selected' : '';
+                                    echo '<option value="' . esc_attr($section->term_id) . '" ' . esc_attr($selected) . '>' . esc_html($section->name) . '</option>';
+                                }
+                            ?>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="frontpageengine_frontpage_url"><?php _e( 'Front Page URL', 'frontpageengine' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="url" name="frontpageengine_frontpage_url" id="frontpageengine_frontpage_url" value="<?php print esc_attr($frontpage->url) ?>" />
+                        <p class="description"><?php _e( 'eg. "https://www.dailymaverick.co.za"', 'frontpageengine' ); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="frontpageengine_frontpage_post_id"><?php _e( 'Front Page Post ID', 'frontpageengine' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" name="frontpageengine_frontpage_post_id" id="frontpageengine_frontpage_post_id" value="<?php print esc_attr($frontpage->post_id) ?>" />
+                        <p class="description"><?php _e( 'eg. "1234"', 'frontpageengine' ); ?></p>
+                    </td>
+                </tr>
             </tbody>
         </table>
         <?php submit_button(); ?>

@@ -91,16 +91,22 @@ class FrontpageEngineAdminSettings {
         $new = false;
         $table_name = $wpdb->prefix . 'frontpage_engine_frontpages';
         $post_types = isset($_POST['frontpageengine_frontpage_post_types']) ? $_POST['frontpageengine_frontpage_post_types'] : [];
+        $url = isset($_POST['frontpageengine_frontpage_url']) ? $_POST['frontpageengine_frontpage_url'] : null;
+        $primary_section = isset($_POST['frontpageengine_frontpage_primary_section']) ? $_POST['frontpageengine_frontpage_primary_section'] : null;
+        $post_id = isset($_POST['frontpageengine_frontpage_post_id']) ? $_POST['frontpageengine_frontpage_post_id'] : null;
         $data = [
             'name' => sanitize_text_field($_POST['frontpageengine_frontpage_name']),
             'slug' => sanitize_text_field($_POST['frontpageengine_frontpage_slug']),
             'ordering_code' => sanitize_text_field($_POST['frontpageengine_frontpage_ordering_code']),
             'featured_code' => sanitize_text_field($_POST['frontpageengine_frontpage_featured_code']),
             'post_types' => sanitize_text_field(join(",", $post_types)),
-            'number_of_slots' => intval($_POST['frontpageengine_frontpage_number_of_slots'])
+            'number_of_slots' => intval($_POST['frontpageengine_frontpage_number_of_slots']),
+            'url' => sanitize_text_field($url),
+            'primary_section' => intval($primary_section),
+            'post_id' => intval($post_id),
         ];
         if ($frontpage_id === null) {
-            $wpdb->insert($table_name, $data, ['%s', '%s', '%s', '%s', '%s', '%d']);
+            $wpdb->insert($table_name, $data, ['%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%d']);
             if ($wpdb->last_error) {
                 wp_die(esc_attr($wpdb->last_error));
             }

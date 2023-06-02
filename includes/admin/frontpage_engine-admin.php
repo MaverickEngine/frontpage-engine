@@ -195,7 +195,9 @@ class FrontpageEngineAdmin {
             // Check if the post is published
             $post = get_post($post_id);
             if ($post->post_status !== "publish") {
-                return $this->_queue_front_pages_on_publish($post_id);
+                $this->_ensure_unpublished_not_showing($post_id);
+                $this->_queue_front_pages_on_publish($post_id);
+                return;
             }
             $frontpages = $this->get_front_page_with_pos($post_id);
             $to_change = [];
@@ -255,6 +257,20 @@ class FrontpageEngineAdmin {
             return $post_id;
         }
 	}
+
+    private function _ensure_unpublished_not_showing($post_id) {
+        $post_status = get_post_status($post_id);
+        if ($post_status === "publish") {
+            return;
+        }
+        $frontpagelib = new FrontPageEngineLib();
+        $frontpages = $this->get_front_page_with_pos($post_id);
+        foreach($frontpages as $frontpage) {
+            $frontpage_id = intval($frontpage->id);
+            $frontpagelib->remove_post($frontpage_id, $post_id);
+            $frontpagelib->ws_callback($frontpage_id, "wp_admin");
+        }
+    }
 
     private function _queue_front_pages_on_publish($post_id) {
         if ( ! isset( $_POST['frontpage-engine-metabox_nonce'] ) ) {

@@ -19,6 +19,12 @@ class FrontPageEngineLib {
         return $frontpage;
     }
 
+    public function get_frontpage_by_slug(string $frontpage_slug) {
+        global $wpdb;
+        $frontpage = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}frontpage_engine_frontpages WHERE slug = %s", $frontpage_slug));
+        return $frontpage;
+    }
+
     protected function _map_wp_post($post) {
         $post_type = get_post_type_object( $post->post_type );
         $thumb = get_the_post_thumbnail_url( $post->ID, array( 50, 50 ) );
@@ -186,6 +192,10 @@ class FrontPageEngineLib {
         }
         $frontpage = $this->get_frontpage($frontpage_id);
         foreach($posts as $post) {
+            $post_status = get_post_status($post->post_id);
+            if ($post_status !== 'publish') {
+                continue;
+            }
             update_post_meta($post->post_id, $frontpage->ordering_code, $post->display_order);
             update_post_meta($post->post_id, $frontpage->featured_code, '1');
             $this->_set_featured_flag($post->post_id, $frontpage->featured_code);
@@ -247,6 +257,7 @@ class FrontPageEngineLib {
         $this->_update_featured_posts_slow($frontpage_id, $tasks->update);
         $this->_insert_featured_posts_slow($frontpage_id, $tasks->insert);
         $this->_delete_featured_posts_slow($frontpage_id, $tasks->delete);
+        $this->_set_last_updated($frontpage_id);
         // update_postmeta_cache( wp_list_pluck( $slots, 'post_id' ) );
     }
 
@@ -627,5 +638,14 @@ class FrontPageEngineLib {
                 "post_id" => null,
             ));
         }
+    }
+
+    protected function _set_last_updated($frontpage_id) {
+        global $wpdb;
+        $wpdb->update("{$wpdb->prefix}frontpage_engine_frontpages", array(
+            "last_updated" => current_time("mysql"),
+        ), array(
+            "id" => $frontpage_id,
+        ));
     }
 }

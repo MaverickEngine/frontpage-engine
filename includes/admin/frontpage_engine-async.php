@@ -12,7 +12,7 @@ class FrontpageEngineAsync extends FrontpageEngineAdmin {
     }
 
     public function handlePostStatusChange($new_status, $old_status, $post) {
-        if ($new_status === 'publish' || $old_status !== 'publish') {
+        if ($new_status === 'publish' && $old_status !== 'publish') {
             $this->publishPost($post);
         }
         if ($new_status !== 'publish' && $old_status === 'publish') {

@@ -179,6 +179,7 @@
 <table class="wp-list-table widefat fixed striped table-view-list featuredposts {updating  ? "is-updating" : ""}">
     <thead>
         <tr>
+            <td class="width-30"></td>
             <td class="manage-column check-column">
                 <label class="screen-reader-text" for="">Select All</label>
                 <input class="" type="checkbox" on:change={checkAll} />
@@ -209,7 +210,8 @@
             class:is-locked={post.locked}
             on:mouseover={() => rowHovering = index}
             on:focus={() => rowHovering = index}
-        >
+        >   
+            <th class="width-30">{index + 1}</th>
             <th scope="row" class="check-column">
                 {#if (!post.locked && !!post.slot.post_id)}
                 <label class="screen-reader-text" for="cb-select-1">Select</label>
@@ -291,6 +293,10 @@
 
     .width-150 {
         width: 150px;
+    }
+
+    .width-30 {
+        width: 30px;
     }
 
     .cursor-pointer {

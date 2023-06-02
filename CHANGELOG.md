@@ -1,5 +1,22 @@
 # FrontpageEngine Changelog
 
+## 0.2.4
+
+* Show position on frontpage table
+* Primary section
+* URL
+* Post ID
+* Links to RSS and JSON feeds
+
+## 0.2.3
+
+* JSON feed
+* RSS feed
+
+## 0.1.2
+
+* Fix to ensure that unpublished articles are not published to the frontpage.
+
 ## 0.1.1
 
 * When a post is unpublished, remove it from the frontpage and set all of its flags and taxonomy correctly.

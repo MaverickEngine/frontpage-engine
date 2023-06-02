@@ -27,7 +27,7 @@ class FrontPageEngineFrontpagesTable extends WP_List_Table {
         $page = isset($_REQUEST['page']) ? esc_attr($_REQUEST['page']) : 'frontpage_engine';
         $actions = array(
             'edit' => sprintf('<a href="?page=%s&action=%s&frontpage_id=%s&_wpnonce=%s">Edit</a>', $page, 'edit', $item['id'], wp_create_nonce('edit')),
-            'delete' => sprintf('<a href="?page=%s&action=%s&frontpage_id=%s&_wpnonce=%s">Delete</a>', $page, 'delete', $item['id'], wp_create_nonce('delete')),
+            'delete' => sprintf('<a href="?page=%s&action=%s&frontpage_id=%s&_wpnonce=%s">Delete</a>', $page, 'delete', $item['id'], wp_create_nonce('delete'))
         );
         return sprintf('%1$s %2$s', $item['name'], $this->row_actions($actions));
     }
@@ -36,8 +36,10 @@ class FrontPageEngineFrontpagesTable extends WP_List_Table {
         $columns = array(
             'id' => 'ID',
             'name' => 'Name',
+            'slug' => 'Slug',
             'ordering_code' => 'Ordering Code',
             'featured_code' => 'Featured Code',
+            'feeds' => 'Feeds',
         );
         return $columns;
     }
@@ -73,12 +75,15 @@ class FrontPageEngineFrontpagesTable extends WP_List_Table {
         $this->_column_headers = array($columns, $hidden);
         $this->items = array();
         foreach($frontpages as $frontpage) {
+            $feeds = "<a href='/frontpage-engine/rss/{$frontpage->slug}' target='_blank'>RSS</a> | <a href='/frontpage-engine/json/{$frontpage->slug}' target='_blank'>JSON</a>";
             $this->items[] = array(
                 'id' => $frontpage->id,
                 'name' => $frontpage->name,
                 'ordering_code' => $frontpage->ordering_code,
+                'slug' => $frontpage->slug,
                 'featured_code' => $frontpage->featured_code,
                 'post_types' => $frontpage->post_types,
+                'feeds' => $feeds,
             );
         }
     }
