@@ -26,7 +26,8 @@ class FrontpageEngineServe {
         if (empty($_SERVER['REQUEST_URI'])) return;
         $this->uri = sanitize_url($_SERVER['REQUEST_URI']);
         $this->parsed_url = wp_parse_url($this->uri);
-        $this->parameters = wp_parse_args($this->parsed_url["query"]);
+        if (!is_array($this->parsed_url)) return;
+        $this->parameters = wp_parse_args($this->parsed_url["query"] ?? null);
         if (!preg_match('/\/frontpage-engine\/(rss|json|xml)\/(.*)/', $this->parsed_url["path"], $matches)) {
             return;
         }
@@ -114,6 +115,7 @@ class FrontpageEngineServe {
             $channel->appendChild($item);
         }
         // Render RSS
+        // phpcs:ignore
         print $rss->saveXML();
     }
 

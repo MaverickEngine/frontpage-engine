@@ -1,6 +1,6 @@
 {
   "name": "frontpage-engine",
-  "version": "0.0.15",
+  "version": "0.2.7",
   "description": "",
   "main": "rollup.config.js",
   "scripts": {

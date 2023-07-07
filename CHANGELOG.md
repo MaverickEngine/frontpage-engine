@@ -1,5 +1,9 @@
 # FrontpageEngine Changelog
 
+## 0.2.7
+
+* Fix array warning
+
 ## 0.2.4
 
 * Show position on frontpage table
